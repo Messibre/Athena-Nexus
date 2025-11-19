@@ -19,6 +19,7 @@ const Submit = () => {
 
   useEffect(() => {
     fetchWeeks();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
@@ -91,7 +92,7 @@ const Submit = () => {
     }
 
     // Validate GitHub URL
-    const githubRegex = /^https:\/\/github\.com\/[\w\-\.]+\/[\w\-\.]+$/;
+    const githubRegex = /^https:\/\/github\.com\/[\w\-.]+\/[\w\-.]+$/;
     if (!githubRegex.test(githubRepo)) {
       setError('Invalid GitHub URL. Must be in format: https://github.com/owner/repo');
       setLoading(false);

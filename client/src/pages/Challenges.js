@@ -5,7 +5,7 @@ import Navbar from '../components/Navbar';
 import AuthContext from '../context/AuthContext';
 
 const Challenges = () => {
-  const { isAuthenticated, isAdmin, user } = useContext(AuthContext);
+  const { isAuthenticated, isAdmin } = useContext(AuthContext);
   const [weeks, setWeeks] = useState([]);
   const [submissions, setSubmissions] = useState([]);
   const [submissionCounts, setSubmissionCounts] = useState({});
@@ -14,6 +14,7 @@ const Challenges = () => {
 
   useEffect(() => {
     fetchData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isAuthenticated]);
 
   const fetchData = async () => {

@@ -37,6 +37,9 @@ const Home = () => {
   };
 
   useEffect(() => {
+    const currentRef = statsRef.current;
+    if (!currentRef) return;
+
     const observer = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
@@ -52,14 +55,10 @@ const Home = () => {
       { threshold: 0.5 }
     );
 
-    if (statsRef.current) {
-      observer.observe(statsRef.current);
-    }
+    observer.observe(currentRef);
 
     return () => {
-      if (statsRef.current) {
-        observer.unobserve(statsRef.current);
-      }
+      observer.unobserve(currentRef);
     };
   }, [countersAnimated, loading]);
 
