@@ -1,42 +1,24 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { Link } from 'react-router-dom';
-import api from '../config/api';
+import { useDispatch, useSelector } from 'react-redux';
 import Navbar from '../components/Navbar';
 import './Home.css';
+import { fetchPublicStats } from '../redux/thunks/weeksThunks';
+import { selectPublicStats, selectWeeksLoading } from '../redux/selectors/weeksSelectors';
 
 const Home = () => {
+  const dispatch = useDispatch();
+  const stats = useSelector(selectPublicStats);
+  const loading = useSelector(selectWeeksLoading);
   const [isVisible, setIsVisible] = useState(false);
   const statsRef = useRef(null);
   const [countersAnimated, setCountersAnimated] = useState(false);
-  const [stats, setStats] = useState({
-    totalUsers: 0,
-    totalWeeks: 0,
-    totalSubmissions: 0
-  });
-  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     setIsVisible(true);
-    fetchStats();
-  }, []);
+    dispatch(fetchPublicStats());
+  }, [dispatch]);
 
-  const fetchStats = async () => {
-    try {
-      const response = await api.get('/api/weeks/stats/public');
-      setStats({
-        totalUsers: response.data.totalUsers || 0,
-        totalWeeks: response.data.totalWeeks || 0,
-        totalSubmissions: response.data.totalSubmissions || 0
-      });
-    } catch (error) {
-      console.error('Error fetching stats:', error);
-      // Keep default values of 0 on error
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     const currentRef = statsRef.current;
     if (!currentRef) return;
@@ -46,7 +28,6 @@ const Home = () => {
         entries.forEach((entry) => {
           if (entry.isIntersecting && !countersAnimated && !loading) {
             setCountersAnimated(true);
-            // Small delay to ensure stats are set
             setTimeout(() => {
               animateCounters();
             }, 100);
@@ -89,11 +70,16 @@ const Home = () => {
     });
   };
 
+  const displayStats = {
+    totalUsers: stats?.totalUsers || 0,
+    totalWeeks: stats?.totalWeeks || 0,
+    totalSubmissions: stats?.totalSubmissions || 0
+  };
+
   return (
     <>
       <Navbar />
       <div className="home-container">
-        {/* Animated Background */}
         <div className="animated-background">
           <div className="gradient-orb orb-1"></div>
           <div className="gradient-orb orb-2"></div>
@@ -111,7 +97,6 @@ const Home = () => {
         </div>
 
         <div className="container">
-          {/* Hero Section */}
           <div className={`hero-section ${isVisible ? 'fade-in' : ''}`}>
             <div className="hero-content">
               <div className="hero-badge">
@@ -153,7 +138,6 @@ const Home = () => {
             </div>
           </div>
 
-          {/* Features Section */}
           <div className={`features-section ${isVisible ? 'slide-up' : ''}`}>
             <div className="features-grid">
               <div className="feature-card card-hover">
@@ -183,19 +167,18 @@ const Home = () => {
             </div>
           </div>
 
-          {/* Stats Section */}
           <div ref={statsRef} className={`stats-section ${isVisible ? 'fade-in-delay' : ''}`}>
             <div className="stats-grid">
               <div className="stat-item">
-                <div className="stat-number" data-target={stats.totalUsers}>0</div>
+                <div className="stat-number" data-target={displayStats.totalUsers}>0</div>
                 <div className="stat-label">Active Teams</div>
               </div>
               <div className="stat-item">
-                <div className="stat-number" data-target={stats.totalWeeks}>0</div>
+                <div className="stat-number" data-target={displayStats.totalWeeks}>0</div>
                 <div className="stat-label">Challenges</div>
               </div>
               <div className="stat-item">
-                <div className="stat-number" data-target={stats.totalSubmissions}>0</div>
+                <div className="stat-number" data-target={displayStats.totalSubmissions}>0</div>
                 <div className="stat-label">Submissions</div>
               </div>
             </div>
@@ -207,4 +190,3 @@ const Home = () => {
 };
 
 export default Home;
-

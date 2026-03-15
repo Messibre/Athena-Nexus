@@ -1,15 +1,17 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
-import { logout } from '../store/authSlice';
-import { toggleTheme } from '../store/themeSlice';
+import { logout } from '../redux/slices/authSlice';
+import { toggleTheme } from '../redux/slices/themeSlice';
+import { selectUser, selectIsAuthenticated, selectIsAdmin } from '../redux/selectors/authSelectors';
+import { selectTheme } from '../redux/selectors/themeSelectors';
 
 const Navbar = () => {
   const dispatch = useDispatch();
-  const { user } = useSelector((state) => state.auth);
-  const theme = useSelector((state) => state.theme.theme);
-  const isAuthenticated = !!user;
-  const isAdmin = user?.role === 'admin';
+  const user = useSelector(selectUser);
+  const isAuthenticated = useSelector(selectIsAuthenticated);
+  const isAdmin = useSelector(selectIsAdmin);
+  const theme = useSelector(selectTheme);
 
   const handleLogout = () => {
     dispatch(logout());
@@ -24,6 +26,7 @@ const Navbar = () => {
         <div className="navbar-links">
           <Link to="/" className="navbar-link">Home</Link>
           <Link to="/challenges" className="navbar-link">Challenges</Link>
+          <Link to="/milestones" className="navbar-link">Milestones</Link>
           <Link to="/gallery" className="navbar-link">Gallery</Link>
           <Link to="/about" className="navbar-link">About</Link>
 

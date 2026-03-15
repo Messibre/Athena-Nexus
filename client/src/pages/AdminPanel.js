@@ -1,20 +1,43 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import api from '../config/api';
+import { useDispatch, useSelector } from 'react-redux';
 import Navbar from '../components/Navbar';
+import {
+  fetchAdminWeeks,
+  fetchAdminWeekById,
+  createAdminWeek,
+  updateAdminWeek,
+  deleteAdminWeek,
+  fetchAdminUsers,
+  createAdminUser,
+  updateAdminUser,
+  fetchAdminSubmissions,
+  updateAdminSubmissionStatus,
+  exportAdminSubmissions,
+  fetchAdminStats
+} from '../redux/thunks/adminThunks';
+import {
+  selectAdminWeeks,
+  selectAdminUsers,
+  selectAdminSubmissions,
+  selectAdminStats,
+  selectAdminLoading,
+  selectAdminActionLoading
+} from '../redux/selectors/adminSelectors';
 
 const AdminPanel = () => {
+  const dispatch = useDispatch();
   const [searchParams, setSearchParams] = useSearchParams();
   const [activeTab, setActiveTab] = useState(searchParams.get('tab') || 'weeks');
   const [editingWeek, setEditingWeek] = useState(null);
   const [editingUser, setEditingUser] = useState(null);
-  const [weeks, setWeeks] = useState([]);
-  const [users, setUsers] = useState([]);
-  const [submissions, setSubmissions] = useState([]);
-  const [stats, setStats] = useState(null);
-  const [loading, setLoading] = useState(false);
+  const weeks = useSelector(selectAdminWeeks);
+  const users = useSelector(selectAdminUsers);
+  const submissions = useSelector(selectAdminSubmissions);
+  const stats = useSelector(selectAdminStats);
+  const loading = useSelector(selectAdminLoading);
+  const actionLoading = useSelector(selectAdminActionLoading);
 
-  // Form states
   const [weekForm, setWeekForm] = useState({ week_number: '', title: '', description: '', startDate: '', deadlineDate: '', resources: '', isActive: false });
   const [userForm, setUserForm] = useState({ username: '', password: '', displayName: '', email: '', members: '' });
   const [selectedSubmission, setSelectedSubmission] = useState(null);
@@ -22,8 +45,7 @@ const AdminPanel = () => {
 
   const loadWeekForEdit = useCallback(async (weekId) => {
     try {
-      const response = await api.get(`/api/weeks/${weekId}`);
-      const week = response.data;
+      const week = await dispatch(fetchAdminWeekById(weekId)).unwrap();
       setEditingWeek(week);
       setWeekForm({
         week_number: week.week_number,
@@ -38,12 +60,11 @@ const AdminPanel = () => {
     } catch (error) {
       console.error('Error loading week:', error);
     }
-  }, []);
+  }, [dispatch]);
 
   const loadUserForEdit = useCallback(async (userId) => {
     try {
-      const response = await api.get(`/api/admin/users`);
-      const user = response.data.find(u => u._id === userId);
+      const user = users.find(u => u._id === userId);
       if (user) {
         setEditingUser(user);
         setUserForm({
@@ -58,9 +79,8 @@ const AdminPanel = () => {
     } catch (error) {
       console.error('Error loading user:', error);
     }
-  }, []);
+  }, [users]);
 
-  // Handle URL parameters
   useEffect(() => {
     const tab = searchParams.get('tab');
     const editWeek = searchParams.get('edit');
@@ -72,60 +92,42 @@ const AdminPanel = () => {
     }
   }, [searchParams, activeTab, loadWeekForEdit]);
 
-  // Update URL when tab changes (but not on initial load)
   useEffect(() => {
     const currentTab = searchParams.get('tab');
     if (currentTab !== activeTab && activeTab) {
       setSearchParams({ tab: activeTab });
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeTab]);
+  }, [activeTab, searchParams, setSearchParams]);
 
   useEffect(() => {
-    fetchData();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeTab]);
-
-  const fetchData = async () => {
-    setLoading(true);
-    try {
-      if (activeTab === 'weeks') {
-        const response = await api.get('/api/weeks');
-        setWeeks(response.data.sort((a, b) => b.week_number - a.week_number));
-      } else if (activeTab === 'users') {
-        const response = await api.get('/api/admin/users');
-        setUsers(response.data);
-      } else if (activeTab === 'submissions') {
-        const response = await api.get('/api/admin/submissions');
-        setSubmissions(response.data);
-      } else if (activeTab === 'stats') {
-        const response = await api.get('/api/admin/stats');
-        setStats(response.data);
-      }
-    } catch (error) {
-      console.error('Error fetching data:', error);
-    } finally {
-      setLoading(false);
+    if (activeTab === 'weeks') {
+      dispatch(fetchAdminWeeks());
+    } else if (activeTab === 'users') {
+      dispatch(fetchAdminUsers());
+    } else if (activeTab === 'submissions') {
+      dispatch(fetchAdminSubmissions());
+    } else if (activeTab === 'stats') {
+      dispatch(fetchAdminStats());
     }
-  };
+  }, [activeTab, dispatch]);
 
   const handleCreateWeek = async (e) => {
     e.preventDefault();
     try {
       const resources = weekForm.resources ? weekForm.resources.split(',').map(r => r.trim()).filter(r => r) : [];
-      await api.post('/api/admin/weeks', {
+      await dispatch(createAdminWeek({
         week_number: parseInt(weekForm.week_number),
         title: weekForm.title,
         description: weekForm.description,
         startDate: weekForm.startDate || null,
         deadlineDate: weekForm.deadlineDate || null,
         resources
-      });
+      })).unwrap();
       resetWeekForm();
-      fetchData();
+      dispatch(fetchAdminWeeks());
       alert('Week created successfully!');
     } catch (error) {
-      alert(error.response?.data?.message || 'Failed to create week');
+      alert(error || 'Failed to create week');
     }
   };
 
@@ -134,19 +136,22 @@ const AdminPanel = () => {
     if (!editingWeek) return;
     try {
       const resources = weekForm.resources ? weekForm.resources.split(',').map(r => r.trim()).filter(r => r) : [];
-      await api.put(`/api/admin/weeks/${editingWeek._id}`, {
-        title: weekForm.title,
-        description: weekForm.description,
-        startDate: weekForm.startDate || null,
-        deadlineDate: weekForm.deadlineDate || null,
-        resources,
-        isActive: weekForm.isActive
-      });
+      await dispatch(updateAdminWeek({
+        id: editingWeek._id,
+        payload: {
+          title: weekForm.title,
+          description: weekForm.description,
+          startDate: weekForm.startDate || null,
+          deadlineDate: weekForm.deadlineDate || null,
+          resources,
+          isActive: weekForm.isActive
+        }
+      })).unwrap();
       resetWeekForm();
-      fetchData();
+      dispatch(fetchAdminWeeks());
       alert('Week updated successfully!');
     } catch (error) {
-      alert(error.response?.data?.message || 'Failed to update week');
+      alert(error || 'Failed to update week');
     }
   };
 
@@ -160,18 +165,18 @@ const AdminPanel = () => {
     e.preventDefault();
     try {
       const members = userForm.members ? userForm.members.split(',').map(m => ({ name: m.trim() })).filter(m => m.name) : [];
-      await api.post('/api/admin/users', {
+      await dispatch(createAdminUser({
         username: userForm.username,
         password: userForm.password,
         displayName: userForm.displayName || userForm.username,
         email: userForm.email,
         members
-      });
+      })).unwrap();
       resetUserForm();
-      fetchData();
+      dispatch(fetchAdminUsers());
       alert('User created successfully!');
     } catch (error) {
-      alert(error.response?.data?.message || 'Failed to create user');
+      alert(error || 'Failed to create user');
     }
   };
 
@@ -180,16 +185,19 @@ const AdminPanel = () => {
     if (!editingUser) return;
     try {
       const members = userForm.members ? userForm.members.split(',').map(m => ({ name: m.trim() })).filter(m => m.name) : [];
-      await api.put(`/api/admin/users/${editingUser._id}`, {
-        displayName: userForm.displayName || userForm.username,
-        email: userForm.email,
-        members
-      });
+      await dispatch(updateAdminUser({
+        id: editingUser._id,
+        payload: {
+          displayName: userForm.displayName || userForm.username,
+          email: userForm.email,
+          members
+        }
+      })).unwrap();
       resetUserForm();
-      fetchData();
+      dispatch(fetchAdminUsers());
       alert('User updated successfully!');
     } catch (error) {
-      alert(error.response?.data?.message || 'Failed to update user');
+      alert(error || 'Failed to update user');
     }
   };
 
@@ -200,23 +208,26 @@ const AdminPanel = () => {
 
   const handleUpdateSubmissionStatus = async (submissionId, status) => {
     try {
-      await api.put(`/api/admin/submissions/${submissionId}/status`, {
-        status,
-        reviewerNotes: reviewNotes
-      });
+      await dispatch(updateAdminSubmissionStatus({
+        id: submissionId,
+        payload: {
+          status,
+          reviewerNotes: reviewNotes
+        }
+      })).unwrap();
       setSelectedSubmission(null);
       setReviewNotes('');
-      fetchData();
+      dispatch(fetchAdminSubmissions());
       alert('Submission status updated!');
     } catch (error) {
-      alert(error.response?.data?.message || 'Failed to update status');
+      alert(error || 'Failed to update status');
     }
   };
 
   const handleExportCSV = async () => {
     try {
-      const response = await api.get('/api/admin/submissions/export', { responseType: 'blob' });
-      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const blobData = await dispatch(exportAdminSubmissions()).unwrap();
+      const url = window.URL.createObjectURL(new Blob([blobData]));
       const link = document.createElement('a');
       link.href = url;
       link.setAttribute('download', 'submissions.csv');
@@ -224,7 +235,7 @@ const AdminPanel = () => {
       link.click();
       link.remove();
     } catch (error) {
-      alert('Failed to export CSV');
+      alert(error || 'Failed to export CSV');
     }
   };
 
@@ -349,7 +360,7 @@ const AdminPanel = () => {
                       </label>
                     </div>
                     <div style={{ display: 'flex', gap: '8px' }}>
-                      <button type="submit" className="btn btn-primary">
+                      <button type="submit" className="btn btn-primary" disabled={actionLoading}>
                         {editingWeek ? 'Update Week' : 'Create Week'}
                       </button>
                       {editingWeek && (
@@ -444,7 +455,7 @@ const AdminPanel = () => {
                       />
                     </div>
                     <div style={{ display: 'flex', gap: '8px' }}>
-                      <button type="submit" className="btn btn-primary">
+                      <button type="submit" className="btn btn-primary" disabled={actionLoading}>
                         {editingUser ? 'Update Group' : 'Create Group'}
                       </button>
                       {editingUser && (
@@ -487,7 +498,7 @@ const AdminPanel = () => {
             {activeTab === 'submissions' && (
               <div>
                 <div style={{ marginBottom: '16px' }}>
-                  <button onClick={handleExportCSV} className="btn btn-success">
+                  <button onClick={handleExportCSV} className="btn btn-success" disabled={actionLoading}>
                     Export CSV
                   </button>
                 </div>
@@ -618,4 +629,3 @@ const AdminPanel = () => {
 };
 
 export default AdminPanel;
-

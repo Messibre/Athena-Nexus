@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import api from '../config/api';
 import Navbar from '../components/Navbar';
-import { changePassword } from '../store/authSlice';
+import { changePassword, fetchMe } from '../redux/thunks/authThunks';
+import { updateAdminUser } from '../redux/thunks/adminThunks';
 
 const Settings = () => {
   const dispatch = useDispatch();
@@ -43,18 +43,19 @@ const Settings = () => {
     setLoading(true);
 
     try {
-      await api.put(`/api/admin/users/${user._id || user.id}`, {
-        displayName: profileForm.displayName,
-        email: profileForm.email,
-        contactEmail: profileForm.contactEmail,
-        members: profileForm.members
-      });
+      await dispatch(updateAdminUser({
+        id: user._id || user.id,
+        payload: {
+          displayName: profileForm.displayName,
+          email: profileForm.email,
+          contactEmail: profileForm.contactEmail,
+          members: profileForm.members
+        }
+      })).unwrap();
+      await dispatch(fetchMe()).unwrap();
       setSuccess('Profile updated successfully!');
-      setTimeout(() => {
-        window.location.reload();
-      }, 1500);
     } catch (error) {
-      setError(error.response?.data?.message || 'Failed to update profile');
+      setError(error || 'Failed to update profile');
     } finally {
       setLoading(false);
     }

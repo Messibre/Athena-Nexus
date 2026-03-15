@@ -1,0 +1,14 @@
+export const selectAdminState = (state) => state.admin;
+export const selectAdminWeeks = (state) => state.admin.weeks;
+export const selectAdminWeekById = (state, id) => state.admin.weekById[id];
+export const selectAdminUsers = (state) => state.admin.users;
+export const selectAdminSubmissions = (state) => state.admin.submissions;
+export const selectAdminStats = (state) => state.admin.stats;
+export const selectAdminLoading = (state) => state.admin.loading;
+export const selectAdminActionLoading = (state) => state.admin.actionLoading;
+export const selectAdminError = (state) => state.admin.error;
+export const selectAdminExportBlob = (state) => state.admin.exportBlob;
+export const selectAdminMilestoneCategories = (state) => state.admin.milestoneCategories;
+export const selectAdminMilestoneLevels = (state) => state.admin.milestoneLevels;
+export const selectAdminMilestoneChallenges = (state) => state.admin.milestoneChallenges;
+export const selectAdminMilestoneSubmissions = (state) => state.admin.milestoneSubmissions;

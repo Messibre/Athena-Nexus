@@ -1,11 +1,19 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import api from '../config/api';
+import { useDispatch, useSelector } from 'react-redux';
 import Navbar from '../components/Navbar';
+import { fetchWeeks } from '../redux/thunks/weeksThunks';
+import { fetchSubmissionById, createSubmission, updateSubmission } from '../redux/thunks/submissionsThunks';
+import { selectWeeks } from '../redux/selectors/weeksSelectors';
+import { selectCurrentSubmission, selectSubmissionsActionLoading } from '../redux/selectors/submissionsSelectors';
 
 const Submit = () => {
+  const dispatch = useDispatch();
   const [searchParams] = useSearchParams();
-  const [weeks, setWeeks] = useState([]);
+  const weeks = useSelector(selectWeeks);
+  const currentSubmission = useSelector(selectCurrentSubmission);
+  const actionLoading = useSelector(selectSubmissionsActionLoading);
+
   const [selectedWeek, setSelectedWeek] = useState('');
   const [submissionId, setSubmissionId] = useState(null);
   const [githubRepo, setGithubRepo] = useState('');
@@ -17,53 +25,45 @@ const Submit = () => {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
-    fetchWeeks();
-  }, []);
+    dispatch(fetchWeeks());
+  }, [dispatch]);
 
   useEffect(() => {
-    // Handle URL parameters
     const weekParam = searchParams.get('week');
     const editParam = searchParams.get('edit');
-    
+
     if (weekParam && weeks.length > 0) {
       setSelectedWeek(weekParam);
     }
-    
+
     if (editParam) {
       setSubmissionId(editParam);
-      fetchSubmission(editParam);
+      dispatch(fetchSubmissionById(editParam));
     }
-  }, [searchParams, weeks]);
+  }, [searchParams, weeks, dispatch]);
 
-  const fetchWeeks = async () => {
-    try {
-      const response = await api.get('/api/weeks');
-      setWeeks(response.data);
-      const active = response.data.find(w => w.isActive);
-      if (active && !searchParams.get('week')) {
-        setSelectedWeek(active._id);
-      }
-    } catch (error) {
-      console.error('Error fetching weeks:', error);
-    }
-  };
-
-  const fetchSubmission = async (id) => {
-    try {
-      const response = await api.get(`/api/submissions/${id}`);
-      const sub = response.data;
+  useEffect(() => {
+    if (currentSubmission && submissionId) {
+      const sub = currentSubmission;
       setSelectedWeek(sub.week_id?._id || sub.week_id);
       setGithubRepo(sub.github_repo_url || '');
       setLiveDemo(sub.github_live_demo_url || '');
       setDescription(sub.description || '');
       setTags(sub.tags || []);
-    } catch (error) {
-      console.error('Error fetching submission:', error);
-      setError('Failed to load submission for editing');
     }
-  };
+  }, [currentSubmission, submissionId]);
+
+  const activeWeekId = useMemo(() => {
+    const active = weeks.find(w => w.isActive);
+    return active ? active._id : '';
+  }, [weeks]);
+
+  useEffect(() => {
+    if (!searchParams.get('week') && activeWeekId && !selectedWeek) {
+      setSelectedWeek(activeWeekId);
+    }
+  }, [activeWeekId, selectedWeek, searchParams]);
 
   const handleTagChange = (tag) => {
     setTags(prev =>
@@ -91,7 +91,6 @@ const Submit = () => {
       return;
     }
 
-    // Validate GitHub URL
     const githubRegex = /^https:\/\/github\.com\/[\w-.]+\/[\w-.]+$/;
     if (!githubRegex.test(githubRepo)) {
       setError('Invalid GitHub URL. Must be in format: https://github.com/owner/repo');
@@ -99,7 +98,6 @@ const Submit = () => {
       return;
     }
 
-    // Validate live demo URL if provided
     if (liveDemo) {
       try {
         new URL(liveDemo);
@@ -112,31 +110,36 @@ const Submit = () => {
 
     try {
       if (submissionId) {
-        // Update existing submission
-        await api.put(`/api/submissions/${submissionId}`, {
-          github_repo_url: githubRepo,
-          github_live_demo_url: liveDemo || '',
-          description: description.substring(0, 300),
-          tags
-        });
+        await dispatch(
+          updateSubmission({
+            id: submissionId,
+            payload: {
+              github_repo_url: githubRepo,
+              github_live_demo_url: liveDemo || '',
+              description: description.substring(0, 300),
+              tags
+            }
+          })
+        ).unwrap();
         setSuccess('Submission updated successfully!');
       } else {
-        // Create new submission
-        await api.post('/api/submissions', {
-          week_id: selectedWeek,
-          github_repo_url: githubRepo,
-          github_live_demo_url: liveDemo || '',
-          description: description.substring(0, 300),
-          tags
-        });
+        await dispatch(
+          createSubmission({
+            week_id: selectedWeek,
+            github_repo_url: githubRepo,
+            github_live_demo_url: liveDemo || '',
+            description: description.substring(0, 300),
+            tags
+          })
+        ).unwrap();
         setSuccess('Submission created successfully!');
       }
 
       setTimeout(() => {
         navigate('/dashboard');
       }, 2000);
-    } catch (error) {
-      setError(error.response?.data?.message || 'Failed to submit. Please try again.');
+    } catch (err) {
+      setError(err || 'Failed to submit. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -253,9 +256,11 @@ const Submit = () => {
               type="submit"
               className="btn btn-primary"
               style={{ width: '100%' }}
-              disabled={loading}
+              disabled={loading || actionLoading}
             >
-              {loading ? (submissionId ? 'Updating...' : 'Submitting...') : (submissionId ? 'Update Submission' : 'Submit Project')}
+              {loading || actionLoading
+                ? (submissionId ? 'Updating...' : 'Submitting...')
+                : (submissionId ? 'Update Submission' : 'Submit Project')}
             </button>
           </form>
         </div>
@@ -265,4 +270,3 @@ const Submit = () => {
 };
 
 export default Submit;
-

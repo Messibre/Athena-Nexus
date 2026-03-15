@@ -1,10 +1,12 @@
 import React from 'react';
 import { Navigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
+import { selectUser, selectIsAdmin, selectAuthLoading } from '../redux/selectors/authSelectors';
 
 const AdminRoute = ({ children }) => {
-  const { user, loading } = useSelector((state) => state.auth);
-  const isAdmin = user?.role === 'admin';
+  const user = useSelector(selectUser);
+  const isAdmin = useSelector(selectIsAdmin);
+  const loading = useSelector(selectAuthLoading);
 
   if (loading) {
     return <div className="loading">Loading...</div>;

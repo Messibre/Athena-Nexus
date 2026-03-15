@@ -3,7 +3,9 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import { useDispatch, useSelector } from 'react-redux';
 import PrivateRoute from './components/PrivateRoute';
 import AdminRoute from './components/AdminRoute';
-import { fetchMe } from './store/authSlice';
+import { fetchMe } from './redux/thunks/authThunks';
+import { selectTheme } from './redux/selectors/themeSelectors';
+import { selectAuthToken, selectUser } from './redux/selectors/authSelectors';
 
 // Pages
 import Home from './pages/Home';
@@ -16,13 +18,15 @@ import Challenges from './pages/Challenges';
 import Gallery from './pages/Gallery';
 import AdminPanel from './pages/AdminPanel';
 import About from './pages/About';
+import Milestones from './pages/Milestones';
 
 import './App.css';
 
 function App() {
   const dispatch = useDispatch();
-  const theme = useSelector((state) => state.theme.theme);
-  const { token, user } = useSelector((state) => state.auth);
+  const theme = useSelector(selectTheme);
+  const token = useSelector(selectAuthToken);
+  const user = useSelector(selectUser);
 
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme);
@@ -43,6 +47,7 @@ function App() {
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<Signup />} />
           <Route path="/challenges" element={<Challenges />} />
+          <Route path="/milestones" element={<Milestones />} />
           <Route path="/gallery" element={<Gallery />} />
           <Route path="/gallery/:weekId" element={<Gallery />} />
           <Route path="/about" element={<About />} />

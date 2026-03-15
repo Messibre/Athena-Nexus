@@ -1,69 +1,72 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { useSelector } from 'react-redux';
-import api from '../config/api';
+import { useDispatch, useSelector } from 'react-redux';
 import Navbar from '../components/Navbar';
+import { fetchWeeks } from '../redux/thunks/weeksThunks';
+import { fetchMySubmissions } from '../redux/thunks/submissionsThunks';
+import { fetchAdminSubmissions, deleteAdminWeek } from '../redux/thunks/adminThunks';
+import { selectWeeks } from '../redux/selectors/weeksSelectors';
+import { selectMySubmissions, selectSubmissionsLoading } from '../redux/selectors/submissionsSelectors';
+import { selectAdminSubmissions, selectAdminLoading } from '../redux/selectors/adminSelectors';
 
 const Challenges = () => {
+  const dispatch = useDispatch();
   const user = useSelector((state) => state.auth.user);
   const isAuthenticated = !!user;
   const isAdmin = user?.role === 'admin';
-  const [weeks, setWeeks] = useState([]);
-  const [submissions, setSubmissions] = useState([]);
+  const weeks = useSelector(selectWeeks);
+  const submissions = useSelector(selectMySubmissions);
+  const submissionsLoading = useSelector(selectSubmissionsLoading);
+  const adminSubmissions = useSelector(selectAdminSubmissions);
+  const adminLoading = useSelector(selectAdminLoading);
   const [submissionCounts, setSubmissionCounts] = useState({});
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
-    fetchData();
-  }, [isAuthenticated]);
-
-  const fetchData = async () => {
-    try {
-      const [weeksRes, submissionsRes] = await Promise.all([
-        api.get('/api/weeks'),
-        isAuthenticated && !isAdmin ? api.get('/api/submissions/my-submissions') : Promise.resolve({ data: [] })
-      ]);
-
-      const weeksData = Array.isArray(weeksRes.data) ? weeksRes.data : [];
-      setWeeks(weeksData.sort((a, b) => b.week_number - a.week_number));
-
-      if (isAuthenticated && !isAdmin) {
-        const submissionsData = Array.isArray(submissionsRes.data) ? submissionsRes.data : [];
-        setSubmissions(submissionsData);
-      }
-
-      if (isAdmin) {
-        try {
-          const countsRes = await api.get('/api/admin/submissions');
-          const counts = {};
-          countsRes.data.forEach(sub => {
-            const weekId = sub.week_id?._id || sub.week_id;
-            if (weekId) {
-              if (!counts[weekId]) {
-                counts[weekId] = { total: 0, approved: 0, pending: 0, rejected: 0 };
-              }
-              counts[weekId].total++;
-              counts[weekId][sub.status] = (counts[weekId][sub.status] || 0) + 1;
-            }
-          });
-          setSubmissionCounts(counts);
-        } catch (error) {
-          console.error('Error fetching submission counts:', error);
+    const run = async () => {
+      setLoading(true);
+      try {
+        await dispatch(fetchWeeks()).unwrap();
+        if (isAuthenticated && !isAdmin) {
+          await dispatch(fetchMySubmissions()).unwrap();
         }
+
+        if (isAdmin) {
+          await dispatch(fetchAdminSubmissions()).unwrap();
+        }
+      } catch (error) {
+        console.error('Error fetching data:', error);
+        if (error.message?.includes('Network Error') || error.code === 'ERR_NETWORK') {
+          console.error('Backend API is not reachable. Please configure REACT_APP_API_URL in Netlify environment variables.');
+        }
+      } finally {
+        setLoading(false);
       }
-    } catch (error) {
-      console.error('Error fetching data:', error);
-      if (error.message?.includes('Network Error') || error.code === 'ERR_NETWORK') {
-        console.error('Backend API is not reachable. Please configure REACT_APP_API_URL in Netlify environment variables.');
+    };
+
+    run();
+  }, [dispatch, isAuthenticated, isAdmin]);
+
+  useEffect(() => {
+    if (!isAdmin) return;
+    const counts = {};
+    adminSubmissions.forEach(sub => {
+      const weekId = sub.week_id?._id || sub.week_id;
+      if (weekId) {
+        if (!counts[weekId]) {
+          counts[weekId] = { total: 0, approved: 0, pending: 0, rejected: 0 };
+        }
+        counts[weekId].total++;
+        counts[weekId][sub.status] = (counts[weekId][sub.status] || 0) + 1;
       }
-      setWeeks([]);
-      setSubmissions([]);
-    } finally {
-      setLoading(false);
-    }
-  };
+    });
+    setSubmissionCounts(counts);
+  }, [adminSubmissions, isAdmin]);
+
+  const sortedWeeks = useMemo(() => {
+    return [...weeks].sort((a, b) => b.week_number - a.week_number);
+  }, [weeks]);
 
   const getUserSubmission = (weekId) => {
     return submissions.find(sub => sub.week_id?._id === weekId || sub.week_id === weekId);
@@ -78,11 +81,11 @@ const Challenges = () => {
       return;
     }
     try {
-      await api.delete(`/api/admin/weeks/${weekId}`);
-      fetchData();
+      await dispatch(deleteAdminWeek(weekId)).unwrap();
+      dispatch(fetchWeeks());
       alert('Week deleted successfully');
     } catch (error) {
-      alert(error.response?.data?.message || 'Failed to delete week');
+      alert(error || 'Failed to delete week');
     }
   };
 
@@ -91,7 +94,7 @@ const Challenges = () => {
     return new Date(date).toLocaleDateString();
   };
 
-  if (loading) {
+  if (loading || submissionsLoading || adminLoading) {
     return (
       <>
         <Navbar />
@@ -128,7 +131,7 @@ const Challenges = () => {
           )}
         </div>
 
-        {weeks.length === 0 ? (
+        {sortedWeeks.length === 0 ? (
           <div className="card">
             <p style={{ color: 'var(--text-secondary)' }}>No challenges available yet.</p>
             {isAdmin && (
@@ -139,7 +142,7 @@ const Challenges = () => {
           </div>
         ) : (
           <div className="grid grid-2">
-            {weeks.map(week => {
+            {sortedWeeks.map(week => {
               const userSubmission = isAuthenticated && !isAdmin ? getUserSubmission(week._id) : null;
               const counts = submissionCounts[week._id];
               const deadlinePassed = isDeadlinePassed(week.deadlineDate);

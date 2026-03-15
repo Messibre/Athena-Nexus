@@ -1,34 +1,23 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { useSelector } from 'react-redux';
-import api from '../config/api';
+import { useDispatch, useSelector } from 'react-redux';
 import Navbar from '../components/Navbar';
+import { fetchActiveWeek } from '../redux/thunks/weeksThunks';
+import { fetchMySubmissions } from '../redux/thunks/submissionsThunks';
+import { selectActiveWeek } from '../redux/selectors/weeksSelectors';
+import { selectMySubmissions, selectSubmissionsLoading } from '../redux/selectors/submissionsSelectors';
 
 const Dashboard = () => {
+  const dispatch = useDispatch();
   const user = useSelector((state) => state.auth.user);
-  const [submissions, setSubmissions] = useState([]);
-  const [activeWeek, setActiveWeek] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const activeWeek = useSelector(selectActiveWeek);
+  const submissions = useSelector(selectMySubmissions);
+  const submissionsLoading = useSelector(selectSubmissionsLoading);
 
   useEffect(() => {
-    fetchData();
-  }, []);
-
-  const fetchData = async () => {
-    try {
-      const [submissionsRes, weekRes] = await Promise.all([
-        api.get('/api/submissions/my-submissions'),
-        api.get('/api/weeks/active')
-      ]);
-
-      setSubmissions(submissionsRes.data);
-      setActiveWeek(weekRes.data);
-    } catch (error) {
-      console.error('Error fetching data:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
+    dispatch(fetchMySubmissions());
+    dispatch(fetchActiveWeek());
+  }, [dispatch]);
 
   const getStatusBadge = (status) => {
     const badges = {
@@ -44,7 +33,7 @@ const Dashboard = () => {
     return new Date(date).toLocaleDateString();
   };
 
-  if (loading) {
+  if (submissionsLoading) {
     return (
       <>
         <Navbar />

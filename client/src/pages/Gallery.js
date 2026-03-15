@@ -1,40 +1,49 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useParams } from 'react-router-dom';
-import api from '../config/api';
+import { useDispatch, useSelector } from 'react-redux';
 import Navbar from '../components/Navbar';
+import { fetchWeekById, fetchWeekSubmissions } from '../redux/thunks/weeksThunks';
+import { fetchPublicSubmissions } from '../redux/thunks/submissionsThunks';
+import { selectWeekById, selectWeekSubmissions } from '../redux/selectors/weeksSelectors';
+import { selectPublicSubmissions, selectSubmissionsLoading } from '../redux/selectors/submissionsSelectors';
 
 const Gallery = () => {
   const { weekId } = useParams();
-  const [submissions, setSubmissions] = useState([]);
-  const [week, setWeek] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const dispatch = useDispatch();
+  const [localLoading, setLocalLoading] = useState(true);
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const week = useSelector((state) => (weekId ? selectWeekById(state, weekId) : null));
+  const weekSubmissions = useSelector((state) =>
+    weekId ? selectWeekSubmissions(state, weekId) : []
+  );
+  const publicSubmissions = useSelector(selectPublicSubmissions);
+  const submissionsLoading = useSelector(selectSubmissionsLoading);
+
+  const submissions = useMemo(() => {
+    return weekId ? weekSubmissions : publicSubmissions;
+  }, [weekId, weekSubmissions, publicSubmissions]);
+
   useEffect(() => {
-    fetchData();
-  }, [weekId]);
-
-  const fetchData = async () => {
-    try {
-      if (weekId) {
-        const [submissionsRes, weekRes] = await Promise.all([
-          api.get(`/api/weeks/${weekId}/submissions`),
-          api.get(`/api/weeks/${weekId}`)
-        ]);
-        setSubmissions(submissionsRes.data);
-        setWeek(weekRes.data);
-      } else {
-        const response = await api.get('/api/submissions/public');
-        setSubmissions(response.data);
+    const run = async () => {
+      setLocalLoading(true);
+      try {
+        if (weekId) {
+          await Promise.all([
+            dispatch(fetchWeekSubmissions(weekId)),
+            dispatch(fetchWeekById(weekId))
+          ]);
+        } else {
+          await dispatch(fetchPublicSubmissions()).unwrap();
+        }
+      } finally {
+        setLocalLoading(false);
       }
-    } catch (error) {
-      console.error('Error fetching data:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
+    };
 
-  if (loading) {
+    run();
+  }, [dispatch, weekId]);
+
+  if (localLoading || submissionsLoading) {
     return (
       <>
         <Navbar />
@@ -129,4 +138,3 @@ const Gallery = () => {
 };
 
 export default Gallery;
-
