@@ -3,10 +3,11 @@ import { useDispatch, useSelector } from 'react-redux';
 import Navbar from '../components/Navbar';
 import { changePassword, fetchMe } from '../redux/thunks/authThunks';
 import { updateAdminUser } from '../redux/thunks/adminThunks';
+import { selectUser } from '../redux/selectors/authSelectors';
 
 const Settings = () => {
   const dispatch = useDispatch();
-  const user = useSelector((state) => state.auth.user);
+  const user = useSelector(selectUser);
   const [activeTab, setActiveTab] = useState('profile');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');

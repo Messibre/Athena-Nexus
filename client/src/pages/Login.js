@@ -3,13 +3,14 @@ import { useNavigate, Link } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { login } from '../redux/thunks/authThunks';
 import Navbar from '../components/Navbar';
+import { selectAuthActionLoading } from '../redux/selectors/authSelectors';
 
 const Login = () => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const dispatch = useDispatch();
-  const { actionLoading } = useSelector((state) => state.auth);
+  const actionLoading = useSelector(selectAuthActionLoading);
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {

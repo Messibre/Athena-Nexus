@@ -6,10 +6,11 @@ import { fetchActiveWeek } from '../redux/thunks/weeksThunks';
 import { fetchMySubmissions } from '../redux/thunks/submissionsThunks';
 import { selectActiveWeek } from '../redux/selectors/weeksSelectors';
 import { selectMySubmissions, selectSubmissionsLoading } from '../redux/selectors/submissionsSelectors';
+import { selectUser } from '../redux/selectors/authSelectors';
 
 const Dashboard = () => {
   const dispatch = useDispatch();
-  const user = useSelector((state) => state.auth.user);
+  const user = useSelector(selectUser);
   const activeWeek = useSelector(selectActiveWeek);
   const submissions = useSelector(selectMySubmissions);
   const submissionsLoading = useSelector(selectSubmissionsLoading);

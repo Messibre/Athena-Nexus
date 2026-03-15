@@ -3,6 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { signup } from '../redux/thunks/authThunks';
 import Navbar from '../components/Navbar';
+import { selectAuthActionLoading } from '../redux/selectors/authSelectors';
 
 const Signup = () => {
   const [formData, setFormData] = useState({
@@ -16,7 +17,7 @@ const Signup = () => {
   const [error, setError] = useState('');
   const navigate = useNavigate();
   const dispatch = useDispatch();
-  const { actionLoading } = useSelector((state) => state.auth);
+  const actionLoading = useSelector(selectAuthActionLoading);
 
   const handleChange = (e) => {
     setFormData({

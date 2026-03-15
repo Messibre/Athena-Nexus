@@ -8,12 +8,12 @@ import { fetchAdminSubmissions, deleteAdminWeek } from '../redux/thunks/adminThu
 import { selectWeeks } from '../redux/selectors/weeksSelectors';
 import { selectMySubmissions, selectSubmissionsLoading } from '../redux/selectors/submissionsSelectors';
 import { selectAdminSubmissions, selectAdminLoading } from '../redux/selectors/adminSelectors';
+import { selectIsAdmin, selectIsAuthenticated } from '../redux/selectors/authSelectors';
 
 const Challenges = () => {
   const dispatch = useDispatch();
-  const user = useSelector((state) => state.auth.user);
-  const isAuthenticated = !!user;
-  const isAdmin = user?.role === 'admin';
+  const isAuthenticated = useSelector(selectIsAuthenticated);
+  const isAdmin = useSelector(selectIsAdmin);
   const weeks = useSelector(selectWeeks);
   const submissions = useSelector(selectMySubmissions);
   const submissionsLoading = useSelector(selectSubmissionsLoading);

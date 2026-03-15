@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import Navbar from '../components/Navbar';
@@ -14,7 +14,21 @@ import {
   fetchAdminSubmissions,
   updateAdminSubmissionStatus,
   exportAdminSubmissions,
-  fetchAdminStats
+  fetchAdminStats,
+  fetchAdminMilestoneCategories,
+  createAdminMilestoneCategory,
+  updateAdminMilestoneCategory,
+  deleteAdminMilestoneCategory,
+  fetchAdminMilestoneLevels,
+  createAdminMilestoneLevel,
+  updateAdminMilestoneLevel,
+  deleteAdminMilestoneLevel,
+  fetchAdminMilestoneChallenges,
+  createAdminMilestoneChallenge,
+  updateAdminMilestoneChallenge,
+  deleteAdminMilestoneChallenge,
+  fetchAdminMilestoneSubmissions,
+  updateAdminMilestoneSubmissionStatus
 } from '../redux/thunks/adminThunks';
 import {
   selectAdminWeeks,
@@ -22,7 +36,11 @@ import {
   selectAdminSubmissions,
   selectAdminStats,
   selectAdminLoading,
-  selectAdminActionLoading
+  selectAdminActionLoading,
+  selectAdminMilestoneCategories,
+  selectAdminMilestoneLevels,
+  selectAdminMilestoneChallenges,
+  selectAdminMilestoneSubmissions
 } from '../redux/selectors/adminSelectors';
 
 const AdminPanel = () => {
@@ -37,11 +55,24 @@ const AdminPanel = () => {
   const stats = useSelector(selectAdminStats);
   const loading = useSelector(selectAdminLoading);
   const actionLoading = useSelector(selectAdminActionLoading);
+  const milestoneCategories = useSelector(selectAdminMilestoneCategories);
+  const milestoneLevels = useSelector(selectAdminMilestoneLevels);
+  const milestoneChallenges = useSelector(selectAdminMilestoneChallenges);
+  const milestoneSubmissions = useSelector(selectAdminMilestoneSubmissions);
 
   const [weekForm, setWeekForm] = useState({ week_number: '', title: '', description: '', startDate: '', deadlineDate: '', resources: '', isActive: false });
   const [userForm, setUserForm] = useState({ username: '', password: '', displayName: '', email: '', members: '' });
   const [selectedSubmission, setSelectedSubmission] = useState(null);
   const [reviewNotes, setReviewNotes] = useState('');
+
+  const [milestoneCategoryForm, setMilestoneCategoryForm] = useState({ key: '', name: '', description: '', order: 0, isActive: true });
+  const [milestoneLevelForm, setMilestoneLevelForm] = useState({ categoryId: '', levelNumber: '', title: '', description: '', isActive: true });
+  const [milestoneChallengeForm, setMilestoneChallengeForm] = useState({ categoryId: '', levelId: '', title: '', description: '', requirements: '', resources: '', tags: '', difficulty: 'beginner', isActive: true });
+  const [editingMilestoneCategoryId, setEditingMilestoneCategoryId] = useState(null);
+  const [editingMilestoneLevelId, setEditingMilestoneLevelId] = useState(null);
+  const [editingMilestoneChallengeId, setEditingMilestoneChallengeId] = useState(null);
+  const [milestoneReviewNotes, setMilestoneReviewNotes] = useState('');
+  const [selectedMilestoneSubmission, setSelectedMilestoneSubmission] = useState(null);
 
   const loadWeekForEdit = useCallback(async (weekId) => {
     try {
@@ -108,6 +139,17 @@ const AdminPanel = () => {
       dispatch(fetchAdminSubmissions());
     } else if (activeTab === 'stats') {
       dispatch(fetchAdminStats());
+    } else if (activeTab === 'milestone-categories') {
+      dispatch(fetchAdminMilestoneCategories());
+    } else if (activeTab === 'milestone-levels') {
+      dispatch(fetchAdminMilestoneCategories());
+      dispatch(fetchAdminMilestoneLevels());
+    } else if (activeTab === 'milestone-challenges') {
+      dispatch(fetchAdminMilestoneCategories());
+      dispatch(fetchAdminMilestoneLevels());
+      dispatch(fetchAdminMilestoneChallenges());
+    } else if (activeTab === 'milestone-submissions') {
+      dispatch(fetchAdminMilestoneSubmissions());
     }
   }, [activeTab, dispatch]);
 
@@ -239,6 +281,239 @@ const AdminPanel = () => {
     }
   };
 
+  const handleCreateMilestoneCategory = async (e) => {
+    e.preventDefault();
+    try {
+      await dispatch(createAdminMilestoneCategory({
+        key: milestoneCategoryForm.key,
+        name: milestoneCategoryForm.name,
+        description: milestoneCategoryForm.description,
+        order: parseInt(milestoneCategoryForm.order || 0),
+        isActive: milestoneCategoryForm.isActive
+      })).unwrap();
+      setMilestoneCategoryForm({ key: '', name: '', description: '', order: 0, isActive: true });
+      dispatch(fetchAdminMilestoneCategories());
+      alert('Category created successfully!');
+    } catch (error) {
+      alert(error || 'Failed to create category');
+    }
+  };
+
+  const handleEditMilestoneCategory = (category) => {
+    setEditingMilestoneCategoryId(category._id);
+    setMilestoneCategoryForm({
+      key: category.key,
+      name: category.name,
+      description: category.description || '',
+      order: category.order || 0,
+      isActive: category.isActive
+    });
+  };
+
+  const handleUpdateMilestoneCategory = async (e) => {
+    e.preventDefault();
+    if (!editingMilestoneCategoryId) return;
+    try {
+      await dispatch(updateAdminMilestoneCategory({
+        id: editingMilestoneCategoryId,
+        payload: {
+          key: milestoneCategoryForm.key,
+          name: milestoneCategoryForm.name,
+          description: milestoneCategoryForm.description,
+          order: parseInt(milestoneCategoryForm.order || 0),
+          isActive: milestoneCategoryForm.isActive
+        }
+      })).unwrap();
+      setEditingMilestoneCategoryId(null);
+      setMilestoneCategoryForm({ key: '', name: '', description: '', order: 0, isActive: true });
+      dispatch(fetchAdminMilestoneCategories());
+      alert('Category updated successfully!');
+    } catch (error) {
+      alert(error || 'Failed to update category');
+    }
+  };
+
+  const handleDeleteMilestoneCategory = async (id) => {
+    if (!window.confirm('Delete this category?')) return;
+    try {
+      await dispatch(deleteAdminMilestoneCategory(id)).unwrap();
+      dispatch(fetchAdminMilestoneCategories());
+    } catch (error) {
+      alert(error || 'Failed to delete category');
+    }
+  };
+
+  const handleCreateMilestoneLevel = async (e) => {
+    e.preventDefault();
+    try {
+      await dispatch(createAdminMilestoneLevel({
+        categoryId: milestoneLevelForm.categoryId,
+        levelNumber: parseInt(milestoneLevelForm.levelNumber),
+        title: milestoneLevelForm.title,
+        description: milestoneLevelForm.description,
+        isActive: milestoneLevelForm.isActive
+      })).unwrap();
+      setMilestoneLevelForm({ categoryId: '', levelNumber: '', title: '', description: '', isActive: true });
+      dispatch(fetchAdminMilestoneLevels());
+      alert('Level created successfully!');
+    } catch (error) {
+      alert(error || 'Failed to create level');
+    }
+  };
+
+  const handleEditMilestoneLevel = (level) => {
+    setEditingMilestoneLevelId(level._id);
+    setMilestoneLevelForm({
+      categoryId: level.categoryId?._id || level.categoryId,
+      levelNumber: level.levelNumber,
+      title: level.title,
+      description: level.description || '',
+      isActive: level.isActive
+    });
+  };
+
+  const handleUpdateMilestoneLevel = async (e) => {
+    e.preventDefault();
+    if (!editingMilestoneLevelId) return;
+    try {
+      await dispatch(updateAdminMilestoneLevel({
+        id: editingMilestoneLevelId,
+        payload: {
+          levelNumber: parseInt(milestoneLevelForm.levelNumber),
+          title: milestoneLevelForm.title,
+          description: milestoneLevelForm.description,
+          isActive: milestoneLevelForm.isActive
+        }
+      })).unwrap();
+      setEditingMilestoneLevelId(null);
+      setMilestoneLevelForm({ categoryId: '', levelNumber: '', title: '', description: '', isActive: true });
+      dispatch(fetchAdminMilestoneLevels());
+      alert('Level updated successfully!');
+    } catch (error) {
+      alert(error || 'Failed to update level');
+    }
+  };
+
+  const handleDeleteMilestoneLevel = async (id) => {
+    if (!window.confirm('Delete this level?')) return;
+    try {
+      await dispatch(deleteAdminMilestoneLevel(id)).unwrap();
+      dispatch(fetchAdminMilestoneLevels());
+    } catch (error) {
+      alert(error || 'Failed to delete level');
+    }
+  };
+
+  const handleCreateMilestoneChallenge = async (e) => {
+    e.preventDefault();
+    try {
+      const requirements = milestoneChallengeForm.requirements
+        ? milestoneChallengeForm.requirements.split(',').map(s => s.trim()).filter(Boolean)
+        : [];
+      const resources = milestoneChallengeForm.resources
+        ? milestoneChallengeForm.resources.split(',').map(s => s.trim()).filter(Boolean)
+        : [];
+      const tags = milestoneChallengeForm.tags
+        ? milestoneChallengeForm.tags.split(',').map(s => s.trim()).filter(Boolean)
+        : [];
+      await dispatch(createAdminMilestoneChallenge({
+        categoryId: milestoneChallengeForm.categoryId,
+        levelId: milestoneChallengeForm.levelId,
+        title: milestoneChallengeForm.title,
+        description: milestoneChallengeForm.description,
+        requirements,
+        resources,
+        tags,
+        difficulty: milestoneChallengeForm.difficulty,
+        isActive: milestoneChallengeForm.isActive
+      })).unwrap();
+      setMilestoneChallengeForm({ categoryId: '', levelId: '', title: '', description: '', requirements: '', resources: '', tags: '', difficulty: 'beginner', isActive: true });
+      dispatch(fetchAdminMilestoneChallenges());
+      alert('Challenge created successfully!');
+    } catch (error) {
+      alert(error || 'Failed to create challenge');
+    }
+  };
+
+  const handleEditMilestoneChallenge = (challenge) => {
+    setEditingMilestoneChallengeId(challenge._id);
+    setMilestoneChallengeForm({
+      categoryId: challenge.categoryId?._id || challenge.categoryId,
+      levelId: challenge.levelId?._id || challenge.levelId,
+      title: challenge.title,
+      description: challenge.description || '',
+      requirements: (challenge.requirements || []).join(', '),
+      resources: (challenge.resources || []).join(', '),
+      tags: (challenge.tags || []).join(', '),
+      difficulty: challenge.difficulty || 'beginner',
+      isActive: challenge.isActive
+    });
+  };
+
+  const handleUpdateMilestoneChallenge = async (e) => {
+    e.preventDefault();
+    if (!editingMilestoneChallengeId) return;
+    try {
+      const requirements = milestoneChallengeForm.requirements
+        ? milestoneChallengeForm.requirements.split(',').map(s => s.trim()).filter(Boolean)
+        : [];
+      const resources = milestoneChallengeForm.resources
+        ? milestoneChallengeForm.resources.split(',').map(s => s.trim()).filter(Boolean)
+        : [];
+      const tags = milestoneChallengeForm.tags
+        ? milestoneChallengeForm.tags.split(',').map(s => s.trim()).filter(Boolean)
+        : [];
+      await dispatch(updateAdminMilestoneChallenge({
+        id: editingMilestoneChallengeId,
+        payload: {
+          title: milestoneChallengeForm.title,
+          description: milestoneChallengeForm.description,
+          requirements,
+          resources,
+          tags,
+          difficulty: milestoneChallengeForm.difficulty,
+          isActive: milestoneChallengeForm.isActive
+        }
+      })).unwrap();
+      setEditingMilestoneChallengeId(null);
+      setMilestoneChallengeForm({ categoryId: '', levelId: '', title: '', description: '', requirements: '', resources: '', tags: '', difficulty: 'beginner', isActive: true });
+      dispatch(fetchAdminMilestoneChallenges());
+      alert('Challenge updated successfully!');
+    } catch (error) {
+      alert(error || 'Failed to update challenge');
+    }
+  };
+
+  const handleDeleteMilestoneChallenge = async (id) => {
+    if (!window.confirm('Delete this challenge?')) return;
+    try {
+      await dispatch(deleteAdminMilestoneChallenge(id)).unwrap();
+      dispatch(fetchAdminMilestoneChallenges());
+    } catch (error) {
+      alert(error || 'Failed to delete challenge');
+    }
+  };
+
+  const handleUpdateMilestoneSubmissionStatus = async (submissionId, status) => {
+    try {
+      await dispatch(updateAdminMilestoneSubmissionStatus({
+        id: submissionId,
+        payload: { status, reviewerNotes: milestoneReviewNotes }
+      })).unwrap();
+      setSelectedMilestoneSubmission(null);
+      setMilestoneReviewNotes('');
+      dispatch(fetchAdminMilestoneSubmissions());
+      alert('Milestone submission status updated!');
+    } catch (error) {
+      alert(error || 'Failed to update milestone submission');
+    }
+  };
+
+  const filteredLevelsForCategory = useMemo(() => {
+    if (!milestoneChallengeForm.categoryId) return [];
+    return milestoneLevels.filter(lvl => (lvl.categoryId?._id || lvl.categoryId) === milestoneChallengeForm.categoryId);
+  }, [milestoneLevels, milestoneChallengeForm.categoryId]);
+
   return (
     <>
       <Navbar />
@@ -278,6 +553,42 @@ const AdminPanel = () => {
             }}
           >
             Statistics
+          </button>
+          <button
+            className={`btn ${activeTab === 'milestone-categories' ? 'btn-primary' : 'btn-secondary'}`}
+            onClick={() => {
+              setActiveTab('milestone-categories');
+              setSearchParams({ tab: 'milestone-categories' });
+            }}
+          >
+            Milestone Categories
+          </button>
+          <button
+            className={`btn ${activeTab === 'milestone-levels' ? 'btn-primary' : 'btn-secondary'}`}
+            onClick={() => {
+              setActiveTab('milestone-levels');
+              setSearchParams({ tab: 'milestone-levels' });
+            }}
+          >
+            Milestone Levels
+          </button>
+          <button
+            className={`btn ${activeTab === 'milestone-challenges' ? 'btn-primary' : 'btn-secondary'}`}
+            onClick={() => {
+              setActiveTab('milestone-challenges');
+              setSearchParams({ tab: 'milestone-challenges' });
+            }}
+          >
+            Milestone Challenges
+          </button>
+          <button
+            className={`btn ${activeTab === 'milestone-submissions' ? 'btn-primary' : 'btn-secondary'}`}
+            onClick={() => {
+              setActiveTab('milestone-submissions');
+              setSearchParams({ tab: 'milestone-submissions' });
+            }}
+          >
+            Milestone Submissions
           </button>
         </div>
 
@@ -585,6 +896,506 @@ const AdminPanel = () => {
                           onClick={() => {
                             setSelectedSubmission(null);
                             setReviewNotes('');
+                          }}
+                          className="btn btn-secondary"
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {activeTab === 'milestone-categories' && (
+              <div>
+                <div className="card" style={{ marginBottom: '24px' }}>
+                  <h2 style={{ marginBottom: '16px' }}>
+                    {editingMilestoneCategoryId ? 'Edit Milestone Category' : 'Create Milestone Category'}
+                  </h2>
+                  <form onSubmit={editingMilestoneCategoryId ? handleUpdateMilestoneCategory : handleCreateMilestoneCategory}>
+                    <div className="form-group">
+                      <label className="form-label">Key *</label>
+                      <input
+                        type="text"
+                        className="form-input"
+                        value={milestoneCategoryForm.key}
+                        onChange={(e) => setMilestoneCategoryForm({ ...milestoneCategoryForm, key: e.target.value })}
+                        required
+                      />
+                    </div>
+                    <div className="form-group">
+                      <label className="form-label">Name *</label>
+                      <input
+                        type="text"
+                        className="form-input"
+                        value={milestoneCategoryForm.name}
+                        onChange={(e) => setMilestoneCategoryForm({ ...milestoneCategoryForm, name: e.target.value })}
+                        required
+                      />
+                    </div>
+                    <div className="form-group">
+                      <label className="form-label">Description</label>
+                      <textarea
+                        className="form-textarea"
+                        value={milestoneCategoryForm.description}
+                        onChange={(e) => setMilestoneCategoryForm({ ...milestoneCategoryForm, description: e.target.value })}
+                      />
+                    </div>
+                    <div className="form-group">
+                      <label className="form-label">Order</label>
+                      <input
+                        type="number"
+                        className="form-input"
+                        value={milestoneCategoryForm.order}
+                        onChange={(e) => setMilestoneCategoryForm({ ...milestoneCategoryForm, order: e.target.value })}
+                      />
+                    </div>
+                    <div className="form-group">
+                      <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
+                        <input
+                          type="checkbox"
+                          checked={milestoneCategoryForm.isActive}
+                          onChange={(e) => setMilestoneCategoryForm({ ...milestoneCategoryForm, isActive: e.target.checked })}
+                        />
+                        Active Category
+                      </label>
+                    </div>
+                    <div style={{ display: 'flex', gap: '8px' }}>
+                      <button type="submit" className="btn btn-primary" disabled={actionLoading}>
+                        {editingMilestoneCategoryId ? 'Update Category' : 'Create Category'}
+                      </button>
+                      {editingMilestoneCategoryId && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setEditingMilestoneCategoryId(null);
+                            setMilestoneCategoryForm({ key: '', name: '', description: '', order: 0, isActive: true });
+                          }}
+                          className="btn btn-secondary"
+                        >
+                          Cancel
+                        </button>
+                      )}
+                    </div>
+                  </form>
+                </div>
+
+                <h2 style={{ marginBottom: '16px' }}>All Milestone Categories</h2>
+                <div className="grid grid-2">
+                  {milestoneCategories.map(category => (
+                    <div key={category._id} className="card">
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: '12px' }}>
+                        <div>
+                          <h3>{category.name}</h3>
+                          <p style={{ color: 'var(--text-secondary)' }}>{category.key}</p>
+                        </div>
+                        {category.isActive && <span className="badge badge-success">Active</span>}
+                      </div>
+                      {category.description && <p style={{ color: 'var(--text-secondary)', marginBottom: '12px' }}>{category.description}</p>}
+                      <p style={{ color: 'var(--text-secondary)' }}>Order: {category.order ?? 0}</p>
+                      <div style={{ display: 'flex', gap: '8px', marginTop: '12px' }}>
+                        <button
+                          onClick={() => handleEditMilestoneCategory(category)}
+                          className="btn btn-secondary"
+                          style={{ padding: '6px 12px', fontSize: '14px' }}
+                        >
+                          Edit
+                        </button>
+                        <button
+                          onClick={() => handleDeleteMilestoneCategory(category._id)}
+                          className="btn btn-danger"
+                          style={{ padding: '6px 12px', fontSize: '14px' }}
+                        >
+                          Delete
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {activeTab === 'milestone-levels' && (
+              <div>
+                <div className="card" style={{ marginBottom: '24px' }}>
+                  <h2 style={{ marginBottom: '16px' }}>
+                    {editingMilestoneLevelId ? 'Edit Milestone Level' : 'Create Milestone Level'}
+                  </h2>
+                  <form onSubmit={editingMilestoneLevelId ? handleUpdateMilestoneLevel : handleCreateMilestoneLevel}>
+                    <div className="form-group">
+                      <label className="form-label">Category *</label>
+                      <select
+                        className="form-input"
+                        value={milestoneLevelForm.categoryId}
+                        onChange={(e) => setMilestoneLevelForm({ ...milestoneLevelForm, categoryId: e.target.value })}
+                        disabled={!!editingMilestoneLevelId}
+                        required
+                      >
+                        <option value="">Select category</option>
+                        {milestoneCategories.map(category => (
+                          <option key={category._id} value={category._id}>
+                            {category.name}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    <div className="form-group">
+                      <label className="form-label">Level Number *</label>
+                      <input
+                        type="number"
+                        className="form-input"
+                        value={milestoneLevelForm.levelNumber}
+                        onChange={(e) => setMilestoneLevelForm({ ...milestoneLevelForm, levelNumber: e.target.value })}
+                        required
+                      />
+                    </div>
+                    <div className="form-group">
+                      <label className="form-label">Title *</label>
+                      <input
+                        type="text"
+                        className="form-input"
+                        value={milestoneLevelForm.title}
+                        onChange={(e) => setMilestoneLevelForm({ ...milestoneLevelForm, title: e.target.value })}
+                        required
+                      />
+                    </div>
+                    <div className="form-group">
+                      <label className="form-label">Description</label>
+                      <textarea
+                        className="form-textarea"
+                        value={milestoneLevelForm.description}
+                        onChange={(e) => setMilestoneLevelForm({ ...milestoneLevelForm, description: e.target.value })}
+                      />
+                    </div>
+                    <div className="form-group">
+                      <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
+                        <input
+                          type="checkbox"
+                          checked={milestoneLevelForm.isActive}
+                          onChange={(e) => setMilestoneLevelForm({ ...milestoneLevelForm, isActive: e.target.checked })}
+                        />
+                        Active Level
+                      </label>
+                    </div>
+                    <div style={{ display: 'flex', gap: '8px' }}>
+                      <button type="submit" className="btn btn-primary" disabled={actionLoading}>
+                        {editingMilestoneLevelId ? 'Update Level' : 'Create Level'}
+                      </button>
+                      {editingMilestoneLevelId && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setEditingMilestoneLevelId(null);
+                            setMilestoneLevelForm({ categoryId: '', levelNumber: '', title: '', description: '', isActive: true });
+                          }}
+                          className="btn btn-secondary"
+                        >
+                          Cancel
+                        </button>
+                      )}
+                    </div>
+                  </form>
+                </div>
+
+                <h2 style={{ marginBottom: '16px' }}>All Milestone Levels</h2>
+                <div className="grid grid-2">
+                  {milestoneLevels.map(level => (
+                    <div key={level._id} className="card">
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: '12px' }}>
+                        <div>
+                          <h3>Level {level.levelNumber}: {level.title}</h3>
+                          <p style={{ color: 'var(--text-secondary)' }}>{level.categoryId?.name || 'Category'}</p>
+                        </div>
+                        {level.isActive && <span className="badge badge-success">Active</span>}
+                      </div>
+                      {level.description && <p style={{ color: 'var(--text-secondary)', marginBottom: '12px' }}>{level.description}</p>}
+                      <div style={{ display: 'flex', gap: '8px' }}>
+                        <button
+                          onClick={() => handleEditMilestoneLevel(level)}
+                          className="btn btn-secondary"
+                          style={{ padding: '6px 12px', fontSize: '14px' }}
+                        >
+                          Edit
+                        </button>
+                        <button
+                          onClick={() => handleDeleteMilestoneLevel(level._id)}
+                          className="btn btn-danger"
+                          style={{ padding: '6px 12px', fontSize: '14px' }}
+                        >
+                          Delete
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {activeTab === 'milestone-challenges' && (
+              <div>
+                <div className="card" style={{ marginBottom: '24px' }}>
+                  <h2 style={{ marginBottom: '16px' }}>
+                    {editingMilestoneChallengeId ? 'Edit Milestone Challenge' : 'Create Milestone Challenge'}
+                  </h2>
+                  <form onSubmit={editingMilestoneChallengeId ? handleUpdateMilestoneChallenge : handleCreateMilestoneChallenge}>
+                    <div className="form-group">
+                      <label className="form-label">Category *</label>
+                      <select
+                        className="form-input"
+                        value={milestoneChallengeForm.categoryId}
+                        onChange={(e) => {
+                          setMilestoneChallengeForm({
+                            ...milestoneChallengeForm,
+                            categoryId: e.target.value,
+                            levelId: ''
+                          });
+                        }}
+                        disabled={!!editingMilestoneChallengeId}
+                        required
+                      >
+                        <option value="">Select category</option>
+                        {milestoneCategories.map(category => (
+                          <option key={category._id} value={category._id}>
+                            {category.name}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    <div className="form-group">
+                      <label className="form-label">Level *</label>
+                      <select
+                        className="form-input"
+                        value={milestoneChallengeForm.levelId}
+                        onChange={(e) => setMilestoneChallengeForm({ ...milestoneChallengeForm, levelId: e.target.value })}
+                        disabled={!milestoneChallengeForm.categoryId || !!editingMilestoneChallengeId}
+                        required
+                      >
+                        <option value="">Select level</option>
+                        {filteredLevelsForCategory.map(level => (
+                          <option key={level._id} value={level._id}>
+                            Level {level.levelNumber}: {level.title}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    <div className="form-group">
+                      <label className="form-label">Title *</label>
+                      <input
+                        type="text"
+                        className="form-input"
+                        value={milestoneChallengeForm.title}
+                        onChange={(e) => setMilestoneChallengeForm({ ...milestoneChallengeForm, title: e.target.value })}
+                        required
+                      />
+                    </div>
+                    <div className="form-group">
+                      <label className="form-label">Description</label>
+                      <textarea
+                        className="form-textarea"
+                        value={milestoneChallengeForm.description}
+                        onChange={(e) => setMilestoneChallengeForm({ ...milestoneChallengeForm, description: e.target.value })}
+                      />
+                    </div>
+                    <div className="form-group">
+                      <label className="form-label">Requirements (comma-separated)</label>
+                      <input
+                        type="text"
+                        className="form-input"
+                        value={milestoneChallengeForm.requirements}
+                        onChange={(e) => setMilestoneChallengeForm({ ...milestoneChallengeForm, requirements: e.target.value })}
+                      />
+                    </div>
+                    <div className="form-group">
+                      <label className="form-label">Resources (comma-separated)</label>
+                      <input
+                        type="text"
+                        className="form-input"
+                        value={milestoneChallengeForm.resources}
+                        onChange={(e) => setMilestoneChallengeForm({ ...milestoneChallengeForm, resources: e.target.value })}
+                      />
+                    </div>
+                    <div className="form-group">
+                      <label className="form-label">Tags (comma-separated)</label>
+                      <input
+                        type="text"
+                        className="form-input"
+                        value={milestoneChallengeForm.tags}
+                        onChange={(e) => setMilestoneChallengeForm({ ...milestoneChallengeForm, tags: e.target.value })}
+                      />
+                    </div>
+                    <div className="form-group">
+                      <label className="form-label">Difficulty</label>
+                      <select
+                        className="form-input"
+                        value={milestoneChallengeForm.difficulty}
+                        onChange={(e) => setMilestoneChallengeForm({ ...milestoneChallengeForm, difficulty: e.target.value })}
+                      >
+                        <option value="beginner">Beginner</option>
+                        <option value="intermediate">Intermediate</option>
+                        <option value="advanced">Advanced</option>
+                      </select>
+                    </div>
+                    <div className="form-group">
+                      <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
+                        <input
+                          type="checkbox"
+                          checked={milestoneChallengeForm.isActive}
+                          onChange={(e) => setMilestoneChallengeForm({ ...milestoneChallengeForm, isActive: e.target.checked })}
+                        />
+                        Active Challenge
+                      </label>
+                    </div>
+                    <div style={{ display: 'flex', gap: '8px' }}>
+                      <button type="submit" className="btn btn-primary" disabled={actionLoading}>
+                        {editingMilestoneChallengeId ? 'Update Challenge' : 'Create Challenge'}
+                      </button>
+                      {editingMilestoneChallengeId && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setEditingMilestoneChallengeId(null);
+                            setMilestoneChallengeForm({ categoryId: '', levelId: '', title: '', description: '', requirements: '', resources: '', tags: '', difficulty: 'beginner', isActive: true });
+                          }}
+                          className="btn btn-secondary"
+                        >
+                          Cancel
+                        </button>
+                      )}
+                    </div>
+                  </form>
+                </div>
+
+                <h2 style={{ marginBottom: '16px' }}>All Milestone Challenges</h2>
+                <div className="grid grid-2">
+                  {milestoneChallenges.map(challenge => (
+                    <div key={challenge._id} className="card">
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: '12px' }}>
+                        <div>
+                          <h3>{challenge.title}</h3>
+                          <p style={{ color: 'var(--text-secondary)' }}>
+                            {challenge.categoryId?.name || 'Category'} · Level {challenge.levelId?.levelNumber || 'N/A'}
+                          </p>
+                        </div>
+                        {challenge.isActive && <span className="badge badge-success">Active</span>}
+                      </div>
+                      {challenge.description && <p style={{ color: 'var(--text-secondary)', marginBottom: '12px' }}>{challenge.description}</p>}
+                      <p style={{ color: 'var(--text-secondary)' }}>Difficulty: {challenge.difficulty || 'beginner'}</p>
+                      <div style={{ display: 'flex', gap: '8px', marginTop: '12px' }}>
+                        <button
+                          onClick={() => handleEditMilestoneChallenge(challenge)}
+                          className="btn btn-secondary"
+                          style={{ padding: '6px 12px', fontSize: '14px' }}
+                        >
+                          Edit
+                        </button>
+                        <button
+                          onClick={() => handleDeleteMilestoneChallenge(challenge._id)}
+                          className="btn btn-danger"
+                          style={{ padding: '6px 12px', fontSize: '14px' }}
+                        >
+                          Delete
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {activeTab === 'milestone-submissions' && (
+              <div>
+                <div className="grid grid-2">
+                  {milestoneSubmissions.map(submission => (
+                    <div key={submission._id} className="card">
+                      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '12px' }}>
+                        <h3>{submission.userId?.displayName || submission.userId?.username || 'Unknown User'}</h3>
+                        <span className={`badge ${
+                          submission.status === 'approved' ? 'badge-success' :
+                          submission.status === 'rejected' ? 'badge-danger' : 'badge-warning'
+                        }`}>
+                          {submission.status}
+                        </span>
+                      </div>
+                      <p style={{ color: 'var(--text-secondary)', marginBottom: '8px' }}>
+                        {submission.categoryId?.name || 'Category'} · Level {submission.levelId?.levelNumber || 'N/A'}
+                      </p>
+                      {submission.challengeId?.title && (
+                        <p style={{ color: 'var(--text-secondary)', marginBottom: '8px' }}>
+                          Challenge: {submission.challengeId.title}
+                        </p>
+                      )}
+                      {submission.description && (
+                        <p style={{ marginBottom: '12px' }}>{submission.description}</p>
+                      )}
+                      <div style={{ marginBottom: '12px' }}>
+                        {submission.githubRepoUrl && (
+                          <a href={submission.githubRepoUrl} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--primary)', marginRight: '12px' }}>
+                            GitHub
+                          </a>
+                        )}
+                        {submission.liveDemoUrl && (
+                          <a href={submission.liveDemoUrl} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--primary)' }}>
+                            Live Demo
+                          </a>
+                        )}
+                      </div>
+                      <div style={{ display: 'flex', gap: '8px' }}>
+                        <button
+                          onClick={() => handleUpdateMilestoneSubmissionStatus(submission._id, 'approved')}
+                          className="btn btn-success"
+                          style={{ padding: '6px 12px', fontSize: '14px' }}
+                        >
+                          Approve
+                        </button>
+                        <button
+                          onClick={() => setSelectedMilestoneSubmission(submission)}
+                          className="btn btn-danger"
+                          style={{ padding: '6px 12px', fontSize: '14px' }}
+                        >
+                          Reject
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {selectedMilestoneSubmission && (
+                  <div style={{
+                    position: 'fixed',
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    backgroundColor: 'rgba(0,0,0,0.5)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    zIndex: 1000
+                  }}>
+                    <div className="card" style={{ maxWidth: '500px', width: '90%' }}>
+                      <h2 style={{ marginBottom: '16px' }}>Reject Milestone Submission</h2>
+                      <div className="form-group">
+                        <label className="form-label">Reviewer Notes</label>
+                        <textarea
+                          className="form-textarea"
+                          value={milestoneReviewNotes}
+                          onChange={(e) => setMilestoneReviewNotes(e.target.value)}
+                          placeholder="Explain why this submission was rejected..."
+                        />
+                      </div>
+                      <div style={{ display: 'flex', gap: '8px' }}>
+                        <button
+                          onClick={() => handleUpdateMilestoneSubmissionStatus(selectedMilestoneSubmission._id, 'rejected')}
+                          className="btn btn-danger"
+                        >
+                          Confirm Reject
+                        </button>
+                        <button
+                          onClick={() => {
+                            setSelectedMilestoneSubmission(null);
+                            setMilestoneReviewNotes('');
                           }}
                           className="btn btn-secondary"
                         >
