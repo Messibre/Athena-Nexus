@@ -8,14 +8,13 @@ import submissionRoutes from "./routes/submissions.js";
 import weekRoutes from "./routes/weeks.js";
 import adminRoutes from "./routes/admin.js";
 import activityRoutes from "./routes/activity.js";
+import milestonesRoutes from "./routes/milestones.js";
+import adminMilestonesRoutes from "./routes/adminMilestones.js";
 
 dotenv.config();
 
 const app = express();
 
-// Trust proxy (for rate limiting behind proxies)
-// Set to true if behind a proxy (like nginx, load balancer)
-// For local development, false is fine
 app.set("trust proxy", false);
 
 // Security middleware
@@ -51,6 +50,8 @@ app.use("/api/submissions", submissionRoutes);
 app.use("/api/weeks", weekRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/activity", activityRoutes);
+app.use("/api/milestones", milestonesRoutes);
+app.use("/api/admin/milestones", adminMilestonesRoutes);
 
 // Health check
 app.get("/api/health", (req, res) => {
