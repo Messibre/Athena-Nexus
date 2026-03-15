@@ -1,16 +1,17 @@
-import React, { useState, useContext, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
 import api from '../config/api';
 import Navbar from '../components/Navbar';
-import AuthContext from '../context/AuthContext';
+import { changePassword } from '../store/authSlice';
 
 const Settings = () => {
-  const { user, changePassword } = useContext(AuthContext);
+  const dispatch = useDispatch();
+  const user = useSelector((state) => state.auth.user);
   const [activeTab, setActiveTab] = useState('profile');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
 
-  // Profile form
   const [profileForm, setProfileForm] = useState({
     displayName: '',
     email: '',
@@ -29,7 +30,6 @@ const Settings = () => {
     }
   }, [user]);
 
-  // Password form
   const [passwordForm, setPasswordForm] = useState({
     currentPassword: '',
     newPassword: '',
@@ -50,7 +50,6 @@ const Settings = () => {
         members: profileForm.members
       });
       setSuccess('Profile updated successfully!');
-      // Refresh user data after a short delay
       setTimeout(() => {
         window.location.reload();
       }, 1500);
@@ -85,13 +84,17 @@ const Settings = () => {
 
     setLoading(true);
 
-    const result = await changePassword(passwordForm.currentPassword, passwordForm.newPassword);
-
-    if (result.success) {
+    try {
+      await dispatch(
+        changePassword({
+          currentPassword: passwordForm.currentPassword,
+          newPassword: passwordForm.newPassword
+        })
+      ).unwrap();
       setSuccess('Password changed successfully!');
       setPasswordForm({ currentPassword: '', newPassword: '', confirmPassword: '' });
-    } else {
-      setError(result.message);
+    } catch (err) {
+      setError(err || 'Failed to change password');
     }
 
     setLoading(false);
@@ -304,4 +307,3 @@ const Settings = () => {
 };
 
 export default Settings;
-

@@ -1,11 +1,11 @@
-import React, { useState, useEffect, useContext } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import { useSelector } from 'react-redux';
 import api from '../config/api';
 import Navbar from '../components/Navbar';
-import AuthContext from '../context/AuthContext';
 
 const Dashboard = () => {
-  const { user } = useContext(AuthContext);
+  const user = useSelector((state) => state.auth.user);
   const [submissions, setSubmissions] = useState([]);
   const [activeWeek, setActiveWeek] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -20,7 +20,7 @@ const Dashboard = () => {
         api.get('/api/submissions/my-submissions'),
         api.get('/api/weeks/active')
       ]);
-      
+
       setSubmissions(submissionsRes.data);
       setActiveWeek(weekRes.data);
     } catch (error) {
@@ -95,7 +95,7 @@ const Dashboard = () => {
           <div className="card-header">
             <h2 className="card-title">Your Submissions</h2>
           </div>
-          
+
           {submissions.length === 0 ? (
             <p style={{ color: 'var(--text-secondary)' }}>No submissions yet. Start by submitting your first project!</p>
           ) : (
@@ -121,11 +121,11 @@ const Dashboard = () => {
                     </div>
                     {getStatusBadge(submission.status)}
                   </div>
-                  
+
                   {submission.description && (
                     <p style={{ marginBottom: '12px', color: 'var(--text-tertiary)' }}>{submission.description}</p>
                   )}
-                  
+
                   <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
                     <a
                       href={submission.github_repo_url}
@@ -148,7 +148,7 @@ const Dashboard = () => {
                       </a>
                     )}
                   </div>
-                  
+
                   {submission.reviewerNotes && (
                     <div style={{ marginTop: '12px', padding: '12px', backgroundColor: 'var(--badge-warning-bg)', color: 'var(--badge-warning-text)', borderRadius: '6px' }}>
                       <strong>Reviewer Notes:</strong> {submission.reviewerNotes}
@@ -165,4 +165,3 @@ const Dashboard = () => {
 };
 
 export default Dashboard;
-

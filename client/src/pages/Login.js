@@ -1,30 +1,27 @@
-import React, { useState, useContext } from 'react';
+import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import AuthContext from '../context/AuthContext';
+import { useDispatch, useSelector } from 'react-redux';
+import { login } from '../store/authSlice';
 import Navbar from '../components/Navbar';
 
 const Login = () => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false);
-  const { login } = useContext(AuthContext);
+  const dispatch = useDispatch();
+  const { actionLoading } = useSelector((state) => state.auth);
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
-    setLoading(true);
 
-    const result = await login(username, password);
-    
-    if (result.success) {
+    try {
+      await dispatch(login({ username, password })).unwrap();
       navigate('/dashboard');
-    } else {
-      setError(result.message);
+    } catch (err) {
+      setError(err || 'Login failed');
     }
-    
-    setLoading(false);
   };
 
   return (
@@ -35,9 +32,9 @@ const Login = () => {
           <h2 className="card-title" style={{ marginBottom: '24px', textAlign: 'center' }}>
             Login to Your Account
           </h2>
-          
+
           {error && <div className="alert alert-error">{error}</div>}
-          
+
           <form onSubmit={handleSubmit}>
             <div className="form-group">
               <label className="form-label">Username</label>
@@ -50,7 +47,7 @@ const Login = () => {
                 placeholder="Enter your username"
               />
             </div>
-            
+
             <div className="form-group">
               <label className="form-label">Password</label>
               <input
@@ -62,14 +59,14 @@ const Login = () => {
                 placeholder="Enter your password"
               />
             </div>
-            
+
             <button
               type="submit"
               className="btn btn-primary"
               style={{ width: '100%', marginTop: '8px' }}
-              disabled={loading}
+              disabled={actionLoading}
             >
-              {loading ? 'Logging in...' : 'Login'}
+              {actionLoading ? 'Logging in...' : 'Login'}
             </button>
           </form>
 
@@ -88,4 +85,3 @@ const Login = () => {
 };
 
 export default Login;
-

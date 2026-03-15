@@ -1,7 +1,8 @@
-import React, { useState, useContext } from 'react';
+import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
+import { useDispatch, useSelector } from 'react-redux';
+import { signup } from '../store/authSlice';
 import Navbar from '../components/Navbar';
-import AuthContext from '../context/AuthContext';
 
 const Signup = () => {
   const [formData, setFormData] = useState({
@@ -13,9 +14,9 @@ const Signup = () => {
     members: ''
   });
   const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
-  const { signup } = useContext(AuthContext);
+  const dispatch = useDispatch();
+  const { actionLoading } = useSelector((state) => state.auth);
 
   const handleChange = (e) => {
     setFormData({
@@ -28,7 +29,6 @@ const Signup = () => {
     e.preventDefault();
     setError('');
 
-    // Validation
     if (formData.password !== formData.confirmPassword) {
       setError('Passwords do not match');
       return;
@@ -39,7 +39,6 @@ const Signup = () => {
       return;
     }
 
-    // Check if password has letters and numbers
     const hasLetter = /[A-Za-z]/.test(formData.password);
     const hasNumber = /\d/.test(formData.password);
     if (!hasLetter || !hasNumber) {
@@ -47,23 +46,20 @@ const Signup = () => {
       return;
     }
 
-    setLoading(true);
-
-    const result = await signup(
-      formData.username,
-      formData.password,
-      formData.displayName || formData.username,
-      formData.email,
-      formData.members
-    );
-
-    if (result.success) {
+    try {
+      await dispatch(
+        signup({
+          username: formData.username,
+          password: formData.password,
+          displayName: formData.displayName || formData.username,
+          email: formData.email,
+          members: formData.members
+        })
+      ).unwrap();
       navigate('/dashboard');
-    } else {
-      setError(result.message);
+    } catch (err) {
+      setError(err || 'Failed to create account');
     }
-    
-    setLoading(false);
   };
 
   return (
@@ -74,13 +70,13 @@ const Signup = () => {
           <h2 className="card-title" style={{ marginBottom: '24px', textAlign: 'center' }}>
             Register Your Team
           </h2>
-          
+
           <p style={{ textAlign: 'center', color: 'var(--text-secondary)', marginBottom: '24px' }}>
             Create an account for your team of 3 members
           </p>
-          
+
           {error && <div className="alert alert-error">{error}</div>}
-          
+
           <form onSubmit={handleSubmit}>
             <div className="form-group">
               <label className="form-label">Group Username *</label>
@@ -109,7 +105,7 @@ const Signup = () => {
                 placeholder="Your team's display name (optional)"
               />
             </div>
-            
+
             <div className="form-group">
               <label className="form-label">Password *</label>
               <input
@@ -165,14 +161,14 @@ const Signup = () => {
                 Separate names with commas
               </small>
             </div>
-            
+
             <button
               type="submit"
               className="btn btn-primary"
               style={{ width: '100%', marginTop: '8px' }}
-              disabled={loading}
+              disabled={actionLoading}
             >
-              {loading ? 'Creating Account...' : 'Create Account'}
+              {actionLoading ? 'Creating Account...' : 'Create Account'}
             </button>
           </form>
 
@@ -191,4 +187,3 @@ const Signup = () => {
 };
 
 export default Signup;
-

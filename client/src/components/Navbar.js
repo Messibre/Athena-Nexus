@@ -1,11 +1,19 @@
-import React, { useContext } from 'react';
+import React from 'react';
 import { Link } from 'react-router-dom';
-import AuthContext from '../context/AuthContext';
-import ThemeContext from '../context/ThemeContext';
+import { useDispatch, useSelector } from 'react-redux';
+import { logout } from '../store/authSlice';
+import { toggleTheme } from '../store/themeSlice';
 
 const Navbar = () => {
-  const { isAuthenticated, user, logout, isAdmin } = useContext(AuthContext);
-  const { theme, toggleTheme } = useContext(ThemeContext);
+  const dispatch = useDispatch();
+  const { user } = useSelector((state) => state.auth);
+  const theme = useSelector((state) => state.theme.theme);
+  const isAuthenticated = !!user;
+  const isAdmin = user?.role === 'admin';
+
+  const handleLogout = () => {
+    dispatch(logout());
+  };
 
   return (
     <nav className="navbar">
@@ -18,15 +26,15 @@ const Navbar = () => {
           <Link to="/challenges" className="navbar-link">Challenges</Link>
           <Link to="/gallery" className="navbar-link">Gallery</Link>
           <Link to="/about" className="navbar-link">About</Link>
-          
+
           <button
-            onClick={toggleTheme}
+            onClick={() => dispatch(toggleTheme())}
             className="theme-toggle"
             title={theme === 'light' ? 'Switch to dark mode' : 'Switch to light mode'}
           >
-            {theme === 'light' ? '🌙' : '☀️'}
+            {theme === 'light' ? 'Dark' : 'Light'}
           </button>
-          
+
           {isAuthenticated ? (
             <>
               <Link to="/dashboard" className="navbar-link">Dashboard</Link>
@@ -36,7 +44,7 @@ const Navbar = () => {
               <span className="navbar-link" style={{ color: 'var(--text-secondary)' }}>
                 {user?.displayName || user?.username}
               </span>
-              <button onClick={logout} className="btn btn-outline" style={{ padding: '8px 16px' }}>
+              <button onClick={handleLogout} className="btn btn-outline" style={{ padding: '8px 16px' }}>
                 Logout
               </button>
             </>
@@ -52,4 +60,3 @@ const Navbar = () => {
 };
 
 export default Navbar;
-

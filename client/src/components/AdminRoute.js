@@ -1,16 +1,16 @@
 import React from 'react';
 import { Navigate } from 'react-router-dom';
-import { useContext } from 'react';
-import AuthContext from '../context/AuthContext';
+import { useSelector } from 'react-redux';
 
 const AdminRoute = ({ children }) => {
-  const { isAuthenticated, isAdmin, loading } = useContext(AuthContext);
+  const { user, loading } = useSelector((state) => state.auth);
+  const isAdmin = user?.role === 'admin';
 
   if (loading) {
     return <div className="loading">Loading...</div>;
   }
 
-  if (!isAuthenticated) {
+  if (!user) {
     return <Navigate to="/login" replace />;
   }
 
@@ -22,4 +22,3 @@ const AdminRoute = ({ children }) => {
 };
 
 export default AdminRoute;
-

@@ -1,11 +1,13 @@
-import React, { useState, useEffect, useContext } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { useSelector } from 'react-redux';
 import api from '../config/api';
 import Navbar from '../components/Navbar';
-import AuthContext from '../context/AuthContext';
 
 const Challenges = () => {
-  const { isAuthenticated, isAdmin } = useContext(AuthContext);
+  const user = useSelector((state) => state.auth.user);
+  const isAuthenticated = !!user;
+  const isAdmin = user?.role === 'admin';
   const [weeks, setWeeks] = useState([]);
   const [submissions, setSubmissions] = useState([]);
   const [submissionCounts, setSubmissionCounts] = useState({});
@@ -23,17 +25,15 @@ const Challenges = () => {
         api.get('/api/weeks'),
         isAuthenticated && !isAdmin ? api.get('/api/submissions/my-submissions') : Promise.resolve({ data: [] })
       ]);
-      
-      // Ensure weeksRes.data is an array before sorting
+
       const weeksData = Array.isArray(weeksRes.data) ? weeksRes.data : [];
       setWeeks(weeksData.sort((a, b) => b.week_number - a.week_number));
-      
+
       if (isAuthenticated && !isAdmin) {
         const submissionsData = Array.isArray(submissionsRes.data) ? submissionsRes.data : [];
         setSubmissions(submissionsData);
       }
-      
-      // For admins, get submission counts per week
+
       if (isAdmin) {
         try {
           const countsRes = await api.get('/api/admin/submissions');
@@ -55,11 +55,9 @@ const Challenges = () => {
       }
     } catch (error) {
       console.error('Error fetching data:', error);
-      // If API URL is not configured, show helpful message
       if (error.message?.includes('Network Error') || error.code === 'ERR_NETWORK') {
         console.error('Backend API is not reachable. Please configure REACT_APP_API_URL in Netlify environment variables.');
       }
-      // Set empty arrays on error to prevent further errors
       setWeeks([]);
       setSubmissions([]);
     } finally {
@@ -161,15 +159,15 @@ const Challenges = () => {
                       )}
                     </div>
                   </div>
-                  
+
                   {week.title && (
                     <h3 style={{ marginBottom: '12px', color: 'var(--text-primary)' }}>{week.title}</h3>
                   )}
-                  
+
                   {week.description && (
                     <p style={{ marginBottom: '16px', color: 'var(--text-secondary)' }}>{week.description}</p>
                   )}
-                  
+
                   <div style={{ marginBottom: '16px', fontSize: '14px', color: 'var(--text-secondary)' }}>
                     {week.deadlineDate && (
                       <p>
@@ -182,7 +180,6 @@ const Challenges = () => {
                     )}
                   </div>
 
-                  {/* Admin: Show submission counts */}
                   {isAdmin && counts && (
                     <div style={{ marginBottom: '16px', padding: '12px', backgroundColor: 'var(--bg-tertiary)', borderRadius: '6px' }}>
                       <strong style={{ fontSize: '14px' }}>Submissions:</strong>
@@ -195,7 +192,6 @@ const Challenges = () => {
                     </div>
                   )}
 
-                  {/* Group: Show submission status */}
                   {isAuthenticated && !isAdmin && userSubmission && (
                     <div style={{ marginBottom: '16px', padding: '12px', backgroundColor: 'var(--badge-warning-bg)', color: 'var(--badge-warning-text)', borderRadius: '6px' }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -224,9 +220,8 @@ const Challenges = () => {
                       </ul>
                     </div>
                   )}
-                  
+
                   <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-                    {/* Public/All: View Submissions */}
                     <Link
                       to={`/gallery/${week._id}`}
                       className="btn btn-outline"
@@ -235,7 +230,6 @@ const Challenges = () => {
                       View Submissions
                     </Link>
 
-                    {/* Group: Submit button */}
                     {isAuthenticated && !isAdmin && (
                       <>
                         {!userSubmission && !deadlinePassed && (
@@ -259,7 +253,6 @@ const Challenges = () => {
                       </>
                     )}
 
-                    {/* Admin: Edit/Delete buttons */}
                     {isAdmin && (
                       <>
                         <button
@@ -290,4 +283,3 @@ const Challenges = () => {
 };
 
 export default Challenges;
-
