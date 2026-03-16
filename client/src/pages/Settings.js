@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import Navbar from '../components/Navbar';
 import { changePassword, fetchMe } from '../redux/thunks/authThunks';
-import { updateAdminUser } from '../redux/thunks/adminThunks';
+import { updateUserProfile } from '../redux/thunks/usersThunks';
 import { selectUser } from '../redux/selectors/authSelectors';
 
 const Settings = () => {
@@ -44,7 +44,7 @@ const Settings = () => {
     setLoading(true);
 
     try {
-      await dispatch(updateAdminUser({
+      await dispatch(updateUserProfile({
         id: user._id || user.id,
         payload: {
           displayName: profileForm.displayName,

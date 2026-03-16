@@ -61,6 +61,10 @@ const Milestones = () => {
   const challenges = useSelector((state) => selectMilestoneChallenges(state, activeLevelId));
   const mySubmissions = useSelector(selectMyMilestoneSubmissions);
 
+  const activeCategory = categories.find((category) => category._id === activeCategoryId);
+  const activeLevel = levels.find((level) => level._id === activeLevelId);
+  const activeChallenge = challenges.find((challenge) => challenge._id === activeChallengeId);
+
   const progressMap = useMemo(() => {
     return progress.reduce((acc, item) => {
       acc[item.levelId] = item.status;
@@ -182,14 +186,86 @@ const Milestones = () => {
           <Link to="/challenges" className="btn btn-outline">Weekly Challenges</Link>
         </div>
 
-        <div className="card" style={{ marginBottom: '24px' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: '280px 1fr', gap: '24px', alignItems: 'start' }}>
+          <div className="card" style={{ marginBottom: '24px', gridColumn: '2' }}>
+            <h2 style={{ marginBottom: '16px' }}>Details</h2>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+              <div>
+                <h3 style={{ marginBottom: '6px' }}>{activeCategory?.name || 'Select a category'}</h3>
+                <p style={{ color: 'var(--text-secondary)' }}>
+                  {activeCategory?.description || 'Category details will appear here.'}
+                </p>
+              </div>
+              <div>
+                <h3 style={{ marginBottom: '6px' }}>
+                  {activeLevel ? `Level ${activeLevel.levelNumber}: ${activeLevel.title}` : 'Select a level'}
+                </h3>
+                <p style={{ color: 'var(--text-secondary)' }}>
+                  {activeLevel?.description || 'Level details will appear here.'}
+                </p>
+                {activeLevel && (
+                  <div style={{ marginTop: '8px' }}>
+                    <span className={`badge ${getStatusBadge(progressMap[activeLevel._id] || 'locked').className}`}>
+                      {getStatusBadge(progressMap[activeLevel._id] || 'locked').text}
+                    </span>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div style={{ marginTop: '16px' }}>
+              <h3 style={{ marginBottom: '8px' }}>Challenge</h3>
+              {!activeChallenge ? (
+                <p style={{ color: 'var(--text-secondary)' }}>Select a challenge to see full details.</p>
+              ) : (
+                <>
+                  <h4 style={{ marginBottom: '8px' }}>{activeChallenge.title}</h4>
+                  {activeChallenge.description && (
+                    <p style={{ color: 'var(--text-secondary)', marginBottom: '12px' }}>
+                      {activeChallenge.description}
+                    </p>
+                  )}
+                  {activeChallenge.requirements?.length > 0 && (
+                    <div style={{ marginBottom: '12px' }}>
+                      <h4 style={{ marginBottom: '6px' }}>Requirements</h4>
+                      <ul style={{ margin: 0, paddingLeft: '18px', color: 'var(--text-secondary)' }}>
+                        {activeChallenge.requirements.map((item) => (
+                          <li key={item}>{item}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                  {activeChallenge.resources?.length > 0 && (
+                    <div style={{ marginBottom: '12px' }}>
+                      <h4 style={{ marginBottom: '6px' }}>Resources</h4>
+                      <ul style={{ margin: 0, paddingLeft: '18px', color: 'var(--text-secondary)' }}>
+                        {activeChallenge.resources.map((item) => (
+                          <li key={item}>{item}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                  {activeChallenge.tags?.length > 0 && (
+                    <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+                      {activeChallenge.tags.map((tag) => (
+                        <span key={tag} className="badge badge-info">{tag}</span>
+                      ))}
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
+          </div>
+
+        <div className="card" style={{ marginBottom: '24px', gridColumn: '1' }}>
           <h2 style={{ marginBottom: '16px' }}>Categories</h2>
-          <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
             {categories.map((category) => (
               <button
                 key={category._id}
                 className={`btn ${activeCategoryId === category._id ? 'btn-primary' : 'btn-secondary'}`}
                 onClick={() => setActiveCategoryId(category._id)}
+                style={{ textAlign: 'left' }}
               >
                 {category.name}
               </button>
@@ -197,14 +273,14 @@ const Milestones = () => {
           </div>
         </div>
 
-        <div className="card" style={{ marginBottom: '24px' }}>
+        <div className="card" style={{ marginBottom: '24px', gridColumn: '1' }}>
           <h2 style={{ marginBottom: '16px' }}>Levels</h2>
           {loading ? (
             <div className="loading">Loading...</div>
           ) : levels.length === 0 ? (
             <p style={{ color: 'var(--text-secondary)' }}>No levels available yet.</p>
           ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
               {levels.map((level) => {
                 const status = progressMap[level._id] || 'locked';
                 const badge = getStatusBadge(status);
@@ -214,23 +290,11 @@ const Milestones = () => {
                     key={level._id}
                     type="button"
                     onClick={() => handleSelectLevel(level._id)}
-                    className="card"
-                    style={{
-                      padding: '16px',
-                      textAlign: 'left',
-                      cursor: 'pointer',
-                      border: isActive ? '2px solid var(--primary-color)' : '1px solid var(--border-color)',
-                    }}
+                    className={`btn ${isActive ? 'btn-primary' : 'btn-secondary'}`}
+                    style={{ textAlign: 'left', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
                   >
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <div>
-                        <h3>Level {level.levelNumber}: {level.title}</h3>
-                        {level.description && (
-                          <p style={{ color: 'var(--text-secondary)', marginTop: '8px' }}>{level.description}</p>
-                        )}
-                      </div>
-                      <span className={`badge ${badge.className}`}>{badge.text}</span>
-                    </div>
+                    <span>Level {level.levelNumber}: {level.title}</span>
+                    <span className={`badge ${badge.className}`}>{badge.text}</span>
                   </button>
                 );
               })}
@@ -238,14 +302,14 @@ const Milestones = () => {
           )}
         </div>
 
-        <div className="card" style={{ marginBottom: '24px' }}>
+        <div className="card" style={{ marginBottom: '24px', gridColumn: '1' }}>
           <h2 style={{ marginBottom: '16px' }}>Challenges</h2>
           {!activeLevelId ? (
             <p style={{ color: 'var(--text-secondary)' }}>Select a level to view challenges.</p>
           ) : challenges.length === 0 ? (
             <p style={{ color: 'var(--text-secondary)' }}>No challenges available for this level yet.</p>
           ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
               {challenges.map((challenge, index) => {
                 const submission = getSubmissionForChallenge(challenge._id);
                 const status = submission?.status || 'not submitted';
@@ -257,26 +321,19 @@ const Milestones = () => {
                     type="button"
                     onClick={() => handleSelectChallenge(challenge._id)}
                     disabled={isLocked}
-                    className="card"
+                    className={`btn ${isActive ? 'btn-primary' : 'btn-secondary'}`}
                     style={{
-                      padding: '16px',
                       textAlign: 'left',
-                      cursor: isLocked ? 'not-allowed' : 'pointer',
-                      border: isActive ? '2px solid var(--primary-color)' : '1px solid var(--border-color)',
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
                       opacity: isLocked ? 0.6 : 1
                     }}
                   >
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <div>
-                        <h3>{challenge.title}</h3>
-                        {challenge.description && (
-                          <p style={{ color: 'var(--text-secondary)', marginTop: '8px' }}>{challenge.description}</p>
-                        )}
-                      </div>
-                      <span className={`badge ${isLocked ? 'badge-warning' : 'badge-info'}`} style={{ textTransform: 'capitalize' }}>
-                        {isLocked ? 'locked' : status}
-                      </span>
-                    </div>
+                    <span>{challenge.title}</span>
+                    <span className={`badge ${isLocked ? 'badge-warning' : 'badge-info'}`} style={{ textTransform: 'capitalize' }}>
+                      {isLocked ? 'locked' : status}
+                    </span>
                   </button>
                 );
               })}
@@ -284,7 +341,7 @@ const Milestones = () => {
           )}
         </div>
 
-        <div className="card">
+        <div className="card" style={{ gridColumn: '2' }}>
           <h2 style={{ marginBottom: '16px' }}>Submit Your Work</h2>
           {!activeChallengeId ? (
             <p style={{ color: 'var(--text-secondary)' }}>Select a challenge to submit your work.</p>
@@ -347,9 +404,15 @@ const Milestones = () => {
             </form>
           )}
         </div>
+        </div>
       </div>
     </>
   );
 };
 
 export default Milestones;
+
+
+
+
+

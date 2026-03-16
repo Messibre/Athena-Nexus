@@ -11,6 +11,8 @@ import {
   fetchAdminUsers,
   createAdminUser,
   updateAdminUser,
+  resetAdminUserPassword,
+  deleteAdminUser,
   fetchAdminSubmissions,
   updateAdminSubmissionStatus,
   exportAdminSubmissions,
@@ -240,6 +242,29 @@ const AdminPanel = () => {
       alert('User updated successfully!');
     } catch (error) {
       alert(error || 'Failed to update user');
+    }
+  };
+
+  const handleResetUserPassword = async (userId) => {
+    const newPassword = window.prompt("Enter a new password for this user:");
+    if (!newPassword) return;
+
+    try {
+      await dispatch(resetAdminUserPassword({ id: userId, payload: { newPassword } })).unwrap();
+      alert("Password reset successfully.");
+    } catch (error) {
+      alert(error || "Failed to reset password");
+    }
+  };
+
+  const handleDeleteUser = async (userId) => {
+    if (!window.confirm("Delete this user? This action cannot be undone.")) return;
+    try {
+      await dispatch(deleteAdminUser(userId)).unwrap();
+      dispatch(fetchAdminUsers());
+      alert("User deleted successfully.");
+    } catch (error) {
+      alert(error || "Failed to delete user");
     }
   };
 
@@ -800,6 +825,22 @@ const AdminPanel = () => {
                           Edit
                         </button>
                       </div>
+                      <div style={{ display: 'flex', gap: '8px' }}>
+                        <button
+                          onClick={() => handleResetUserPassword(user._id)}
+                          className="btn btn-outline"
+                          style={{ padding: '6px 12px', fontSize: '14px' }}
+                        >
+                          Reset Password
+                        </button>
+                        <button
+                          onClick={() => handleDeleteUser(user._id)}
+                          className="btn btn-danger"
+                          style={{ padding: '6px 12px', fontSize: '14px' }}
+                        >
+                          Delete
+                        </button>
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -909,8 +950,8 @@ const AdminPanel = () => {
             )}
 
             {activeTab === 'milestone-categories' && (
-              <div>
-                <div className="card" style={{ marginBottom: '24px' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '320px 1fr', gap: '24px', alignItems: 'start' }}>
+                <div className="card" style={{ marginBottom: '24px', gridColumn: '2' }}>
                   <h2 style={{ marginBottom: '16px' }}>
                     {editingMilestoneCategoryId ? 'Edit Milestone Category' : 'Create Milestone Category'}
                   </h2>
@@ -982,44 +1023,44 @@ const AdminPanel = () => {
                   </form>
                 </div>
 
-                <h2 style={{ marginBottom: '16px' }}>All Milestone Categories</h2>
-                <div className="grid grid-2">
-                  {milestoneCategories.map(category => (
-                    <div key={category._id} className="card">
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: '12px' }}>
-                        <div>
-                          <h3>{category.name}</h3>
-                          <p style={{ color: 'var(--text-secondary)' }}>{category.key}</p>
-                        </div>
+                <div style={{ gridColumn: '1' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+                    <h2 style={{ marginBottom: 0 }}>Categories</h2>
+                    <button
+                      type="button"
+                      className="btn btn-secondary"
+                      onClick={() => {
+                        setEditingMilestoneCategoryId(null);
+                        setMilestoneCategoryForm({ key: '', name: '', description: '', order: 0, isActive: true });
+                      }}
+                    >
+                      New
+                    </button>
+                  </div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                    {milestoneCategories.map(category => (
+                      <button
+                        key={category._id}
+                        type="button"
+                        onClick={() => handleEditMilestoneCategory(category)}
+                        className={`btn ${editingMilestoneCategoryId === category._id ? 'btn-primary' : 'btn-secondary'}`}
+                        style={{ textAlign: 'left', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
+                      >
+                        <span>{category.name}</span>
                         {category.isActive && <span className="badge badge-success">Active</span>}
-                      </div>
-                      {category.description && <p style={{ color: 'var(--text-secondary)', marginBottom: '12px' }}>{category.description}</p>}
-                      <p style={{ color: 'var(--text-secondary)' }}>Order: {category.order ?? 0}</p>
-                      <div style={{ display: 'flex', gap: '8px', marginTop: '12px' }}>
-                        <button
-                          onClick={() => handleEditMilestoneCategory(category)}
-                          className="btn btn-secondary"
-                          style={{ padding: '6px 12px', fontSize: '14px' }}
-                        >
-                          Edit
-                        </button>
-                        <button
-                          onClick={() => handleDeleteMilestoneCategory(category._id)}
-                          className="btn btn-danger"
-                          style={{ padding: '6px 12px', fontSize: '14px' }}
-                        >
-                          Delete
-                        </button>
-                      </div>
-                    </div>
-                  ))}
+                      </button>
+                    ))}
+                    {milestoneCategories.length === 0 && (
+                      <p style={{ color: 'var(--text-secondary)' }}>No categories yet.</p>
+                    )}
+                  </div>
                 </div>
               </div>
             )}
 
             {activeTab === 'milestone-levels' && (
-              <div>
-                <div className="card" style={{ marginBottom: '24px' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '320px 1fr', gap: '24px', alignItems: 'start' }}>
+                <div className="card" style={{ marginBottom: '24px', gridColumn: '2' }}>
                   <h2 style={{ marginBottom: '16px' }}>
                     {editingMilestoneLevelId ? 'Edit Milestone Level' : 'Create Milestone Level'}
                   </h2>
@@ -1099,45 +1140,46 @@ const AdminPanel = () => {
                   </form>
                 </div>
 
-                <h2 style={{ marginBottom: '16px' }}>All Milestone Levels</h2>
-                <div className="grid grid-2">
-                  {milestoneLevels.map(level => (
-                    <div key={level._id} className="card">
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: '12px' }}>
-                        <div>
-                          <h3>Level {level.levelNumber}: {level.title}</h3>
-                          <p style={{ color: 'var(--text-secondary)' }}>{level.categoryId?.name || 'Category'}</p>
-                        </div>
+                <div style={{ gridColumn: '1' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+                    <h2 style={{ marginBottom: 0 }}>Levels</h2>
+                    <button
+                      type="button"
+                      className="btn btn-secondary"
+                      onClick={() => {
+                        setEditingMilestoneLevelId(null);
+                        setMilestoneLevelForm({ categoryId: '', levelNumber: '', title: '', description: '', isActive: true });
+                      }}
+                    >
+                      New
+                    </button>
+                  </div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                    {milestoneLevels.map(level => (
+                      <button
+                        key={level._id}
+                        type="button"
+                        onClick={() => handleEditMilestoneLevel(level)}
+                        className={`btn ${editingMilestoneLevelId === level._id ? 'btn-primary' : 'btn-secondary'}`}
+                        style={{ textAlign: 'left', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
+                      >
+                        <span>Level {level.levelNumber}: {level.title}</span>
                         {level.isActive && <span className="badge badge-success">Active</span>}
-                      </div>
-                      {level.description && <p style={{ color: 'var(--text-secondary)', marginBottom: '12px' }}>{level.description}</p>}
-                      <div style={{ display: 'flex', gap: '8px' }}>
-                        <button
-                          onClick={() => handleEditMilestoneLevel(level)}
-                          className="btn btn-secondary"
-                          style={{ padding: '6px 12px', fontSize: '14px' }}
-                        >
-                          Edit
-                        </button>
-                        <button
-                          onClick={() => handleDeleteMilestoneLevel(level._id)}
-                          className="btn btn-danger"
-                          style={{ padding: '6px 12px', fontSize: '14px' }}
-                        >
-                          Delete
-                        </button>
-                      </div>
-                    </div>
-                  ))}
+                      </button>
+                    ))}
+                    {milestoneLevels.length === 0 && (
+                      <p style={{ color: 'var(--text-secondary)' }}>No levels yet.</p>
+                    )}
+                  </div>
                 </div>
               </div>
             )}
 
-            {activeTab === 'milestone-challenges' && (
-              <div>
-                <div className="card" style={{ marginBottom: '24px' }}>
-                  <h2 style={{ marginBottom: '16px' }}>
-                    {editingMilestoneChallengeId ? 'Edit Milestone Challenge' : 'Create Milestone Challenge'}
+                        {activeTab === "milestone-challenges" && (
+              <div style={{ display: "grid", gridTemplateColumns: "320px 1fr", gap: "24px", alignItems: "start" }}>
+                <div className="card" style={{ marginBottom: "24px", gridColumn: "2" }}>
+                  <h2 style={{ marginBottom: "16px" }}>
+                    {editingMilestoneChallengeId ? "Edit Milestone Challenge" : "Create Milestone Challenge"}
                   </h2>
                   <form onSubmit={editingMilestoneChallengeId ? handleUpdateMilestoneChallenge : handleCreateMilestoneChallenge}>
                     <div className="form-group">
@@ -1149,7 +1191,7 @@ const AdminPanel = () => {
                           setMilestoneChallengeForm({
                             ...milestoneChallengeForm,
                             categoryId: e.target.value,
-                            levelId: ''
+                            levelId: ""
                           });
                         }}
                         disabled={!!editingMilestoneChallengeId}
@@ -1238,7 +1280,7 @@ const AdminPanel = () => {
                       </select>
                     </div>
                     <div className="form-group">
-                      <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
+                      <label style={{ display: "flex", alignItems: "center", gap: "8px", cursor: "pointer" }}>
                         <input
                           type="checkbox"
                           checked={milestoneChallengeForm.isActive}
@@ -1247,16 +1289,16 @@ const AdminPanel = () => {
                         Active Challenge
                       </label>
                     </div>
-                    <div style={{ display: 'flex', gap: '8px' }}>
+                    <div style={{ display: "flex", gap: "8px" }}>
                       <button type="submit" className="btn btn-primary" disabled={actionLoading}>
-                        {editingMilestoneChallengeId ? 'Update Challenge' : 'Create Challenge'}
+                        {editingMilestoneChallengeId ? "Update Challenge" : "Create Challenge"}
                       </button>
                       {editingMilestoneChallengeId && (
                         <button
                           type="button"
                           onClick={() => {
                             setEditingMilestoneChallengeId(null);
-                            setMilestoneChallengeForm({ categoryId: '', levelId: '', title: '', description: '', requirements: '', resources: '', tags: '', difficulty: 'beginner', isActive: true });
+                            setMilestoneChallengeForm({ categoryId: "", levelId: "", title: "", description: "", requirements: "", resources: "", tags: "", difficulty: "beginner", isActive: true });
                           }}
                           className="btn btn-secondary"
                         >
@@ -1267,39 +1309,37 @@ const AdminPanel = () => {
                   </form>
                 </div>
 
-                <h2 style={{ marginBottom: '16px' }}>All Milestone Challenges</h2>
-                <div className="grid grid-2">
-                  {milestoneChallenges.map(challenge => (
-                    <div key={challenge._id} className="card">
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: '12px' }}>
-                        <div>
-                          <h3>{challenge.title}</h3>
-                          <p style={{ color: 'var(--text-secondary)' }}>
-                            {challenge.categoryId?.name || 'Category'} · Level {challenge.levelId?.levelNumber || 'N/A'}
-                          </p>
-                        </div>
+                <div style={{ gridColumn: "1" }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px" }}>
+                    <h2 style={{ marginBottom: 0 }}>Challenges</h2>
+                    <button
+                      type="button"
+                      className="btn btn-secondary"
+                      onClick={() => {
+                        setEditingMilestoneChallengeId(null);
+                        setMilestoneChallengeForm({ categoryId: "", levelId: "", title: "", description: "", requirements: "", resources: "", tags: "", difficulty: "beginner", isActive: true });
+                      }}
+                    >
+                      New
+                    </button>
+                  </div>
+                  <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+                    {milestoneChallenges.map(challenge => (
+                      <button
+                        key={challenge._id}
+                        type="button"
+                        onClick={() => handleEditMilestoneChallenge(challenge)}
+                        className={`btn ${editingMilestoneChallengeId === challenge._id ? "btn-primary" : "btn-secondary"}`}
+                        style={{ textAlign: "left", display: "flex", justifyContent: "space-between", alignItems: "center" }}
+                      >
+                        <span>{challenge.title}</span>
                         {challenge.isActive && <span className="badge badge-success">Active</span>}
-                      </div>
-                      {challenge.description && <p style={{ color: 'var(--text-secondary)', marginBottom: '12px' }}>{challenge.description}</p>}
-                      <p style={{ color: 'var(--text-secondary)' }}>Difficulty: {challenge.difficulty || 'beginner'}</p>
-                      <div style={{ display: 'flex', gap: '8px', marginTop: '12px' }}>
-                        <button
-                          onClick={() => handleEditMilestoneChallenge(challenge)}
-                          className="btn btn-secondary"
-                          style={{ padding: '6px 12px', fontSize: '14px' }}
-                        >
-                          Edit
-                        </button>
-                        <button
-                          onClick={() => handleDeleteMilestoneChallenge(challenge._id)}
-                          className="btn btn-danger"
-                          style={{ padding: '6px 12px', fontSize: '14px' }}
-                        >
-                          Delete
-                        </button>
-                      </div>
-                    </div>
-                  ))}
+                      </button>
+                    ))}
+                    {milestoneChallenges.length === 0 && (
+                      <p style={{ color: "var(--text-secondary)" }}>No challenges yet.</p>
+                    )}
+                  </div>
                 </div>
               </div>
             )}
@@ -1330,13 +1370,13 @@ const AdminPanel = () => {
                         <p style={{ marginBottom: '12px' }}>{submission.description}</p>
                       )}
                       <div style={{ marginBottom: '12px' }}>
-                        {submission.githubRepoUrl && (
-                          <a href={submission.githubRepoUrl} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--primary)', marginRight: '12px' }}>
+                        {submission.repoUrl && (
+                          <a href={submission.repoUrl} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--primary)', marginRight: '12px' }}>
                             GitHub
                           </a>
                         )}
-                        {submission.liveDemoUrl && (
-                          <a href={submission.liveDemoUrl} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--primary)' }}>
+                        {submission.demoUrl && (
+                          <a href={submission.demoUrl} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--primary)' }}>
                             Live Demo
                           </a>
                         )}
@@ -1440,3 +1480,6 @@ const AdminPanel = () => {
 };
 
 export default AdminPanel;
+
+
+

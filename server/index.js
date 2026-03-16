@@ -10,6 +10,7 @@ import adminRoutes from "./routes/admin.js";
 import activityRoutes from "./routes/activity.js";
 import milestonesRoutes from "./routes/milestones.js";
 import adminMilestonesRoutes from "./routes/adminMilestones.js";
+import usersRoutes from "./routes/users.js";
 
 dotenv.config();
 
@@ -52,6 +53,7 @@ app.use("/api/admin", adminRoutes);
 app.use("/api/activity", activityRoutes);
 app.use("/api/milestones", milestonesRoutes);
 app.use("/api/admin/milestones", adminMilestonesRoutes);
+app.use("/api/users", usersRoutes);
 
 // Health check
 app.get("/api/health", (req, res) => {
