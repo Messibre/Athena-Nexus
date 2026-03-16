@@ -71,6 +71,20 @@ export const fetchMyMilestoneSubmissions = createAsyncThunk(
   },
 );
 
+export const fetchPublicMilestoneSubmissions = createAsyncThunk(
+  "milestones/fetchPublicSubmissions",
+  async (_, thunkApi) => {
+    try {
+      const response = await milestonesApi.getPublicMilestoneSubmissions();
+      return response.data;
+    } catch (error) {
+      return thunkApi.rejectWithValue(
+        error.response?.data?.message || "Failed to fetch submissions",
+      );
+    }
+  },
+);
+
 export const createMilestoneSubmission = createAsyncThunk(
   "milestones/createSubmission",
   async (payload, thunkApi) => {
@@ -112,3 +126,4 @@ export const fetchMilestoneProgress = createAsyncThunk(
     }
   },
 );
+

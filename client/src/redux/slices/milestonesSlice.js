@@ -5,6 +5,7 @@ import {
   fetchMilestoneChallenges,
   fetchMilestoneChallenge,
   fetchMyMilestoneSubmissions,
+  fetchPublicMilestoneSubmissions,
   createMilestoneSubmission,
   updateMilestoneSubmission,
   fetchMilestoneProgress,
@@ -16,6 +17,7 @@ const initialState = {
   challengesByLevel: {},
   challenge: null,
   mySubmissions: [],
+  publicSubmissions: [],
   progressByCategory: {},
   loading: false,
   actionLoading: false,
@@ -57,6 +59,9 @@ const milestonesSlice = createSlice({
       })
       .addCase(fetchMyMilestoneSubmissions.fulfilled, (state, action) => {
         state.mySubmissions = Array.isArray(action.payload) ? action.payload : [];
+      })
+      .addCase(fetchPublicMilestoneSubmissions.fulfilled, (state, action) => {
+        state.publicSubmissions = Array.isArray(action.payload) ? action.payload : [];
       })
       .addCase(createMilestoneSubmission.pending, (state) => {
         state.actionLoading = true;
@@ -105,3 +110,6 @@ const milestonesSlice = createSlice({
 
 export const { clearMilestoneChallenge } = milestonesSlice.actions;
 export default milestonesSlice.reducer;
+
+
+

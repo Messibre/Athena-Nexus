@@ -91,7 +91,7 @@ export const listChallengesByLevel = async (req, res) => {
     const challenges = await MilestoneChallenge.find({
       levelId,
       isActive: true,
-    }).sort({ createdAt: -1 });
+    }).sort({ createdAt: 1 });
     res.json(challenges);
   } catch (error) {
     handleError(res, error, "Failed to fetch challenges");
@@ -128,6 +128,22 @@ export const getMySubmissions = async (req, res) => {
   }
 };
 
+export const listPublicSubmissions = async (req, res) => {
+  try {
+    const submissions = await MilestoneSubmission.find({
+      status: "approved",
+    })
+      .populate("userId", "username displayName")
+      .populate("categoryId", "key name")
+      .populate("levelId", "levelNumber title")
+      .populate("challengeId", "title")
+      .sort({ createdAt: -1 });
+    res.json(submissions);
+  } catch (error) {
+    handleError(res, error, "Failed to fetch submissions");
+  }
+};
+
 export const createSubmission = async (req, res) => {
   try {
     const { challengeId, repoUrl, demoUrl, notes } = req.body;
@@ -152,15 +168,34 @@ export const createSubmission = async (req, res) => {
       return res.status(404).json({ message: "Challenge not found" });
     }
 
-    await ensureProgressForCategory(req.user._id, challenge.categoryId);
-    const status = await getLevelProgressStatus(
-      req.user._id,
-      challenge.categoryId,
-      challenge.levelId,
-    );
-    if (status === "locked") {
-      return res.status(403).json({ message: "Level is locked" });
+    const levelChallenges = await MilestoneChallenge.find({
+      levelId: challenge.levelId,
+      isActive: true,
+    })
+      .sort({ createdAt: 1 })
+      .select("_id");
+
+    const challengeIds = levelChallenges.map((item) => item._id.toString());
+    const targetIndex = challengeIds.indexOf(challengeId.toString());
+    if (targetIndex === -1) {
+      return res.status(404).json({ message: "Challenge not found" });
     }
+
+    const priorIds = challengeIds.slice(0, targetIndex);
+    if (priorIds.length > 0) {
+      const approvedCount = await MilestoneSubmission.countDocuments({
+        userId: req.user._id,
+        challengeId: { $in: priorIds },
+        status: "approved",
+      });
+      if (approvedCount !== priorIds.length) {
+        return res
+          .status(403)
+          .json({ message: "Complete previous challenges in this level first" });
+      }
+    }
+
+    await ensureProgressForCategory(req.user._id, challenge.categoryId);
 
     const existing = await MilestoneSubmission.findOne({
       userId: req.user._id,
@@ -261,4 +296,7 @@ export const getProgress = async (req, res) => {
     handleError(res, error, "Failed to fetch progress");
   }
 };
+
+
+
 

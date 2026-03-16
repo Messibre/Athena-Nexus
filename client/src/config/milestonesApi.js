@@ -10,6 +10,8 @@ export const getMilestoneChallenge = (id) =>
 
 export const getMyMilestoneSubmissions = () =>
   api.get("/api/milestones/submissions/my");
+export const getPublicMilestoneSubmissions = () =>
+  api.get("/api/milestones/submissions/public");
 export const createMilestoneSubmission = (payload) =>
   api.post("/api/milestones/submissions", payload);
 export const updateMilestoneSubmission = (id, payload) =>
@@ -51,3 +53,4 @@ export const adminGetMilestoneSubmission = (id) =>
   api.get(`/api/admin/milestones/submissions/${id}`);
 export const adminUpdateMilestoneSubmissionStatus = (id, payload) =>
   api.put(`/api/admin/milestones/submissions/${id}/status`, payload);
+

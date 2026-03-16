@@ -7,9 +7,12 @@ export const selectMilestoneChallenges = (state, levelId) =>
 export const selectMilestoneChallenge = (state) => state.milestones.challenge;
 export const selectMyMilestoneSubmissions = (state) =>
   state.milestones.mySubmissions;
+export const selectPublicMilestoneSubmissions = (state) =>
+  state.milestones.publicSubmissions;
 export const selectMilestoneProgress = (state, categoryId) =>
   state.milestones.progressByCategory[categoryId] || [];
 export const selectMilestonesLoading = (state) => state.milestones.loading;
 export const selectMilestonesActionLoading = (state) =>
   state.milestones.actionLoading;
 export const selectMilestonesError = (state) => state.milestones.error;
+

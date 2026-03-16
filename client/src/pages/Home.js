@@ -152,7 +152,7 @@ const Home = () => {
                 <div className="feature-icon">💻</div>
                 <h3 className="feature-title">Team Submissions</h3>
                 <p className="feature-description">
-                  Submit your GitHub repository and live demo. Show the world what your team can build.
+                  Submit your GitHub repository and live demo. {displayStats.totalSubmissions} submissions from {displayStats.totalUsers} teams so far.
                 </p>
                 <div className="feature-shine"></div>
               </div>
@@ -161,6 +161,14 @@ const Home = () => {
                 <h3 className="feature-title">Public Gallery</h3>
                 <p className="feature-description">
                   Browse approved submissions from all teams. Get inspired and see what others are building.
+                </p>
+                <div className="feature-shine"></div>
+              </div>
+              <div className="feature-card card-hover">
+                <div className="feature-icon">🎯</div>
+                <h3 className="feature-title">Milestone Challenges</h3>
+                <p className="feature-description">
+                  Follow a structured path: categories → levels → challenges. Unlock levels as you progress.
                 </p>
                 <div className="feature-shine"></div>
               </div>
@@ -190,3 +198,5 @@ const Home = () => {
 };
 
 export default Home;
+
+
