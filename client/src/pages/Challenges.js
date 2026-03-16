@@ -1,14 +1,34 @@
-import React, { useEffect, useMemo, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { useDispatch, useSelector } from 'react-redux';
-import Navbar from '../components/Navbar';
-import { fetchWeeks } from '../redux/thunks/weeksThunks';
-import { fetchMySubmissions } from '../redux/thunks/submissionsThunks';
-import { fetchAdminSubmissions, deleteAdminWeek } from '../redux/thunks/adminThunks';
-import { selectWeeks } from '../redux/selectors/weeksSelectors';
-import { selectMySubmissions, selectSubmissionsLoading } from '../redux/selectors/submissionsSelectors';
-import { selectAdminSubmissions, selectAdminLoading } from '../redux/selectors/adminSelectors';
-import { selectIsAdmin, selectIsAuthenticated } from '../redux/selectors/authSelectors';
+import React, { useEffect, useMemo, useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { useDispatch, useSelector } from "react-redux";
+import { AnimatePresence, motion } from "framer-motion";
+import {
+  CalendarDays,
+  CheckCircle2,
+  Clock,
+  Inbox,
+  List,
+  Menu,
+  Shield,
+  User,
+} from "lucide-react";
+import Navbar from "../components/Navbar";
+import { fetchWeeks } from "../redux/thunks/weeksThunks";
+import { fetchMySubmissions } from "../redux/thunks/submissionsThunks";
+import { fetchAdminSubmissions, deleteAdminWeek } from "../redux/thunks/adminThunks";
+import { selectWeeks } from "../redux/selectors/weeksSelectors";
+import {
+  selectMySubmissions,
+  selectSubmissionsLoading,
+} from "../redux/selectors/submissionsSelectors";
+import {
+  selectAdminSubmissions,
+  selectAdminLoading,
+} from "../redux/selectors/adminSelectors";
+import {
+  selectIsAdmin,
+  selectIsAuthenticated,
+} from "../redux/selectors/authSelectors";
 
 const Challenges = () => {
   const dispatch = useDispatch();
@@ -21,6 +41,10 @@ const Challenges = () => {
   const adminLoading = useSelector(selectAdminLoading);
   const [submissionCounts, setSubmissionCounts] = useState({});
   const [loading, setLoading] = useState(true);
+  const [activeWeekId, setActiveWeekId] = useState("");
+  const [activeItemId, setActiveItemId] = useState("");
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [isListOpen, setIsListOpen] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -36,9 +60,11 @@ const Challenges = () => {
           await dispatch(fetchAdminSubmissions()).unwrap();
         }
       } catch (error) {
-        console.error('Error fetching data:', error);
-        if (error.message?.includes('Network Error') || error.code === 'ERR_NETWORK') {
-          console.error('Backend API is not reachable. Please configure REACT_APP_API_URL in Netlify environment variables.');
+        console.error("Error fetching data:", error);
+        if (error.message?.includes("Network Error") || error.code === "ERR_NETWORK") {
+          console.error(
+            "Backend API is not reachable. Please configure REACT_APP_API_URL in Netlify environment variables.",
+          );
         }
       } finally {
         setLoading(false);
@@ -51,7 +77,7 @@ const Challenges = () => {
   useEffect(() => {
     if (!isAdmin) return;
     const counts = {};
-    adminSubmissions.forEach(sub => {
+    adminSubmissions.forEach((sub) => {
       const weekId = sub.week_id?._id || sub.week_id;
       if (weekId) {
         if (!counts[weekId]) {
@@ -68,8 +94,19 @@ const Challenges = () => {
     return [...weeks].sort((a, b) => b.week_number - a.week_number);
   }, [weeks]);
 
+  useEffect(() => {
+    if (!sortedWeeks.length) return;
+    if (!activeWeekId) {
+      setActiveWeekId(sortedWeeks[0]._id);
+    }
+  }, [sortedWeeks, activeWeekId]);
+
+  const activeWeek = sortedWeeks.find((week) => week._id === activeWeekId);
+
   const getUserSubmission = (weekId) => {
-    return submissions.find(sub => sub.week_id?._id === weekId || sub.week_id === weekId);
+    return submissions.find(
+      (sub) => sub.week_id?._id === weekId || sub.week_id === weekId,
+    );
   };
 
   const handleEditWeek = (weekId) => {
@@ -77,22 +114,90 @@ const Challenges = () => {
   };
 
   const handleDeleteWeek = async (weekId) => {
-    if (!window.confirm('Are you sure you want to delete this week? This action cannot be undone.')) {
+    if (!window.confirm("Are you sure you want to delete this week? This action cannot be undone.")) {
       return;
     }
     try {
       await dispatch(deleteAdminWeek(weekId)).unwrap();
       dispatch(fetchWeeks());
-      alert('Week deleted successfully');
+      alert("Week deleted successfully");
     } catch (error) {
-      alert(error || 'Failed to delete week');
+      alert(error || "Failed to delete week");
     }
   };
 
   const formatDate = (date) => {
-    if (!date) return 'Not set';
+    if (!date) return "Not set";
     return new Date(date).toLocaleDateString();
   };
+
+  const formatRange = (week) => {
+    if (!week?.startDate && !week?.deadlineDate) return "Dates TBD";
+    const start = week.startDate ? formatDate(week.startDate) : "TBD";
+    const end = week.deadlineDate ? formatDate(week.deadlineDate) : "TBD";
+    return `${start} - ${end}`;
+  };
+
+  const getStatusPill = (status) => {
+    if (status === "approved") return "status-success";
+    if (status === "rejected") return "status-danger";
+    if (status === "pending") return "status-warning";
+    return "status-info";
+  };
+
+  const listItems = useMemo(() => {
+    if (!activeWeek) return [];
+    const items = [
+      {
+        id: `week-${activeWeek._id}`,
+        type: "challenge",
+        title: activeWeek.title || `Week ${activeWeek.week_number}`,
+        status: activeWeek.isActive ? "Active" : "Archived",
+        week: activeWeek,
+      },
+    ];
+
+    if (isAdmin) {
+      const weekSubmissions = adminSubmissions.filter((sub) => {
+        const weekId = sub.week_id?._id || sub.week_id;
+        return weekId === activeWeek._id;
+      });
+      weekSubmissions.forEach((submission) => {
+        items.push({
+          id: `submission-${submission._id}`,
+          type: "submission",
+          title: submission.user_id?.displayName || submission.user_id?.username || "Submission",
+          status: submission.status || "pending",
+          submission,
+        });
+      });
+    } else if (isAuthenticated) {
+      const userSubmission = getUserSubmission(activeWeek._id);
+      if (userSubmission) {
+        items.push({
+          id: `submission-${userSubmission._id}`,
+          type: "submission",
+          title: "Your Submission",
+          status: userSubmission.status || "pending",
+          submission: userSubmission,
+        });
+      }
+    }
+
+    return items;
+  }, [activeWeek, isAdmin, adminSubmissions, isAuthenticated, submissions]);
+
+  useEffect(() => {
+    if (!listItems.length) {
+      setActiveItemId("");
+      return;
+    }
+    if (!listItems.find((item) => item.id === activeItemId)) {
+      setActiveItemId(listItems[0].id);
+    }
+  }, [listItems, activeItemId]);
+
+  const activeItem = listItems.find((item) => item.id === activeItemId);
 
   if (loading || submissionsLoading || adminLoading) {
     return (
@@ -103,16 +208,6 @@ const Challenges = () => {
     );
   }
 
-  const getStatusBadge = (status) => {
-    const badges = {
-      pending: { class: 'badge-warning', text: 'Pending' },
-      approved: { class: 'badge-success', text: 'Approved' },
-      rejected: { class: 'badge-danger', text: 'Rejected' }
-    };
-    const badge = badges[status] || badges.pending;
-    return <span className={`badge ${badge.class}`}>{badge.text}</span>;
-  };
-
   const isDeadlinePassed = (deadlineDate) => {
     if (!deadlineDate) return false;
     return new Date() > new Date(deadlineDate);
@@ -121,165 +216,392 @@ const Challenges = () => {
   return (
     <>
       <Navbar />
-      <div className="container" style={{ marginTop: '32px' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '32px' }}>
-          <h1>Weekly Challenges</h1>
-          {isAdmin && (
-            <Link to="/admin?tab=weeks" className="btn btn-primary">
-              Manage Challenges
-            </Link>
-          )}
-        </div>
-
-        {sortedWeeks.length === 0 ? (
-          <div className="card">
-            <p style={{ color: 'var(--text-secondary)' }}>No challenges available yet.</p>
-            {isAdmin && (
-              <Link to="/admin?tab=weeks" className="btn btn-primary" style={{ marginTop: '16px' }}>
-                Create First Challenge
+      <div className="dashboard-shell">
+        <div className="dashboard-body">
+          <div className="dashboard-header">
+            <div>
+              <div className="dashboard-title">Weekly Challenge Inbox</div>
+              <div className="dashboard-subtitle">
+                Browse each week like curated correspondence and drill into submissions.
+              </div>
+            </div>
+            <div className="dashboard-actions">
+              <button
+                className="ghost-btn mobile-only"
+                onClick={() => setIsSidebarOpen(true)}
+              >
+                <Menu size={16} /> Menu
+              </button>
+              <button className="ghost-btn mobile-only" onClick={() => setIsListOpen(true)}>
+                <List size={16} /> Items
+              </button>
+              {isAdmin && (
+                <Link to="/admin?tab=weeks" className="ghost-btn">
+                  Manage Challenges
+                </Link>
+              )}
+              <Link to="/milestones" className="ghost-btn">
+                Milestones
               </Link>
-            )}
+            </div>
           </div>
-        ) : (
-          <div className="grid grid-2">
-            {sortedWeeks.map(week => {
-              const userSubmission = isAuthenticated && !isAdmin ? getUserSubmission(week._id) : null;
-              const counts = submissionCounts[week._id];
-              const deadlinePassed = isDeadlinePassed(week.deadlineDate);
 
-              return (
-                <div key={week._id} className="card">
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: '16px' }}>
-                    <h2 style={{ marginBottom: '8px' }}>
-                      Week {week.week_number}
-                    </h2>
-                    <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                      {week.isActive && (
-                        <span className="badge badge-success">Active</span>
-                      )}
-                      {deadlinePassed && (
-                        <span className="badge badge-danger">Closed</span>
-                      )}
-                    </div>
-                  </div>
-
-                  {week.title && (
-                    <h3 style={{ marginBottom: '12px', color: 'var(--text-primary)' }}>{week.title}</h3>
-                  )}
-
-                  {week.description && (
-                    <p style={{ marginBottom: '16px', color: 'var(--text-secondary)' }}>{week.description}</p>
-                  )}
-
-                  <div style={{ marginBottom: '16px', fontSize: '14px', color: 'var(--text-secondary)' }}>
-                    {week.deadlineDate && (
-                      <p>
-                        <strong>Deadline:</strong> {formatDate(week.deadlineDate)}
-                        {deadlinePassed && <span style={{ color: 'var(--danger)', marginLeft: '8px' }}>(Passed)</span>}
-                      </p>
-                    )}
-                    {week.startDate && (
-                      <p><strong>Start:</strong> {formatDate(week.startDate)}</p>
-                    )}
-                  </div>
-
-                  {isAdmin && counts && (
-                    <div style={{ marginBottom: '16px', padding: '12px', backgroundColor: 'var(--bg-tertiary)', borderRadius: '6px' }}>
-                      <strong style={{ fontSize: '14px' }}>Submissions:</strong>
-                      <div style={{ display: 'flex', gap: '12px', marginTop: '8px', flexWrap: 'wrap' }}>
-                        <span style={{ fontSize: '13px' }}>Total: {counts.total}</span>
-                        <span style={{ fontSize: '13px', color: 'var(--success)' }}>Approved: {counts.approved}</span>
-                        <span style={{ fontSize: '13px', color: 'var(--warning)' }}>Pending: {counts.pending}</span>
-                        <span style={{ fontSize: '13px', color: 'var(--danger)' }}>Rejected: {counts.rejected}</span>
-                      </div>
-                    </div>
-                  )}
-
-                  {isAuthenticated && !isAdmin && userSubmission && (
-                    <div style={{ marginBottom: '16px', padding: '12px', backgroundColor: 'var(--badge-warning-bg)', color: 'var(--badge-warning-text)', borderRadius: '6px' }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <span style={{ fontSize: '14px', fontWeight: '600' }}>Your Submission:</span>
-                        {getStatusBadge(userSubmission.status)}
-                      </div>
-                      {userSubmission.reviewerNotes && (
-                        <p style={{ marginTop: '8px', fontSize: '13px' }}>
-                          {userSubmission.reviewerNotes}
-                        </p>
-                      )}
-                    </div>
-                  )}
-
-                  {week.resources && week.resources.length > 0 && (
-                    <div style={{ marginBottom: '16px' }}>
-                      <strong style={{ fontSize: '14px' }}>Resources:</strong>
-                      <ul style={{ marginTop: '8px', paddingLeft: '20px' }}>
-                        {week.resources.map((resource, idx) => (
-                          <li key={idx}>
-                          <a href={resource} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--primary)' }}>
-                            {resource}
-                          </a>
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  )}
-
-                  <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-                    <Link
-                      to={`/gallery/${week._id}`}
-                      className="btn btn-outline"
-                      style={{ flex: 1, textAlign: 'center' }}
-                    >
-                      View Submissions
-                    </Link>
-
-                    {isAuthenticated && !isAdmin && (
-                      <>
-                        {!userSubmission && !deadlinePassed && (
-                          <Link
-                            to={`/submit?week=${week._id}`}
-                            className="btn btn-primary"
-                            style={{ flex: 1, textAlign: 'center' }}
-                          >
-                            Submit Project
-                          </Link>
-                        )}
-                        {userSubmission && !deadlinePassed && (
-                          <Link
-                            to={`/submit?week=${week._id}&edit=${userSubmission._id}`}
-                            className="btn btn-secondary"
-                            style={{ flex: 1, textAlign: 'center' }}
-                          >
-                            Update Submission
-                          </Link>
-                        )}
-                      </>
-                    )}
-
-                    {isAdmin && (
-                      <>
+          {isSidebarOpen && (
+            <div className="mobile-overlay">
+              <div className="mobile-panel pane glass-panel">
+                <div className="pane-header">
+                  <span className="pane-title">Weeks</span>
+                  <button className="ghost-btn" onClick={() => setIsSidebarOpen(false)}>
+                    Close
+                  </button>
+                </div>
+                <div className="pane-body">
+                  <div className="list-stack">
+                    {sortedWeeks.map((week) => {
+                      const counts = submissionCounts[week._id];
+                      return (
                         <button
-                          onClick={() => handleEditWeek(week._id)}
-                          className="btn btn-secondary"
-                          style={{ flex: 1, textAlign: 'center' }}
+                          key={week._id}
+                          className={`list-row ${
+                            activeWeekId === week._id ? "active" : ""
+                          }`}
+                          onClick={() => {
+                            setActiveWeekId(week._id);
+                            setIsSidebarOpen(false);
+                          }}
+                          type="button"
                         >
-                          Edit
+                          <div>
+                            <div className="list-row-title">
+                              Week {week.week_number}: {week.title || "Untitled"}
+                            </div>
+                            <div className="list-row-meta">
+                              <CalendarDays size={14} />
+                              <span>{formatRange(week)}</span>
+                            </div>
+                          </div>
+                          {isAdmin && counts && (
+                            <span className="status-pill status-info">
+                              {counts.total} submissions
+                            </span>
+                          )}
                         </button>
-                        <button
-                          onClick={() => handleDeleteWeek(week._id)}
-                          className="btn btn-danger"
-                          style={{ flex: 1, textAlign: 'center' }}
-                        >
-                          Delete
-                        </button>
-                      </>
-                    )}
+                      );
+                    })}
                   </div>
                 </div>
-              );
-            })}
+              </div>
+            </div>
+          )}
+
+          {isListOpen && (
+            <div className="mobile-overlay">
+              <div className="mobile-panel list pane glass-panel">
+                <div className="pane-header">
+                  <span className="pane-title">Inbox</span>
+                  <button className="ghost-btn" onClick={() => setIsListOpen(false)}>
+                    Close
+                  </button>
+                </div>
+                <div className="pane-body">
+                  {listItems.length === 0 ? (
+                    <p className="tree-subtle">No items yet.</p>
+                  ) : (
+                    <div className="list-stack">
+                      {listItems.map((item) => (
+                        <button
+                          key={item.id}
+                          className={`list-row ${activeItemId === item.id ? "active" : ""}`}
+                          onClick={() => {
+                            setActiveItemId(item.id);
+                            setIsListOpen(false);
+                          }}
+                          type="button"
+                        >
+                          <div>
+                            <div className="list-row-title">{item.title}</div>
+                            <div className="list-row-meta">
+                              {item.type === "submission" ? (
+                                <>
+                                  <User size={14} />
+                                  <span>Submission</span>
+                                </>
+                              ) : (
+                                <>
+                                  <Inbox size={14} />
+                                  <span>Challenge Brief</span>
+                                </>
+                              )}
+                            </div>
+                          </div>
+                          <span className={`status-pill ${getStatusPill(item.status)}`}>
+                            {item.status}
+                          </span>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+
+          <div className="dashboard-grid">
+            <div className="desktop-only pane glass-panel">
+              <div className="pane-header">
+                <span className="pane-title">Weekly Challenges</span>
+                <span className="tree-subtle">{sortedWeeks.length} weeks</span>
+              </div>
+              <div className="pane-body">
+                {sortedWeeks.length === 0 ? (
+                  <p className="tree-subtle">No challenges available yet.</p>
+                ) : (
+                  <div className="list-stack">
+                    {sortedWeeks.map((week) => {
+                      const counts = submissionCounts[week._id];
+                      return (
+                        <motion.button
+                          key={week._id}
+                          className={`list-row ${
+                            activeWeekId === week._id ? "active" : ""
+                          }`}
+                          onClick={() => setActiveWeekId(week._id)}
+                          type="button"
+                          initial={{ opacity: 0, y: 8 }}
+                          animate={{ opacity: 1, y: 0 }}
+                        >
+                          <div>
+                            <div className="list-row-title">
+                              Week {week.week_number}: {week.title || "Untitled"}
+                            </div>
+                            <div className="list-row-meta">
+                              <CalendarDays size={14} />
+                              <span>{formatRange(week)}</span>
+                            </div>
+                          </div>
+                          {isAdmin && counts && (
+                            <span className="status-pill status-info">
+                              {counts.total} submissions
+                            </span>
+                          )}
+                        </motion.button>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div className="desktop-only pane">
+              <div className="pane-header">
+                <span className="pane-title">Inbox</span>
+                <span className="tree-subtle">
+                  {activeWeek ? `Week ${activeWeek.week_number}` : "Select a week"}
+                </span>
+              </div>
+              <div className="pane-body">
+                {listItems.length === 0 ? (
+                  <p className="tree-subtle">No items yet.</p>
+                ) : (
+                  <div className="list-stack">
+                    {listItems.map((item) => (
+                      <motion.button
+                        key={item.id}
+                        className={`list-row ${activeItemId === item.id ? "active" : ""}`}
+                        onClick={() => setActiveItemId(item.id)}
+                        type="button"
+                        initial={{ opacity: 0, y: 8 }}
+                        animate={{ opacity: 1, y: 0 }}
+                      >
+                        <div>
+                          <div className="list-row-title">{item.title}</div>
+                          <div className="list-row-meta">
+                            {item.type === "submission" ? (
+                              <>
+                                <User size={14} />
+                                <span>Submission</span>
+                              </>
+                            ) : (
+                              <>
+                                <Inbox size={14} />
+                                <span>Challenge Brief</span>
+                              </>
+                            )}
+                          </div>
+                        </div>
+                        <span className={`status-pill ${getStatusPill(item.status)}`}>
+                          {item.status}
+                        </span>
+                      </motion.button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div className="pane">
+              <div className="pane-header">
+                <span className="pane-title">Detail View</span>
+                <span className="tree-subtle">
+                  {activeWeek ? `Week ${activeWeek.week_number}` : "Waiting"}
+                </span>
+              </div>
+              <div className="pane-body">
+                <AnimatePresence mode="wait">
+                  <motion.div
+                    key={activeItem?.id || "empty"}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -10 }}
+                    transition={{ duration: 0.2 }}
+                  >
+                    {!activeWeek ? (
+                      <div className="detail-card">
+                        <div className="detail-title">Select a week</div>
+                        <p className="detail-text">
+                          Choose a week from the sidebar to view challenge details.
+                        </p>
+                      </div>
+                    ) : activeItem?.type === "submission" ? (
+                      <div className="detail-card">
+                        <div className="detail-title">Submission Details</div>
+                        <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "12px" }}>
+                          {isAdmin ? <Shield size={16} /> : <User size={16} />}
+                          <span className="list-row-title">{activeItem.title}</span>
+                        </div>
+                        <div className="list-row-meta" style={{ marginBottom: "12px" }}>
+                          <span className={`status-pill ${getStatusPill(activeItem.status)}`}>
+                            {activeItem.status}
+                          </span>
+                          <span>Week {activeWeek.week_number}</span>
+                        </div>
+                        {activeItem.submission?.description && (
+                          <p className="detail-text" style={{ marginBottom: "12px" }}>
+                            {activeItem.submission.description}
+                          </p>
+                        )}
+                        <div className="list-row-meta" style={{ gap: "16px" }}>
+                          {activeItem.submission?.github_repo_url && (
+                            <a
+                              href={activeItem.submission.github_repo_url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="ghost-btn"
+                            >
+                              GitHub
+                            </a>
+                          )}
+                          {activeItem.submission?.github_live_demo_url && (
+                            <a
+                              href={activeItem.submission.github_live_demo_url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="ghost-btn"
+                            >
+                              Live Demo
+                            </a>
+                          )}
+                        </div>
+                        {isAdmin && (
+                          <div style={{ marginTop: "16px" }}>
+                            <Link to="/admin?tab=submissions" className="btn btn-secondary">
+                              Review in Admin
+                            </Link>
+                          </div>
+                        )}
+                      </div>
+                    ) : (
+                      <div className="detail-card">
+                        <div className="detail-title">
+                          Week {activeWeek.week_number}: {activeWeek.title || "Challenge Brief"}
+                        </div>
+                        {activeWeek.description && (
+                          <p className="detail-text" style={{ marginBottom: "12px" }}>
+                            {activeWeek.description}
+                          </p>
+                        )}
+                        <div className="list-row-meta" style={{ marginBottom: "12px" }}>
+                          <CalendarDays size={14} />
+                          <span>{formatRange(activeWeek)}</span>
+                          <span>•</span>
+                          <Clock size={14} />
+                          <span>
+                            {isDeadlinePassed(activeWeek.deadlineDate)
+                              ? "Closed"
+                              : "Open"}
+                          </span>
+                        </div>
+                        {activeWeek.resources && activeWeek.resources.length > 0 && (
+                          <div style={{ marginBottom: "12px" }}>
+                            <div className="list-row-title">Resources</div>
+                            <ul style={{ marginTop: "8px", paddingLeft: "18px" }}>
+                              {activeWeek.resources.map((resource, idx) => (
+                                <li key={idx} className="detail-text">
+                                  <a href={resource} target="_blank" rel="noopener noreferrer">
+                                    {resource}
+                                  </a>
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        )}
+                        <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
+                          <Link to={`/gallery/${activeWeek._id}`} className="btn btn-outline">
+                            View Submissions
+                          </Link>
+                          {isAuthenticated && !isAdmin && (
+                            <>
+                              {!getUserSubmission(activeWeek._id) &&
+                                !isDeadlinePassed(activeWeek.deadlineDate) && (
+                                  <Link to={`/submit?week=${activeWeek._id}`} className="btn btn-primary">
+                                    Submit Project
+                                  </Link>
+                                )}
+                              {getUserSubmission(activeWeek._id) &&
+                                !isDeadlinePassed(activeWeek.deadlineDate) && (
+                                  <Link
+                                    to={`/submit?week=${activeWeek._id}&edit=${getUserSubmission(activeWeek._id)._id}`}
+                                    className="btn btn-secondary"
+                                  >
+                                    Update Submission
+                                  </Link>
+                                )}
+                            </>
+                          )}
+                          {isAdmin && (
+                            <>
+                              <button
+                                onClick={() => handleEditWeek(activeWeek._id)}
+                                className="btn btn-secondary"
+                              >
+                                Edit
+                              </button>
+                              <button
+                                onClick={() => handleDeleteWeek(activeWeek._id)}
+                                className="btn btn-danger"
+                              >
+                                Delete
+                              </button>
+                            </>
+                          )}
+                        </div>
+                      </div>
+                    )}
+                  </motion.div>
+                </AnimatePresence>
+              </div>
+              <div className="pane-body" style={{ paddingTop: 0 }}>
+                <div className="list-row-meta">
+                  <CheckCircle2 size={14} />
+                  <span>Keep submissions tidy like a curated mailbox.</span>
+                  <span>•</span>
+                  <Inbox size={14} />
+                  <span>{activeWeek ? "Week selected" : "Week not set"}</span>
+                </div>
+              </div>
+            </div>
           </div>
-        )}
+        </div>
       </div>
     </>
   );
