@@ -7,7 +7,7 @@
 }
 
 :root {
-  /* Light theme colors */
+  
   --bg-primary: #ffffff;
   --bg-secondary: #f5f5f5;
   --bg-tertiary: #f9fafb;
@@ -19,7 +19,7 @@
   --shadow: rgba(0, 0, 0, 0.1);
   --shadow-hover: rgba(0, 0, 0, 0.15);
   
-  /* Accent colors */
+  
   --primary: #6366f1;
   --primary-hover: #4f46e5;
   --secondary: #6b7280;
@@ -31,7 +31,7 @@
   --warning: #f59e0b;
   --info: #3b82f6;
   
-  /* Badge colors */
+  
   --badge-success-bg: #d1fae5;
   --badge-success-text: #065f46;
   --badge-warning-bg: #fef3c7;
@@ -41,7 +41,7 @@
   --badge-info-bg: #dbeafe;
   --badge-info-text: #1e40af;
   
-  /* Alert colors */
+  
   --alert-success-bg: #d1fae5;
   --alert-success-text: #065f46;
   --alert-success-border: #10b981;
@@ -54,7 +54,7 @@
 }
 
 [data-theme="dark"] {
-  /* Dark theme colors */
+  
   --bg-primary: #1f2937;
   --bg-secondary: #111827;
   --bg-tertiary: #374151;
@@ -66,7 +66,7 @@
   --shadow: rgba(0, 0, 0, 0.3);
   --shadow-hover: rgba(0, 0, 0, 0.4);
   
-  /* Accent colors (slightly adjusted for dark mode) */
+  
   --primary: #818cf8;
   --primary-hover: #6366f1;
   --secondary: #9ca3af;
@@ -78,7 +78,7 @@
   --warning: #fbbf24;
   --info: #60a5fa;
   
-  /* Badge colors (dark mode) */
+  
   --badge-success-bg: #064e3b;
   --badge-success-text: #6ee7b7;
   --badge-warning-bg: #78350f;
@@ -88,7 +88,7 @@
   --badge-info-bg: #1e3a8a;
   --badge-info-text: #93c5fd;
   
-  /* Alert colors (dark mode) */
+  
   --alert-success-bg: #064e3b;
   --alert-success-text: #6ee7b7;
   --alert-success-border: #34d399;

@@ -1,10 +1,13 @@
-import React, { useEffect, useState, useRef } from 'react';
-import { Link } from 'react-router-dom';
-import { useDispatch, useSelector } from 'react-redux';
-import Navbar from '../components/Navbar';
-import './Home.css';
-import { fetchPublicStats } from '../redux/thunks/weeksThunks';
-import { selectPublicStats, selectWeeksLoading } from '../redux/selectors/weeksSelectors';
+import React, { useEffect, useState, useRef } from "react";
+import { Link } from "react-router-dom";
+import { useDispatch, useSelector } from "react-redux";
+import Navbar from "../components/Navbar";
+import "./Home.css";
+import { fetchPublicStats } from "../redux/thunks/weeksThunks";
+import {
+  selectPublicStats,
+  selectWeeksLoading,
+} from "../redux/selectors/weeksSelectors";
 
 const Home = () => {
   const dispatch = useDispatch();
@@ -34,7 +37,7 @@ const Home = () => {
           }
         });
       },
-      { threshold: 0.5 }
+      { threshold: 0.5 },
     );
 
     observer.observe(currentRef);
@@ -45,11 +48,11 @@ const Home = () => {
   }, [countersAnimated, loading]);
 
   const animateCounters = () => {
-    const statNumbers = document.querySelectorAll('.stat-number');
+    const statNumbers = document.querySelectorAll(".stat-number");
     statNumbers.forEach((stat) => {
-      const target = parseInt(stat.getAttribute('data-target')) || 0;
+      const target = parseInt(stat.getAttribute("data-target")) || 0;
       if (target === 0) {
-        stat.textContent = '0';
+        stat.textContent = "0";
         return;
       }
       const duration = 2000;
@@ -73,7 +76,7 @@ const Home = () => {
   const displayStats = {
     totalUsers: stats?.totalUsers || 0,
     totalWeeks: stats?.totalWeeks || 0,
-    totalSubmissions: stats?.totalSubmissions || 0
+    totalSubmissions: stats?.totalSubmissions || 0,
   };
 
   return (
@@ -86,21 +89,27 @@ const Home = () => {
           <div className="gradient-orb orb-3"></div>
           <div className="particles">
             {[...Array(20)].map((_, i) => (
-              <div key={i} className="particle" style={{
-                left: `${Math.random() * 100}%`,
-                top: `${Math.random() * 100}%`,
-                animationDelay: `${Math.random() * 3}s`,
-                animationDuration: `${3 + Math.random() * 4}s`
-              }}></div>
+              <div
+                key={i}
+                className="particle"
+                style={{
+                  left: `${Math.random() * 100}%`,
+                  top: `${Math.random() * 100}%`,
+                  animationDelay: `${Math.random() * 3}s`,
+                  animationDuration: `${3 + Math.random() * 4}s`,
+                }}
+              ></div>
             ))}
           </div>
         </div>
 
         <div className="container">
-          <div className={`hero-section ${isVisible ? 'fade-in' : ''}`}>
+          <div className={`hero-section ${isVisible ? "fade-in" : ""}`}>
             <div className="hero-content">
               <div className="hero-badge">
-                <span className="badge-text">⚡ Where Excellence Meets Discipline</span>
+                <span className="badge-text">
+                  Where Excellence Meets Discipline
+                </span>
               </div>
               <h1 className="hero-title">
                 <span className="title-line">Athena</span>
@@ -108,85 +117,106 @@ const Home = () => {
               </h1>
               <div className="quote-container">
                 <div className="quote-mark quote-mark-left">"</div>
-                <p className="hero-quote">
-                  Discipline is the motivation
-                </p>
+                <p className="hero-quote">Discipline is the motivation</p>
                 <div className="quote-mark quote-mark-right">"</div>
               </div>
               <p className="hero-description">
-                Weekly project challenges for teams of 3. Submit your GitHub repos and live demos, 
-                showcase your work, and grow together through disciplined practice.
+                Weekly project challenges for teams of 3. Submit your GitHub
+                repos and live demos, showcase your work, and grow together
+                through disciplined practice.
               </p>
               <div className="hero-buttons">
                 <Link to="/challenges" className="btn btn-primary btn-animated">
                   <span>View Challenges</span>
-                  <span className="btn-icon">→</span>
+                  <span className="btn-icon">-</span>
                 </Link>
                 <Link to="/gallery" className="btn btn-outline btn-animated">
                   <span>View Gallery</span>
-                  <span className="btn-icon">🎨</span>
+                  <span className="btn-icon">Gallery</span>
                 </Link>
                 <Link to="/signup" className="btn btn-success btn-animated">
                   <span>Register Team</span>
-                  <span className="btn-icon">🚀</span>
+                  <span className="btn-icon">Register</span>
                 </Link>
                 <Link to="/login" className="btn btn-secondary btn-animated">
                   <span>Login</span>
-                  <span className="btn-icon">🔐</span>
+                  <span className="btn-icon">Login</span>
                 </Link>
               </div>
             </div>
           </div>
 
-          <div className={`features-section ${isVisible ? 'slide-up' : ''}`}>
+          <div className={`features-section ${isVisible ? "slide-up" : ""}`}>
             <div className="features-grid">
               <div className="feature-card card-hover">
-                <div className="feature-icon">📅</div>
+                <div className="feature-icon">Weekly</div>
                 <h3 className="feature-title">Weekly Challenges</h3>
                 <p className="feature-description">
-                  Each week brings a new challenge. Build projects, learn new skills, and push your boundaries.
+                  Each week brings a new challenge. Build projects, learn new
+                  skills, and push your boundaries.
                 </p>
                 <div className="feature-shine"></div>
               </div>
               <div className="feature-card card-hover">
-                <div className="feature-icon">💻</div>
+                <div className="feature-icon">Teams</div>
                 <h3 className="feature-title">Team Submissions</h3>
                 <p className="feature-description">
-                  Submit your GitHub repository and live demo. {displayStats.totalSubmissions} submissions from {displayStats.totalUsers} teams so far.
+                  Progress through milestone paths and unlock new levels as you
+                  complete each challenge.
                 </p>
                 <div className="feature-shine"></div>
               </div>
               <div className="feature-card card-hover">
-                <div className="feature-icon">🖼️</div>
+                <div className="feature-icon">Gallery</div>
                 <h3 className="feature-title">Public Gallery</h3>
                 <p className="feature-description">
-                  Browse approved submissions from all teams. Get inspired and see what others are building.
+                  Browse approved submissions from all teams. Get inspired and
+                  see what others are building.
                 </p>
                 <div className="feature-shine"></div>
               </div>
               <div className="feature-card card-hover">
-                <div className="feature-icon">🎯</div>
+                <div className="feature-icon">Milestones</div>
                 <h3 className="feature-title">Milestone Challenges</h3>
                 <p className="feature-description">
-                  Follow a structured path: categories → levels → challenges. Unlock levels as you progress.
+                  Follow a structured path: categories - levels - challenges.
+                  Unlock levels as you progress.
                 </p>
                 <div className="feature-shine"></div>
               </div>
             </div>
           </div>
 
-          <div ref={statsRef} className={`stats-section ${isVisible ? 'fade-in-delay' : ''}`}>
+          <div
+            ref={statsRef}
+            className={`stats-section ${isVisible ? "fade-in-delay" : ""}`}
+          >
             <div className="stats-grid">
               <div className="stat-item">
-                <div className="stat-number" data-target={displayStats.totalUsers}>0</div>
+                <div
+                  className="stat-number"
+                  data-target={displayStats.totalUsers}
+                >
+                  0
+                </div>
                 <div className="stat-label">Active Teams</div>
               </div>
               <div className="stat-item">
-                <div className="stat-number" data-target={displayStats.totalWeeks}>0</div>
+                <div
+                  className="stat-number"
+                  data-target={displayStats.totalWeeks}
+                >
+                  0
+                </div>
                 <div className="stat-label">Challenges</div>
               </div>
               <div className="stat-item">
-                <div className="stat-number" data-target={displayStats.totalSubmissions}>0</div>
+                <div
+                  className="stat-number"
+                  data-target={displayStats.totalSubmissions}
+                >
+                  0
+                </div>
                 <div className="stat-label">Submissions</div>
               </div>
             </div>
@@ -198,5 +228,3 @@ const Home = () => {
 };
 
 export default Home;
-
-

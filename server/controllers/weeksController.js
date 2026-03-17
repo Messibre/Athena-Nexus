@@ -2,7 +2,7 @@ import Week from '../models/Week.js';
 import Submission from '../models/Submission.js';
 import User from '../models/User.js';
 
-// Get all weeks (public)
+
 export const getWeeks = async (req, res) => {
   try {
     const weeks = await Week.find().sort({ week_number: -1 });
@@ -13,7 +13,7 @@ export const getWeeks = async (req, res) => {
   }
 };
 
-// Get active week
+
 export const getActiveWeek = async (req, res) => {
   try {
     const week = await Week.findOne({ isActive: true });
@@ -27,7 +27,7 @@ export const getActiveWeek = async (req, res) => {
   }
 };
 
-// Get week by ID
+
 export const getWeekById = async (req, res) => {
   try {
     const week = await Week.findById(req.params.id);
@@ -41,7 +41,7 @@ export const getWeekById = async (req, res) => {
   }
 };
 
-// Get submissions for a week (public - only approved)
+
 export const getWeekSubmissions = async (req, res) => {
   try {
     const submissions = await Submission.find({
@@ -58,7 +58,7 @@ export const getWeekSubmissions = async (req, res) => {
   }
 };
 
-// Get public stats (no authentication required)
+
 export const getPublicStats = async (req, res) => {
   try {
     const totalUsers = await User.countDocuments({ role: 'member' });

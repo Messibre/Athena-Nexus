@@ -23,7 +23,7 @@ export const getPublicSubmissions = async (req, res) => {
   }
 };
 
-// Get user's own submissions (protected)
+
 export const getMySubmissions = async (req, res) => {
   try {
     const submissions = await Submission.find({ user_id: req.user._id })
@@ -37,7 +37,7 @@ export const getMySubmissions = async (req, res) => {
   }
 };
 
-// Get submission by ID (optional auth - public can see approved, owners/admins can see all)
+
 export const getSubmissionById = async (req, res) => {
   try {
     const submission = await Submission.findById(req.params.id)
@@ -48,7 +48,7 @@ export const getSubmissionById = async (req, res) => {
       return res.status(404).json({ message: "Submission not found" });
     }
 
-    // Public can only see approved submissions
+    
     const token = req.headers.authorization?.split(" ")[1];
     if (!token) {
       if (submission.status !== "approved") {
@@ -57,20 +57,20 @@ export const getSubmissionById = async (req, res) => {
       return res.json(submission);
     }
 
-    // If token exists, verify it and check ownership/admin
+    
     try {
       const decoded = jwt.verify(token, process.env.JWT_SECRET);
       const user = await User.findById(decoded.userId);
 
       if (!user) {
-        // Invalid user, treat as public
+        
         if (submission.status !== "approved") {
           return res.status(403).json({ message: "Submission not available" });
         }
         return res.json(submission);
       }
 
-      // Allow if: approved (public), owner, or admin
+      
       const isOwner = submission.user_id._id.toString() === user._id.toString();
       const isAdmin = user.role === "admin";
 
@@ -82,7 +82,7 @@ export const getSubmissionById = async (req, res) => {
         .status(403)
         .json({ message: "Not authorized to view this submission" });
     } catch (authError) {
-      // Invalid token, treat as public
+      
       if (submission.status !== "approved") {
         return res.status(403).json({ message: "Submission not available" });
       }
@@ -94,7 +94,7 @@ export const getSubmissionById = async (req, res) => {
   }
 };
 
-// Create submission (protected)
+
 export const createSubmission = async (req, res) => {
   try {
     const {
@@ -112,7 +112,7 @@ export const createSubmission = async (req, res) => {
         .json({ message: "Week ID and GitHub repo URL are required" });
     }
 
-    // Validate GitHub URL
+    
     if (!isValidGitHubUrl(github_repo_url)) {
       return res.status(400).json({
         message:
@@ -120,25 +120,25 @@ export const createSubmission = async (req, res) => {
       });
     }
 
-    // Validate live demo URL if provided
+    
     if (github_live_demo_url && !isValidUrl(github_live_demo_url)) {
       return res.status(400).json({ message: "Invalid live demo URL" });
     }
 
-    // Check if week exists
+    
     const week = await Week.findById(week_id);
     if (!week) {
       return res.status(404).json({ message: "Week not found" });
     }
 
-    // Check if deadline has passed
+    
     if (week.deadlineDate && new Date() > new Date(week.deadlineDate)) {
       return res
         .status(400)
         .json({ message: "Submission deadline has passed" });
     }
 
-    // Check if user already submitted for this week
+    
     const existingSubmission = await Submission.findOne({
       user_id: req.user._id,
       week_id: week_id,
@@ -164,7 +164,7 @@ export const createSubmission = async (req, res) => {
 
     await submission.save();
 
-    // Log activity
+    
     await ActivityLog.create({
       user_id: req.user._id,
       action: "submit",
@@ -178,7 +178,7 @@ export const createSubmission = async (req, res) => {
   }
 };
 
-// Update submission (protected)
+
 export const updateSubmission = async (req, res) => {
   try {
     const submission = await Submission.findById(req.params.id);
@@ -187,14 +187,14 @@ export const updateSubmission = async (req, res) => {
       return res.status(404).json({ message: "Submission not found" });
     }
 
-    // Check if user owns this submission
+    
     if (submission.user_id.toString() !== req.user._id.toString()) {
       return res
         .status(403)
         .json({ message: "Not authorized to update this submission" });
     }
 
-    // Check if deadline has passed
+    
     const week = await Week.findById(submission.week_id);
     if (week.deadlineDate && new Date() > new Date(week.deadlineDate)) {
       return res
@@ -210,7 +210,7 @@ export const updateSubmission = async (req, res) => {
       screenshotUrl,
     } = req.body;
 
-    // Validate GitHub URL if provided
+    
     if (github_repo_url && !isValidGitHubUrl(github_repo_url)) {
       return res.status(400).json({
         message:
@@ -218,12 +218,12 @@ export const updateSubmission = async (req, res) => {
       });
     }
 
-    // Validate live demo URL if provided
+    
     if (github_live_demo_url && !isValidUrl(github_live_demo_url)) {
       return res.status(400).json({ message: "Invalid live demo URL" });
     }
 
-    // Update fields
+    
     if (github_repo_url) submission.github_repo_url = github_repo_url;
     if (github_live_demo_url !== undefined)
       submission.github_live_demo_url = github_live_demo_url;
@@ -231,14 +231,14 @@ export const updateSubmission = async (req, res) => {
     if (tags !== undefined) submission.tags = tags;
     if (screenshotUrl !== undefined) submission.screenshotUrl = screenshotUrl;
 
-    // Reset status to pending if it was rejected
+    
     if (submission.status === "rejected") {
       submission.status = "pending";
     }
 
     await submission.save();
 
-    // Log activity
+    
     await ActivityLog.create({
       user_id: req.user._id,
       action: "update",

@@ -255,12 +255,10 @@ const Submit = () => {
             <button
               type="submit"
               className="btn btn-primary"
-              style={{ width: '100%' }}
+              style={{ width: '100%', marginTop: '16px' }}
               disabled={loading || actionLoading}
             >
-              {loading || actionLoading
-                ? (submissionId ? 'Updating...' : 'Submitting...')
-                : (submissionId ? 'Update Submission' : 'Submit Project')}
+              {loading || actionLoading ? 'Submitting...' : submissionId ? 'Update Submission' : 'Submit Project'}
             </button>
           </form>
         </div>

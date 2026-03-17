@@ -18,7 +18,7 @@ const app = express();
 
 app.set("trust proxy", false);
 
-// Security middleware
+
 app.use(helmet());
 app.use(
   cors({
@@ -29,7 +29,7 @@ app.use(
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// MongoDB connection
+
 const connectDB = async () => {
   try {
     const mongoURI =
@@ -45,7 +45,7 @@ const connectDB = async () => {
   }
 };
 
-// Routes
+
 app.use("/api/auth", authRoutes);
 app.use("/api/submissions", submissionRoutes);
 app.use("/api/weeks", weekRoutes);
@@ -55,7 +55,7 @@ app.use("/api/milestones", milestonesRoutes);
 app.use("/api/admin/milestones", adminMilestonesRoutes);
 app.use("/api/users", usersRoutes);
 
-// Health check
+
 app.get("/api/health", (req, res) => {
   const dbStatus =
     mongoose.connection.readyState === 1 ? "connected" : "disconnected";
@@ -66,7 +66,7 @@ app.get("/api/health", (req, res) => {
   });
 });
 
-// Error handling middleware
+
 app.use((err, req, res, next) => {
   console.error("Unhandled error:", err);
   res.status(500).json({
@@ -75,7 +75,7 @@ app.use((err, req, res, next) => {
   });
 });
 
-// Start server after MongoDB connection
+
 const PORT = process.env.PORT || 5000;
 
 const startServer = async () => {
@@ -91,7 +91,7 @@ const startServer = async () => {
     process.exit(1);
   }
 
-  // Check for required environment variables
+  
   if (!process.env.JWT_SECRET) {
     console.error("⚠️  WARNING: JWT_SECRET is not set!");
     console.error("Run: cd server && npm run generate-secret");

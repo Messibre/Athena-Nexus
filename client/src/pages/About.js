@@ -112,6 +112,8 @@ const About = () => {
                 rel="noopener noreferrer"
                 className="contact-link"
               >
+              >
+              >
                 <span className="contact-icon">💬</span>
                 <span>Join Our Telegram Channel</span>
                 <span className="contact-arrow">→</span>
@@ -125,4 +127,7 @@ const About = () => {
 };
 
 export default About;
+
+
+
 

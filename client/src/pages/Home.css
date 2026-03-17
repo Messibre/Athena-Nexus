@@ -1,4 +1,4 @@
-/* Home Container */
+
 .home-container {
   position: relative;
   min-height: 100vh;
@@ -6,7 +6,7 @@
   background: linear-gradient(135deg, var(--bg-secondary) 0%, var(--bg-tertiary) 100%);
 }
 
-/* Animated Background */
+
 .animated-background {
   position: fixed;
   top: 0;
@@ -66,7 +66,7 @@
   }
 }
 
-/* Particles */
+
 .particles {
   position: absolute;
   width: 100%;
@@ -101,7 +101,7 @@
   }
 }
 
-/* Hero Section */
+
 .hero-section {
   position: relative;
   z-index: 1;
@@ -366,7 +366,7 @@
   transform: translateX(5px) scale(1.2);
 }
 
-/* Features Section */
+
 .features-section {
   position: relative;
   z-index: 1;
@@ -495,7 +495,7 @@
   }
 }
 
-/* Stats Section */
+
 .stats-section {
   position: relative;
   z-index: 1;
@@ -552,7 +552,7 @@
   letter-spacing: 1px;
 }
 
-/* Responsive Design */
+
 @media (max-width: 768px) {
   .hero-section {
     padding: 60px 20px 40px;
@@ -591,7 +591,7 @@
   }
 }
 
-/* Dark mode adjustments */
+
 [data-theme="dark"] .feature-card {
   background: rgba(31, 41, 55, 0.8);
 }

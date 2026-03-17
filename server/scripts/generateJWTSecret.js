@@ -1,10 +1,10 @@
-// Simple script to generate a secure JWT secret
-// Run with: node scripts/generateJWTSecret.js
+
+
 
 import crypto from 'crypto';
 
 const generateSecret = () => {
-  // Generate a random 64-character hex string
+  
   return crypto.randomBytes(32).toString('hex');
 };
 

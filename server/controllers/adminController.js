@@ -3,7 +3,7 @@ import User from "../models/User.js";
 import Submission from "../models/Submission.js";
 import { isValidPassword } from "../utils/validators.js";
 
-// Create week
+
 export const createWeek = async (req, res) => {
   try {
     const {
@@ -19,7 +19,7 @@ export const createWeek = async (req, res) => {
       return res.status(400).json({ message: "Week number is required" });
     }
 
-    // Check if week number already exists
+    
     const existingWeek = await Week.findOne({ week_number });
     if (existingWeek) {
       return res.status(400).json({ message: "Week number already exists" });
@@ -43,7 +43,7 @@ export const createWeek = async (req, res) => {
   }
 };
 
-// Update week
+
 export const updateWeek = async (req, res) => {
   try {
     const week = await Week.findById(req.params.id);
@@ -71,7 +71,7 @@ export const updateWeek = async (req, res) => {
   }
 };
 
-// Delete week
+
 export const deleteWeek = async (req, res) => {
   try {
     const week = await Week.findById(req.params.id);
@@ -79,7 +79,7 @@ export const deleteWeek = async (req, res) => {
       return res.status(404).json({ message: "Week not found" });
     }
 
-    // Check if there are submissions for this week
+    
     const submissions = await Submission.find({ week_id: week._id });
     if (submissions.length > 0) {
       return res.status(400).json({
@@ -95,7 +95,7 @@ export const deleteWeek = async (req, res) => {
   }
 };
 
-// Create group/user
+
 export const createUser = async (req, res) => {
   try {
     const { username, password, email, displayName, members, contactEmail } =
@@ -114,7 +114,7 @@ export const createUser = async (req, res) => {
       });
     }
 
-    // Check if username exists
+    
     const existingUser = await User.findOne({ username });
     if (existingUser) {
       return res.status(400).json({ message: "Username already exists" });
@@ -122,7 +122,7 @@ export const createUser = async (req, res) => {
 
     const user = new User({
       username,
-      password_hash: password, // Will be hashed by pre-save hook
+      password_hash: password, 
       email: email || "",
       role: "member",
       displayName: displayName || username,
@@ -143,7 +143,7 @@ export const createUser = async (req, res) => {
   }
 };
 
-// Get all users
+
 export const getUsers = async (req, res) => {
   try {
     const users = await User.find({ role: "member" })
@@ -156,7 +156,7 @@ export const getUsers = async (req, res) => {
   }
 };
 
-// Update user (admin or self)
+
 export const updateUser = async (req, res) => {
   try {
     const user = await User.findById(req.params.id);
@@ -164,7 +164,7 @@ export const updateUser = async (req, res) => {
       return res.status(404).json({ message: "User not found" });
     }
 
-    // Allow admin or the user themselves to update
+    
     const isAdmin = req.user.role === "admin";
     const isSelf = req.user._id.toString() === req.params.id;
 
@@ -196,7 +196,7 @@ export const updateUser = async (req, res) => {
   }
 };
 
-// Reset user password
+
 export const resetUserPassword = async (req, res) => {
   try {
     const { newPassword } = req.body;
@@ -212,7 +212,7 @@ export const resetUserPassword = async (req, res) => {
       });
     }
 
-    user.password_hash = newPassword; // Will be hashed by pre-save hook
+    user.password_hash = newPassword; 
     await user.save();
 
     res.json({ message: "Password reset successfully" });
@@ -222,7 +222,7 @@ export const resetUserPassword = async (req, res) => {
   }
 };
 
-// Delete user
+
 export const deleteUser = async (req, res) => {
   try {
     const user = await User.findById(req.params.id);
@@ -230,10 +230,10 @@ export const deleteUser = async (req, res) => {
       return res.status(404).json({ message: "User not found" });
     }
 
-    // Optionally check for submissions
+    
     const submissions = await Submission.find({ user_id: user._id });
     if (submissions.length > 0) {
-      // You might want to handle this differently - maybe soft delete
+      
       return res.status(400).json({
         message: "Cannot delete user with existing submissions",
       });
@@ -247,7 +247,7 @@ export const deleteUser = async (req, res) => {
   }
 };
 
-// Get all submissions
+
 export const getSubmissions = async (req, res) => {
   try {
     const { weekId, status } = req.query;
@@ -267,7 +267,7 @@ export const getSubmissions = async (req, res) => {
   }
 };
 
-// Approve/reject submission
+
 export const updateSubmissionStatus = async (req, res) => {
   try {
     const { status, reviewerNotes } = req.body;
@@ -294,7 +294,7 @@ export const updateSubmissionStatus = async (req, res) => {
   }
 };
 
-// Export submissions as CSV
+
 export const exportSubmissions = async (req, res) => {
   try {
     const { weekId } = req.query;
@@ -305,7 +305,7 @@ export const exportSubmissions = async (req, res) => {
       .populate("week_id", "week_number title")
       .sort({ created_at: -1 });
 
-    // Convert to CSV
+    
     const csvHeader =
       "Week,Group Name,GitHub Repo,Live Demo,Status,Description,Submitted At\n";
     const csvRows = submissions
@@ -316,7 +316,7 @@ export const exportSubmissions = async (req, res) => {
         const repo = sub.github_repo_url || "";
         const demo = sub.github_live_demo_url || "";
         const status = sub.status || "";
-        const desc = (sub.description || "").replace(/,/g, ";"); // Replace commas
+        const desc = (sub.description || "").replace(/,/g, ";"); 
         const date = new Date(sub.created_at).toISOString();
         return `${week},"${groupName}","${repo}","${demo}",${status},"${desc}",${date}`;
       })
@@ -334,7 +334,7 @@ export const exportSubmissions = async (req, res) => {
   }
 };
 
-// Get dashboard stats
+
 export const getStats = async (req, res) => {
   try {
     const totalUsers = await User.countDocuments({ role: "member" });

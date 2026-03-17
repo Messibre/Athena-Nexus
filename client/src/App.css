@@ -4,14 +4,14 @@
   transition: background-color 0.3s ease;
 }
 
-/* Container */
+
 .container {
   max-width: 1200px;
   margin: 0 auto;
   padding: 0 20px;
 }
 
-/* Buttons */
+
 .btn {
   padding: 12px 24px;
   border-radius: 6px;
@@ -69,7 +69,7 @@
   color: white;
 }
 
-/* Forms */
+
 .form-group {
   margin-bottom: 20px;
 }
@@ -113,7 +113,7 @@
   margin-top: 5px;
 }
 
-/* Cards */
+
 .card {
   background: var(--bg-primary);
   border-radius: 8px;
@@ -135,7 +135,7 @@
   color: var(--text-primary);
 }
 
-/* Navigation */
+
 .navbar {
   background: var(--bg-primary);
   box-shadow: 0 1px 3px var(--shadow);
@@ -172,7 +172,7 @@
   color: var(--primary);
 }
 
-/* Theme Toggle Button */
+
 .theme-toggle {
   background: transparent;
   border: 2px solid var(--border-color);
@@ -192,7 +192,7 @@
   border-color: var(--primary);
 }
 
-/* Alerts */
+
 .alert {
   padding: 16px;
   border-radius: 6px;
@@ -218,14 +218,14 @@
   border: 1px solid var(--alert-info-border);
 }
 
-/* Loading */
+
 .loading {
   text-align: center;
   padding: 40px;
   color: var(--text-secondary);
 }
 
-/* Grid */
+
 .grid {
   display: grid;
   gap: 24px;
@@ -239,7 +239,7 @@
   grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
 }
 
-/* Badge */
+
 .badge {
   display: inline-block;
   padding: 4px 12px;
@@ -270,7 +270,7 @@
   color: var(--badge-info-text);
 }
 
-/* Responsive */
+
 @media (max-width: 768px) {
   .navbar-content {
     flex-direction: column;
@@ -287,7 +287,7 @@
   }
 }
 
-/* Modern Manuscript Dashboard */
+
 .dashboard-shell {
   min-height: 100vh;
   background: radial-gradient(120% 120% at 10% 0%, #0b1020 0%, #0c1224 45%, #0b0f1a 100%);

@@ -6,17 +6,21 @@ import {
   CheckCircle2,
   Clock,
   Layers,
-  List,
-  Menu,
   Sparkles,
+  ChevronRight,
+  ChevronLeft,
+  Lock,
+  Github,
+  Globe,
+  Sun,
+  Moon,
 } from "lucide-react";
 import Navbar from "../components/Navbar";
-import MilestoneSidebar from "../components/MilestoneSidebar";
 import {
   fetchMilestoneCategories,
   fetchMilestoneLevels,
-  fetchMilestoneProgress,
   fetchMilestoneChallenges,
+  fetchMilestoneProgress,
   fetchMyMilestoneSubmissions,
   createMilestoneSubmission,
   updateMilestoneSubmission,
@@ -26,26 +30,28 @@ import {
   selectMilestoneLevels,
   selectMilestoneChallenges,
   selectMyMilestoneSubmissions,
-  selectMilestoneProgress,
   selectMilestonesLoading,
   selectMilestonesActionLoading,
 } from "../redux/selectors/milestonesSelectors";
 
+export const selectTheme = (state) => state.theme.theme;
+
 const Milestones = () => {
   const dispatch = useDispatch();
+  const theme = useSelector(selectTheme) || "dark";
   const categories = useSelector(selectMilestoneCategories);
   const loading = useSelector(selectMilestonesLoading);
   const actionLoading = useSelector(selectMilestonesActionLoading);
+
   const [activeCategoryId, setActiveCategoryId] = useState("");
   const [activeLevelId, setActiveLevelId] = useState("");
   const [activeChallengeId, setActiveChallengeId] = useState("");
+  const [mobileStep, setMobileStep] = useState("categories");
+
   const [repoUrl, setRepoUrl] = useState("");
   const [demoUrl, setDemoUrl] = useState("");
   const [notes, setNotes] = useState("");
-  const [submitError, setSubmitError] = useState("");
   const [submitSuccess, setSubmitSuccess] = useState("");
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const [isListOpen, setIsListOpen] = useState(false);
 
   useEffect(() => {
     dispatch(fetchMilestoneCategories());
@@ -53,9 +59,8 @@ const Milestones = () => {
   }, [dispatch]);
 
   useEffect(() => {
-    if (categories.length && !activeCategoryId) {
+    if (categories.length && !activeCategoryId)
       setActiveCategoryId(categories[0]._id);
-    }
   }, [categories, activeCategoryId]);
 
   useEffect(() => {
@@ -64,120 +69,52 @@ const Milestones = () => {
     dispatch(fetchMilestoneProgress({ categoryId: activeCategoryId }));
     setActiveLevelId("");
     setActiveChallengeId("");
-    setSubmitError("");
-    setSubmitSuccess("");
   }, [dispatch, activeCategoryId]);
 
   const levels = useSelector((state) =>
     selectMilestoneLevels(state, activeCategoryId),
-  );
-  const progress = useSelector((state) =>
-    selectMilestoneProgress(state, activeCategoryId),
   );
   const challenges = useSelector((state) =>
     selectMilestoneChallenges(state, activeLevelId),
   );
   const mySubmissions = useSelector(selectMyMilestoneSubmissions);
 
-  const activeCategory = categories.find(
-    (category) => category._id === activeCategoryId,
-  );
-  const activeLevel = levels.find((level) => level._id === activeLevelId);
-  const activeChallenge = challenges.find(
-    (challenge) => challenge._id === activeChallengeId,
-  );
+  const activeCategory = categories.find((c) => c._id === activeCategoryId);
+  const activeLevel = levels.find((l) => l._id === activeLevelId);
+  const activeChallenge = challenges.find((ch) => ch._id === activeChallengeId);
 
-  const progressMap = useMemo(() => {
-    return progress.reduce((acc, item) => {
-      acc[item.levelId] = item.status;
-      return acc;
-    }, {});
-  }, [progress]);
-
-  const getStatusBadge = (status) => {
-    if (status === "completed")
-      return { className: "status-success", text: "Completed" };
-    if (status === "unlocked")
-      return { className: "status-info", text: "In Progress" };
-    return { className: "status-warning", text: "Not Started" };
-  };
-
-  useEffect(() => {
-    if (!activeLevelId) return;
-    dispatch(fetchMilestoneChallenges(activeLevelId));
-  }, [dispatch, activeLevelId]);
-
-  useEffect(() => {
-    if (!levels.length) return;
-    if (activeLevelId) return;
-    if (levels[0]?._id) {
-      setActiveLevelId(levels[0]._id);
-    }
-  }, [levels, activeLevelId]);
-
-  useEffect(() => {
-    if (!activeChallengeId) {
-      setRepoUrl("");
-      setDemoUrl("");
-      setNotes("");
-      return;
-    }
-    const existing = mySubmissions.find((submission) => {
-      const challengeId = submission.challengeId?._id || submission.challengeId;
-      return challengeId === activeChallengeId;
-    });
-    if (existing) {
-      setRepoUrl(existing.repoUrl || "");
-      setDemoUrl(existing.demoUrl || "");
-      setNotes(existing.notes || "");
-    } else {
-      setRepoUrl("");
-      setDemoUrl("");
-      setNotes("");
-    }
-  }, [activeChallengeId, mySubmissions]);
-
-  const handleSelectLevel = (levelId) => {
-    setActiveLevelId(levelId);
-    setActiveChallengeId("");
-    setSubmitError("");
-    setSubmitSuccess("");
-    setIsListOpen(true);
-  };
-
-  const handleSelectChallenge = (challengeId) => {
-    setActiveChallengeId(challengeId);
-    setSubmitError("");
-    setSubmitSuccess("");
-    setIsListOpen(false);
-  };
-
-  const getSubmissionForChallenge = (challengeId) => {
-    return mySubmissions.find((submission) => {
-      const id = submission.challengeId?._id || submission.challengeId;
-      return id === challengeId;
-    });
-  };
+  const getSubmissionForChallenge = (id) =>
+    mySubmissions.find((s) => (s.challengeId?._id || s.challengeId) === id);
 
   const firstIncompleteIndex = useMemo(() => {
-    for (let i = 0; i < challenges.length; i += 1) {
-      const submission = getSubmissionForChallenge(challenges[i]._id);
-      if (submission?.status !== "approved") {
+    for (let i = 0; i < challenges.length; i++) {
+      if (getSubmissionForChallenge(challenges[i]._id)?.status !== "approved")
         return i;
-      }
     }
     return challenges.length;
   }, [challenges, mySubmissions]);
 
+  useEffect(() => {
+    if (levels.length && !activeLevelId) setActiveLevelId(levels[0]._id);
+  }, [levels, activeLevelId]);
+
+  useEffect(() => {
+    if (!activeLevelId) return;
+    dispatch(fetchMilestoneChallenges(activeLevelId));
+    setActiveChallengeId("");
+  }, [dispatch, activeLevelId]);
+
+  useEffect(() => {
+    const existing = getSubmissionForChallenge(activeChallengeId);
+    setRepoUrl(existing?.repoUrl || "");
+    setDemoUrl(existing?.demoUrl || "");
+    setNotes(existing?.notes || "");
+  }, [activeChallengeId, mySubmissions]);
+
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setSubmitError("");
-    setSubmitSuccess("");
-
-    if (!activeChallengeId) return;
-    const existing = getSubmissionForChallenge(activeChallengeId);
-
     try {
+      const existing = getSubmissionForChallenge(activeChallengeId);
       if (existing) {
         await dispatch(
           updateMilestoneSubmission({
@@ -185,7 +122,6 @@ const Milestones = () => {
             payload: { repoUrl, demoUrl, notes },
           }),
         ).unwrap();
-        setSubmitSuccess("Submission updated.");
       } else {
         await dispatch(
           createMilestoneSubmission({
@@ -195,450 +131,175 @@ const Milestones = () => {
             notes,
           }),
         ).unwrap();
-        setSubmitSuccess("Submission created.");
       }
+      setSubmitSuccess("Synced!");
       dispatch(fetchMyMilestoneSubmissions());
-    } catch (error) {
-      setSubmitError(error || "Failed to submit");
+    } catch (err) {
+      console.error(err);
     }
   };
 
-  const listVariants = {
-    hidden: { opacity: 0, y: 8 },
-    visible: { opacity: 1, y: 0 },
+  const styles = {
+    bgMain: theme === "dark" ? "bg-[#0a0a0a]" : "bg-slate-50",
+    bgSide: theme === "dark" ? "bg-[#0f0f0f]" : "bg-white",
+    bgMid: theme === "dark" ? "bg-[#0d0d0d]" : "bg-white",
+    border: theme === "dark" ? "border-white/5" : "border-slate-200",
+    textDim: theme === "dark" ? "text-slate-500" : "text-slate-400",
+    textHead: theme === "dark" ? "text-white" : "text-slate-900",
   };
 
   return (
-    <>
+    <div
+      className={`min-h-screen transition-colors duration-300 ${styles.bgMain} ${theme === "dark" ? "text-slate-300" : "text-slate-700"}`}
+    >
       <Navbar />
-      <div className="dashboard-shell">
-        <div className="dashboard-body">
-          <div className="dashboard-header">
-            <div>
-              <div className="dashboard-title">Milestone Atlas</div>
-              <div className="dashboard-subtitle">
-                Track each level like a curated inbox of breakthroughs.
+      <div className="max-w-[100vw] h-[calc(100vh-64px)] flex flex-col">
+        <div
+          className={`flex items-center justify-between px-4 py-2 border-b ${styles.bgMid} ${styles.border}`}
+        >
+          <div className="flex items-center gap-2 text-[10px] font-bold uppercase">
+            <button
+              onClick={() =>
+                setMobileStep(
+                  mobileStep === "detail" ? "challenges" : "categories",
+                )
+              }
+              className="md:hidden p-1"
+            >
+              <ChevronLeft size={16} />
+            </button>
+            <span className={styles.textHead}>
+              {activeCategory?.name || "Atlas"}
+            </span>
+            {activeLevel && (
+              <>
+                <ChevronRight size={10} className="opacity-20" />
+                <span className={styles.textHead}>
+                  Lvl {activeLevel.levelNumber}
+                </span>
+              </>
+            )}
+          </div>
+          <Link
+            to="/challenges"
+            className="text-[10px] text-blue-500 font-bold"
+          >
+            WEEKLY
+          </Link>
+        </div>
+
+        <div className="flex-1 flex overflow-hidden">
+          <div
+            className={`${mobileStep === "categories" ? "flex" : "hidden md:flex"} w-full md:w-64 flex-col border-r ${styles.bgSide} ${styles.border} overflow-y-auto`}
+          >
+            {categories.map((cat) => (
+              <div key={cat._id} className={`border-b ${styles.border}`}>
+                <button
+                  onClick={() => setActiveCategoryId(cat._id)}
+                  className={`w-full text-left px-4 py-3 text-[12px] ${activeCategoryId === cat._id ? "text-blue-500 bg-blue-500/5" : styles.textDim}`}
+                >
+                  {cat.name}
+                </button>
+                {activeCategoryId === cat._id &&
+                  levels.map((lvl) => (
+                    <button
+                      key={lvl._id}
+                      onClick={() => {
+                        setActiveLevelId(lvl._id);
+                        setMobileStep("challenges");
+                      }}
+                      className={`w-full text-left px-6 py-2 text-[11px] ${activeLevelId === lvl._id ? "text-blue-500 border-l-2 border-blue-500" : styles.textDim}`}
+                    >
+                      Level {lvl.levelNumber}
+                    </button>
+                  ))}
               </div>
-            </div>
-            <div className="dashboard-actions">
-              <button
-                className="ghost-btn mobile-only"
-                onClick={() => setIsSidebarOpen(true)}
-              >
-                <Menu size={16} /> Menu
-              </button>
-              <button
-                className="ghost-btn mobile-only"
-                onClick={() => setIsListOpen(true)}
-              >
-                <List size={16} /> Items
-              </button>
-              <Link to="/challenges" className="ghost-btn">
-                Weekly Challenges
-              </Link>
-            </div>
+            ))}
           </div>
 
-          {isSidebarOpen && (
-            <div className="mobile-overlay">
-              <div className="mobile-panel">
-                <MilestoneSidebar
-                  categories={categories}
-                  activeCategoryId={activeCategoryId}
-                  onSelectCategory={(id) => {
-                    setActiveCategoryId(id);
-                    setIsSidebarOpen(false);
-                  }}
-                  levels={levels}
-                  activeLevelId={activeLevelId}
-                  onSelectLevel={(id) => {
-                    handleSelectLevel(id);
-                    setIsSidebarOpen(false);
-                  }}
-                  levelProgressMap={progressMap}
-                  activeChallengeId={activeChallengeId}
-                  showChangeChallenge={!!activeChallengeId}
-                  onChangeChallenge={() => {
-                    setActiveChallengeId("");
-                    setIsSidebarOpen(false);
-                  }}
-                  loading={loading}
-                  onClose={() => setIsSidebarOpen(false)}
-                />
+          <div
+            className={`${mobileStep === "challenges" ? "flex" : "hidden md:flex"} w-full md:w-80 flex-col border-r ${styles.bgMid} ${styles.border} overflow-y-auto`}
+          >
+            {challenges.length === 0 ? (
+              <div className="p-6 text-[12px] opacity-60">
+                No challenges available for this level yet.
               </div>
-            </div>
-          )}
-
-          {isListOpen && (
-            <div className="mobile-overlay">
-              <div className="mobile-panel list pane glass-panel">
-                <div className="pane-header">
-                  <span className="pane-title">Challenges</span>
-                  <button className="ghost-btn" onClick={() => setIsListOpen(false)}>
-                    Close
-                  </button>
-                </div>
-                <div className="pane-body">
-                  {!activeLevelId ? (
-                    <p className="tree-subtle">Select a level to view challenges.</p>
-                  ) : challenges.length === 0 ? (
-                    <p className="tree-subtle">No challenges available for this level.</p>
-                  ) : (
-                    <div className="list-stack">
-                      {challenges.map((challenge, index) => {
-                        const submission = getSubmissionForChallenge(challenge._id);
-                        const status = submission?.status || "not submitted";
-                        const isLocked = index > firstIncompleteIndex;
-                        const badge = isLocked
-                          ? { className: "status-warning", text: "Locked" }
-                          : status === "approved"
-                            ? { className: "status-success", text: "Approved" }
-                            : { className: "status-info", text: "Open" };
-                        return (
-                          <button
-                            key={challenge._id}
-                            type="button"
-                            onClick={() => handleSelectChallenge(challenge._id)}
-                            disabled={isLocked}
-                            className={`list-row ${
-                              activeChallengeId === challenge._id ? "active" : ""
-                            }`}
-                            style={{ opacity: isLocked ? 0.6 : 1 }}
-                          >
-                            <div>
-                              <div className="list-row-title">{challenge.title}</div>
-                              <div className="list-row-meta">
-                                <span>Level {activeLevel?.levelNumber || "-"}</span>
-                                <span>•</span>
-                                <span>{activeCategory?.name || "Milestone"}</span>
-                              </div>
-                            </div>
-                            <span className={`status-pill ${badge.className}`}>
-                              {badge.text}
-                            </span>
-                          </button>
-                        );
-                      })}
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
-          )}
-
-          <div className="dashboard-grid">
-            <div className="desktop-only">
-              <MilestoneSidebar
-                categories={categories}
-                activeCategoryId={activeCategoryId}
-                onSelectCategory={(id) => {
-                  setActiveCategoryId(id);
-                }}
-                levels={levels}
-                activeLevelId={activeLevelId}
-                onSelectLevel={handleSelectLevel}
-                levelProgressMap={progressMap}
-                activeChallengeId={activeChallengeId}
-                showChangeChallenge={!!activeChallengeId}
-                onChangeChallenge={() => setActiveChallengeId("")}
-                loading={loading}
-                className="pane glass-panel"
-              />
-            </div>
-
-            <div className="desktop-only pane">
-              <div className="pane-header">
-                <span className="pane-title">Challenge Queue</span>
-                <span className="tree-subtle">
-                  {activeLevel
-                    ? `Level ${activeLevel.levelNumber}`
-                    : "Select a level"}
-                </span>
-              </div>
-              <div className="pane-body">
-                {!activeLevelId ? (
-                  <p className="tree-subtle">Select a level to view challenges.</p>
-                ) : challenges.length === 0 ? (
-                  <p className="tree-subtle">No challenges available for this level.</p>
-                ) : (
-                  <div className="list-stack">
-                    {challenges.map((challenge, index) => {
-                      const submission = getSubmissionForChallenge(challenge._id);
-                      const status = submission?.status || "not submitted";
-                      const isLocked = index > firstIncompleteIndex;
-                      const badge = isLocked
-                        ? { className: "status-warning", text: "Locked" }
-                        : status === "approved"
-                          ? { className: "status-success", text: "Approved" }
-                          : { className: "status-info", text: "Open" };
-                      return (
-                        <motion.button
-                          key={challenge._id}
-                          type="button"
-                          onClick={() => handleSelectChallenge(challenge._id)}
-                          disabled={isLocked}
-                          className={`list-row ${
-                            activeChallengeId === challenge._id ? "active" : ""
-                          }`}
-                          style={{ opacity: isLocked ? 0.6 : 1 }}
-                          initial="hidden"
-                          animate="visible"
-                          variants={listVariants}
-                        >
-                          <div>
-                            <div className="list-row-title">{challenge.title}</div>
-                            <div className="list-row-meta">
-                              <span>Level {activeLevel?.levelNumber || "-"}</span>
-                              <span>•</span>
-                              <span>{activeCategory?.name || "Milestone"}</span>
-                            </div>
-                          </div>
-                          <span className={`status-pill ${badge.className}`}>
-                            {badge.text}
-                          </span>
-                        </motion.button>
-                      );
-                    })}
+            ) : (
+              challenges.map((ch, idx) => (
+                <button
+                  key={ch._id}
+                  disabled={idx > firstIncompleteIndex}
+                  onClick={() => {
+                    setActiveChallengeId(ch._id);
+                    setMobileStep("detail");
+                  }}
+                  className={`w-full text-left p-4 border-b ${styles.border} ${activeChallengeId === ch._id ? "bg-blue-600 text-white" : "hover:bg-black/5"}`}
+                >
+                  <div className="flex justify-between items-start font-bold text-[13px]">
+                    {ch.title}{" "}
+                    {getSubmissionForChallenge(ch._id)?.status ===
+                      "approved" && <CheckCircle2 size={12} />}
+                    {idx > firstIncompleteIndex && (
+                      <Lock size={12} className="opacity-70" />
+                    )}
                   </div>
-                )}
-              </div>
-            </div>
+                  <div className="text-[10px] uppercase opacity-60">
+                    {getSubmissionForChallenge(ch._id)?.status || "Open"}
+                  </div>
+                </button>
+              ))
+            )}
+          </div>
 
-            <div className="pane">
-              <div className="pane-header">
-                <span className="pane-title">Detail View</span>
-                <span className="tree-subtle">
-                  {activeChallenge ? "Challenge Selected" : "Awaiting Selection"}
+          <div
+            className={`${mobileStep === "detail" ? "flex" : "hidden md:flex"} flex-1 overflow-y-auto ${styles.bgMain} p-6 md:p-12`}
+          >
+            {activeChallenge ? (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                className="max-w-2xl mx-auto w-full"
+              >
+                <span className="text-blue-500 text-[10px] font-bold uppercase tracking-widest">
+                  Challenge {challenges.indexOf(activeChallenge) + 1}
                 </span>
-              </div>
-              <div className="pane-body">
-                <AnimatePresence mode="wait">
-                  <motion.div
-                    key={activeChallenge?._id || "empty"}
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -10 }}
-                    transition={{ duration: 0.2 }}
+                <h2
+                  className={`text-3xl md:text-5xl font-extrabold mt-2 tracking-tighter ${styles.textHead}`}
+                >
+                  title: {activeChallenge.title.toLowerCase()}
+                </h2>
+                <p className="mt-6 text-[14px] leading-relaxed opacity-60">
+                  {activeChallenge.description}
+                </p>
+                <form
+                  onSubmit={handleSubmit}
+                  className={`mt-12 p-6 rounded border ${styles.bgSide} ${styles.border} space-y-4`}
+                >
+                  <input
+                    type="url"
+                    required
+                    value={repoUrl}
+                    onChange={(e) => setRepoUrl(e.target.value)}
+                    className={`w-full p-2 text-[12px] rounded border ${styles.border} ${theme === "dark" ? "bg-black" : "bg-white"}`}
+                    placeholder="Github Repo URL"
+                  />
+                  <button
+                    type="submit"
+                    className="w-full py-3 bg-blue-600 text-white text-[11px] font-bold uppercase rounded"
                   >
-                    <div className="detail-card">
-                      <div className="detail-title">Overview</div>
-                      <div className="detail-text">
-                        <strong style={{ color: "#f8fafc" }}>
-                          {activeCategory?.name || "Select a category"}
-                        </strong>
-                        <p className="detail-text">
-                          {activeCategory?.description ||
-                            "Category details will appear here."}
-                        </p>
-                      </div>
-                      <div style={{ marginTop: "16px" }}>
-                        <div
-                          style={{
-                            display: "flex",
-                            justifyContent: "space-between",
-                            alignItems: "center",
-                            gap: "12px",
-                          }}
-                        >
-                          <div>
-                            <div className="list-row-title">
-                              {activeLevel
-                                ? `Level ${activeLevel.levelNumber}: ${activeLevel.title}`
-                                : "Select a level"}
-                            </div>
-                            <p className="detail-text">
-                              {activeLevel?.description ||
-                                "Level details will appear here."}
-                            </p>
-                          </div>
-                          {activeLevel && (
-                            <span
-                              className={`status-pill ${
-                                getStatusBadge(
-                                  progressMap[activeLevel._id] || "locked",
-                                ).className
-                              }`}
-                            >
-                              {
-                                getStatusBadge(
-                                  progressMap[activeLevel._id] || "locked",
-                                ).text
-                              }
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="detail-card">
-                      <div className="detail-title">Challenge</div>
-                      {!activeChallenge ? (
-                        <p className="detail-text">
-                          Select a challenge to see full details.
-                        </p>
-                      ) : (
-                        <>
-                          <div
-                            style={{
-                              display: "flex",
-                              alignItems: "center",
-                              gap: "10px",
-                              marginBottom: "12px",
-                            }}
-                          >
-                            <Sparkles size={18} />
-                            <span className="list-row-title">
-                              {activeChallenge.title}
-                            </span>
-                          </div>
-                          {activeChallenge.description && (
-                            <p className="detail-text" style={{ marginBottom: "12px" }}>
-                              {activeChallenge.description}
-                            </p>
-                          )}
-                          {activeChallenge.requirements?.length > 0 && (
-                            <div style={{ marginBottom: "12px" }}>
-                              <div className="list-row-title">Requirements</div>
-                              <ul style={{ marginTop: "8px", paddingLeft: "18px" }}>
-                                {activeChallenge.requirements.map((item) => (
-                                  <li key={item} className="detail-text">
-                                    {item}
-                                  </li>
-                                ))}
-                              </ul>
-                            </div>
-                          )}
-                          {activeChallenge.resources?.length > 0 && (
-                            <div style={{ marginBottom: "12px" }}>
-                              <div className="list-row-title">Resources</div>
-                              <ul style={{ marginTop: "8px", paddingLeft: "18px" }}>
-                                {activeChallenge.resources.map((item) => (
-                                  <li key={item} className="detail-text">
-                                    {item}
-                                  </li>
-                                ))}
-                              </ul>
-                            </div>
-                          )}
-                          {activeChallenge.tags?.length > 0 && (
-                            <div className="list-row-meta" style={{ flexWrap: "wrap" }}>
-                              {activeChallenge.tags.map((tag) => (
-                                <span key={tag} className="status-pill status-info">
-                                  {tag}
-                                </span>
-                              ))}
-                            </div>
-                          )}
-                        </>
-                      )}
-                    </div>
-
-                    <div className="detail-card">
-                      <div className="detail-title">Submit Your Work</div>
-                      {!activeChallengeId ? (
-                        <p className="detail-text">
-                          Select a challenge to submit your work.
-                        </p>
-                      ) : (
-                        <form onSubmit={handleSubmit} className="list-stack">
-                          {submitError && (
-                            <div className="alert alert-error">{submitError}</div>
-                          )}
-                          {submitSuccess && (
-                            <div className="alert alert-success">{submitSuccess}</div>
-                          )}
-                          {(() => {
-                            const existing =
-                              getSubmissionForChallenge(activeChallengeId);
-                            if (existing?.status === "approved") {
-                              return (
-                                <div className="alert alert-info">
-                                  This submission has been approved and can't be edited.
-                                </div>
-                              );
-                            }
-                            return null;
-                          })()}
-
-                          <label className="list-stack">
-                            <span className="list-row-title">Repo URL</span>
-                            <input
-                              type="url"
-                              value={repoUrl}
-                              onChange={(e) => setRepoUrl(e.target.value)}
-                              placeholder="https://github.com/yourname/project"
-                              required
-                              disabled={
-                                actionLoading ||
-                                getSubmissionForChallenge(activeChallengeId)
-                                  ?.status === "approved"
-                              }
-                              className="form-input"
-                            />
-                          </label>
-                          <label className="list-stack">
-                            <span className="list-row-title">Demo URL (optional)</span>
-                            <input
-                              type="url"
-                              value={demoUrl}
-                              onChange={(e) => setDemoUrl(e.target.value)}
-                              placeholder="https://your-demo.com"
-                              disabled={
-                                actionLoading ||
-                                getSubmissionForChallenge(activeChallengeId)
-                                  ?.status === "approved"
-                              }
-                              className="form-input"
-                            />
-                          </label>
-                          <label className="list-stack">
-                            <span className="list-row-title">Notes (optional)</span>
-                            <textarea
-                              value={notes}
-                              onChange={(e) => setNotes(e.target.value)}
-                              rows={4}
-                              disabled={
-                                actionLoading ||
-                                getSubmissionForChallenge(activeChallengeId)
-                                  ?.status === "approved"
-                              }
-                              className="form-textarea"
-                            />
-                          </label>
-                          <button
-                            type="submit"
-                            className="btn btn-primary"
-                            disabled={
-                              actionLoading ||
-                              getSubmissionForChallenge(activeChallengeId)
-                                ?.status === "approved"
-                            }
-                          >
-                            {actionLoading ? "Submitting..." : "Submit"}
-                          </button>
-                        </form>
-                      )}
-                    </div>
-                  </motion.div>
-                </AnimatePresence>
+                    Sync Submission
+                  </button>
+                </form>
+              </motion.div>
+            ) : (
+              <div className="max-w-2xl mx-auto w-full text-[13px] opacity-60">
+                Select a challenge to view details and submit your work.
               </div>
-              <div className="pane-body" style={{ paddingTop: 0 }}>
-                <div className="list-row-meta">
-                  <Clock size={14} />
-                  <span>Milestone cadence updates as you progress.</span>
-                  <span>•</span>
-                  <CheckCircle2 size={14} />
-                  <span>Submit when ready.</span>
-                  <span>•</span>
-                  <Layers size={14} />
-                  <span>{activeLevel ? "Level focused" : "Level not set"}</span>
-                </div>
-              </div>
-            </div>
+            )}
           </div>
         </div>
       </div>
-    </>
+    </div>
   );
 };
 

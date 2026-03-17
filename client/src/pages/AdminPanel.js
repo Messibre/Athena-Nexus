@@ -1,10 +1,33 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { useSearchParams } from 'react-router-dom';
-import { useDispatch, useSelector } from 'react-redux';
-import Navbar from '../components/Navbar';
+import React, { useState, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
+import { useDispatch, useSelector } from "react-redux";
+import { motion, AnimatePresence } from "framer-motion";
+import {
+  Users,
+  Calendar,
+  CheckSquare,
+  BarChart3,
+  Layers,
+  Download,
+  Trash2,
+  Edit3,
+  Plus,
+  Save,
+  X,
+  ChevronRight,
+  Database,
+  ListTree,
+  Key,
+  Shield,
+  Info,
+  Link as LinkIcon,
+  ChevronDown,
+  Search,
+} from "lucide-react";
+import Navbar from "../components/Navbar";
+
 import {
   fetchAdminWeeks,
-  fetchAdminWeekById,
   createAdminWeek,
   updateAdminWeek,
   deleteAdminWeek,
@@ -30,8 +53,9 @@ import {
   updateAdminMilestoneChallenge,
   deleteAdminMilestoneChallenge,
   fetchAdminMilestoneSubmissions,
-  updateAdminMilestoneSubmissionStatus
-} from '../redux/thunks/adminThunks';
+  updateAdminMilestoneSubmissionStatus,
+} from "../redux/thunks/adminThunks";
+
 import {
   selectAdminWeeks,
   selectAdminUsers,
@@ -42,1444 +66,1120 @@ import {
   selectAdminMilestoneCategories,
   selectAdminMilestoneLevels,
   selectAdminMilestoneChallenges,
-  selectAdminMilestoneSubmissions
-} from '../redux/selectors/adminSelectors';
+  selectAdminMilestoneSubmissions,
+} from "../redux/selectors/adminSelectors";
+
+const selectTheme = (state) => state.theme.theme;
 
 const AdminPanel = () => {
   const dispatch = useDispatch();
+  const theme = useSelector(selectTheme) || "dark";
   const [searchParams, setSearchParams] = useSearchParams();
-  const [activeTab, setActiveTab] = useState(searchParams.get('tab') || 'weeks');
-  const [editingWeek, setEditingWeek] = useState(null);
-  const [editingUser, setEditingUser] = useState(null);
+  const activeTab = searchParams.get("tab") || "stats";
+
   const weeks = useSelector(selectAdminWeeks);
   const users = useSelector(selectAdminUsers);
   const submissions = useSelector(selectAdminSubmissions);
+  const mSubmissions = useSelector(selectAdminMilestoneSubmissions);
+  const categories = useSelector(selectAdminMilestoneCategories);
+  const levels = useSelector(selectAdminMilestoneLevels);
+  const challenges = useSelector(selectAdminMilestoneChallenges);
   const stats = useSelector(selectAdminStats);
   const loading = useSelector(selectAdminLoading);
   const actionLoading = useSelector(selectAdminActionLoading);
-  const milestoneCategories = useSelector(selectAdminMilestoneCategories);
-  const milestoneLevels = useSelector(selectAdminMilestoneLevels);
-  const milestoneChallenges = useSelector(selectAdminMilestoneChallenges);
-  const milestoneSubmissions = useSelector(selectAdminMilestoneSubmissions);
 
-  const [weekForm, setWeekForm] = useState({ week_number: '', title: '', description: '', startDate: '', deadlineDate: '', resources: '', isActive: false });
-  const [userForm, setUserForm] = useState({ username: '', password: '', displayName: '', email: '', members: '' });
-  const [selectedSubmission, setSelectedSubmission] = useState(null);
-  const [reviewNotes, setReviewNotes] = useState('');
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [modalMode, setModalMode] = useState("create");
+  const [targetType, setTargetType] = useState("week");
+  const [formData, setFormData] = useState({});
+  const [milestoneScope, setMilestoneScope] = useState("categories");
 
-  const [milestoneCategoryForm, setMilestoneCategoryForm] = useState({ key: '', name: '', description: '', order: 0, isActive: true });
-  const [milestoneLevelForm, setMilestoneLevelForm] = useState({ categoryId: '', levelNumber: '', title: '', description: '', isActive: true });
-  const [milestoneChallengeForm, setMilestoneChallengeForm] = useState({ categoryId: '', levelId: '', title: '', description: '', requirements: '', resources: '', tags: '', difficulty: 'beginner', isActive: true });
-  const [editingMilestoneCategoryId, setEditingMilestoneCategoryId] = useState(null);
-  const [editingMilestoneLevelId, setEditingMilestoneLevelId] = useState(null);
-  const [editingMilestoneChallengeId, setEditingMilestoneChallengeId] = useState(null);
-  const [milestoneReviewNotes, setMilestoneReviewNotes] = useState('');
-  const [selectedMilestoneSubmission, setSelectedMilestoneSubmission] = useState(null);
-
-  const loadWeekForEdit = useCallback(async (weekId) => {
-    try {
-      const week = await dispatch(fetchAdminWeekById(weekId)).unwrap();
-      setEditingWeek(week);
-      setWeekForm({
-        week_number: week.week_number,
-        title: week.title || '',
-        description: week.description || '',
-        startDate: week.startDate ? new Date(week.startDate).toISOString().slice(0, 16) : '',
-        deadlineDate: week.deadlineDate ? new Date(week.deadlineDate).toISOString().slice(0, 16) : '',
-        resources: week.resources ? week.resources.join(', ') : '',
-        isActive: week.isActive || false
-      });
-      setActiveTab('weeks');
-    } catch (error) {
-      console.error('Error loading week:', error);
-    }
+  useEffect(() => {
+    dispatch(fetchAdminStats());
+    dispatch(fetchAdminWeeks());
+    dispatch(fetchAdminUsers());
+    dispatch(fetchAdminSubmissions());
+    dispatch(fetchAdminMilestoneSubmissions());
+    dispatch(fetchAdminMilestoneCategories());
   }, [dispatch]);
 
-  const loadUserForEdit = useCallback(async (userId) => {
-    try {
-      const user = users.find(u => u._id === userId);
-      if (user) {
-        setEditingUser(user);
-        setUserForm({
-          username: user.username,
-          password: '',
-          displayName: user.displayName || '',
-          email: user.email || '',
-          members: user.members ? user.members.map(m => m.name).join(', ') : ''
-        });
-        setActiveTab('users');
+  useEffect(() => {
+    if (activeTab !== "milestones") return;
+    if (milestoneScope === "levels") {
+      dispatch(fetchAdminMilestoneLevels());
+    }
+    if (milestoneScope === "challenges") {
+      dispatch(fetchAdminMilestoneLevels());
+      dispatch(fetchAdminMilestoneChallenges());
+    }
+  }, [activeTab, milestoneScope, dispatch]);
+
+  const handleTabChange = (tab) => {
+    setSearchParams({ tab });
+    setIsModalOpen(false);
+  };
+
+  const normalizeModalData = (type, data) => {
+    if (type === "level") {
+      return {
+        ...data,
+        categoryId: data.categoryId?._id || data.categoryId || "",
+      };
+    }
+    if (type === "challenge") {
+      return {
+        ...data,
+        categoryId: data.categoryId?._id || data.categoryId || "",
+        levelId: data.levelId?._id || data.levelId || "",
+      };
+    }
+    if (type === "week") {
+      return {
+        ...data,
+        week_number: data.week_number ?? data.weekNumber ?? "",
+        resources: Array.isArray(data.resources)
+          ? data.resources.join(", ")
+          : data.resources || "",
+      };
+    }
+    if (type === "user") {
+      return {
+        ...data,
+        displayName: data.displayName || data.username || "",
+        members: Array.isArray(data.members)
+          ? data.members.map((member) => member.name).join(", ")
+          : data.members || "",
+      };
+    }
+    return data;
+  };
+
+  const openModal = (mode, type, data = {}) => {
+    setModalMode(mode);
+    setTargetType(type);
+    setFormData(normalizeModalData(type, data));
+    setIsModalOpen(true);
+
+    if (type === "level" && data.categoryId)
+      dispatch(
+        fetchAdminMilestoneLevels(data.categoryId?._id || data.categoryId),
+      );
+    if (type === "challenge" && data.levelId)
+      dispatch(
+        fetchAdminMilestoneChallenges(data.levelId?._id || data.levelId),
+      );
+  };
+
+  const handleFormSubmit = async (e) => {
+    e.preventDefault();
+    const id = formData._id;
+
+    const actions = {
+      week: modalMode === "create" ? createAdminWeek : updateAdminWeek,
+      user: modalMode === "create" ? createAdminUser : updateAdminUser,
+      category:
+        modalMode === "create"
+          ? createAdminMilestoneCategory
+          : updateAdminMilestoneCategory,
+      level:
+        modalMode === "create"
+          ? createAdminMilestoneLevel
+          : updateAdminMilestoneLevel,
+      challenge:
+        modalMode === "create"
+          ? createAdminMilestoneChallenge
+          : updateAdminMilestoneChallenge,
+    };
+
+    const action = actions[targetType];
+    const parseList = (value) =>
+      value
+        ? value
+            .split(",")
+            .map((item) => item.trim())
+            .filter(Boolean)
+        : [];
+
+    const normalizePayload = () => {
+      if (targetType === "week") {
+        return {
+          week_number: formData.week_number
+            ? parseInt(formData.week_number, 10)
+            : undefined,
+          title: formData.title || "",
+          description: formData.description || "",
+          startDate: formData.startDate || null,
+          deadlineDate: formData.deadlineDate || null,
+          resources: parseList(formData.resources),
+          isActive: !!formData.isActive,
+        };
       }
-    } catch (error) {
-      console.error('Error loading user:', error);
-    }
-  }, [users]);
 
-  useEffect(() => {
-    const tab = searchParams.get('tab');
-    const editWeek = searchParams.get('edit');
-    if (tab && tab !== activeTab) {
-      setActiveTab(tab);
-    }
-    if (editWeek && (tab === 'weeks' || !tab)) {
-      loadWeekForEdit(editWeek);
-    }
-  }, [searchParams, activeTab, loadWeekForEdit]);
-
-  useEffect(() => {
-    const currentTab = searchParams.get('tab');
-    if (currentTab !== activeTab && activeTab) {
-      setSearchParams({ tab: activeTab });
-    }
-  }, [activeTab, searchParams, setSearchParams]);
-
-  useEffect(() => {
-    if (activeTab === 'weeks') {
-      dispatch(fetchAdminWeeks());
-    } else if (activeTab === 'users') {
-      dispatch(fetchAdminUsers());
-    } else if (activeTab === 'submissions') {
-      dispatch(fetchAdminSubmissions());
-    } else if (activeTab === 'stats') {
-      dispatch(fetchAdminStats());
-    } else if (activeTab === 'milestone-categories') {
-      dispatch(fetchAdminMilestoneCategories());
-    } else if (activeTab === 'milestone-levels') {
-      dispatch(fetchAdminMilestoneCategories());
-      dispatch(fetchAdminMilestoneLevels());
-    } else if (activeTab === 'milestone-challenges') {
-      dispatch(fetchAdminMilestoneCategories());
-      dispatch(fetchAdminMilestoneLevels());
-      dispatch(fetchAdminMilestoneChallenges());
-    } else if (activeTab === 'milestone-submissions') {
-      dispatch(fetchAdminMilestoneSubmissions());
-    }
-  }, [activeTab, dispatch]);
-
-  const handleCreateWeek = async (e) => {
-    e.preventDefault();
-    try {
-      const resources = weekForm.resources ? weekForm.resources.split(',').map(r => r.trim()).filter(r => r) : [];
-      await dispatch(createAdminWeek({
-        week_number: parseInt(weekForm.week_number),
-        title: weekForm.title,
-        description: weekForm.description,
-        startDate: weekForm.startDate || null,
-        deadlineDate: weekForm.deadlineDate || null,
-        resources
-      })).unwrap();
-      resetWeekForm();
-      dispatch(fetchAdminWeeks());
-      alert('Week created successfully!');
-    } catch (error) {
-      alert(error || 'Failed to create week');
-    }
-  };
-
-  const handleUpdateWeek = async (e) => {
-    e.preventDefault();
-    if (!editingWeek) return;
-    try {
-      const resources = weekForm.resources ? weekForm.resources.split(',').map(r => r.trim()).filter(r => r) : [];
-      await dispatch(updateAdminWeek({
-        id: editingWeek._id,
-        payload: {
-          title: weekForm.title,
-          description: weekForm.description,
-          startDate: weekForm.startDate || null,
-          deadlineDate: weekForm.deadlineDate || null,
-          resources,
-          isActive: weekForm.isActive
+      if (targetType === "user") {
+        const members = parseList(formData.members).map((name) => ({ name }));
+        if (modalMode === "create") {
+          return {
+            username: formData.username || "",
+            password: formData.password || "",
+            displayName: formData.displayName || formData.username || "",
+            email: formData.email || "",
+            contactEmail: formData.contactEmail || formData.email || "",
+            members,
+          };
         }
-      })).unwrap();
-      resetWeekForm();
-      dispatch(fetchAdminWeeks());
-      alert('Week updated successfully!');
-    } catch (error) {
-      alert(error || 'Failed to update week');
+        return {
+          displayName: formData.displayName || formData.username || "",
+          email: formData.email || "",
+          contactEmail: formData.contactEmail || formData.email || "",
+          members,
+        };
+      }
+
+      if (targetType === "category") {
+        return {
+          key: formData.key || "",
+          name: formData.name || "",
+          description: formData.description || "",
+          order: formData.order ? parseInt(formData.order, 10) : 0,
+          isActive:
+            formData.isActive !== undefined ? !!formData.isActive : true,
+        };
+      }
+
+      if (targetType === "level") {
+        return {
+          categoryId: formData.categoryId || "",
+          levelNumber: formData.levelNumber
+            ? parseInt(formData.levelNumber, 10)
+            : undefined,
+          title: formData.title || "",
+          description: formData.description || "",
+          isActive:
+            formData.isActive !== undefined ? !!formData.isActive : true,
+        };
+      }
+
+      return {
+        categoryId: formData.categoryId || "",
+        levelId: formData.levelId || "",
+        title: formData.title || "",
+        description: formData.description || "",
+        requirements: parseList(formData.requirements),
+        resources: parseList(formData.resources),
+        tags: parseList(formData.tags),
+        difficulty: formData.difficulty || "beginner",
+        isActive: formData.isActive !== undefined ? !!formData.isActive : true,
+      };
+    };
+
+    const payload = normalizePayload();
+
+    if (modalMode === "edit") {
+      await dispatch(action({ id, payload }));
+    } else {
+      await dispatch(action(payload));
     }
+
+    setIsModalOpen(false);
+    if (targetType === "week") dispatch(fetchAdminWeeks());
+    if (targetType === "user") dispatch(fetchAdminUsers());
+    if (targetType === "category") dispatch(fetchAdminMilestoneCategories());
+    if (targetType === "level") dispatch(fetchAdminMilestoneLevels());
+    if (targetType === "challenge") dispatch(fetchAdminMilestoneChallenges());
+    dispatch(fetchAdminStats());
   };
 
-  const resetWeekForm = () => {
-    setWeekForm({ week_number: '', title: '', description: '', startDate: '', deadlineDate: '', resources: '', isActive: false });
-    setEditingWeek(null);
-    setSearchParams({ tab: 'weeks' });
+  const styles = {
+    bg: theme === "dark" ? "bg-[#0a0a0a]" : "bg-slate-50",
+    panel: theme === "dark" ? "bg-[#0f0f0f]" : "bg-white",
+    border: theme === "dark" ? "border-white/5" : "border-slate-200",
+    textMain: theme === "dark" ? "text-slate-400" : "text-slate-600",
+    textHead: theme === "dark" ? "text-white" : "text-slate-900",
+    input:
+      theme === "dark"
+        ? "bg-black border-white/10 text-white placeholder:text-slate-700"
+        : "bg-white border-slate-200 text-slate-900",
   };
-
-  const handleCreateUser = async (e) => {
-    e.preventDefault();
-    try {
-      const members = userForm.members ? userForm.members.split(',').map(m => ({ name: m.trim() })).filter(m => m.name) : [];
-      await dispatch(createAdminUser({
-        username: userForm.username,
-        password: userForm.password,
-        displayName: userForm.displayName || userForm.username,
-        email: userForm.email,
-        members
-      })).unwrap();
-      resetUserForm();
-      dispatch(fetchAdminUsers());
-      alert('User created successfully!');
-    } catch (error) {
-      alert(error || 'Failed to create user');
-    }
-  };
-
-  const handleUpdateUser = async (e) => {
-    e.preventDefault();
-    if (!editingUser) return;
-    try {
-      const members = userForm.members ? userForm.members.split(',').map(m => ({ name: m.trim() })).filter(m => m.name) : [];
-      await dispatch(updateAdminUser({
-        id: editingUser._id,
-        payload: {
-          displayName: userForm.displayName || userForm.username,
-          email: userForm.email,
-          members
-        }
-      })).unwrap();
-      resetUserForm();
-      dispatch(fetchAdminUsers());
-      alert('User updated successfully!');
-    } catch (error) {
-      alert(error || 'Failed to update user');
-    }
-  };
-
-  const handleResetUserPassword = async (userId) => {
-    const newPassword = window.prompt("Enter a new password for this user:");
-    if (!newPassword) return;
-
-    try {
-      await dispatch(resetAdminUserPassword({ id: userId, payload: { newPassword } })).unwrap();
-      alert("Password reset successfully.");
-    } catch (error) {
-      alert(error || "Failed to reset password");
-    }
-  };
-
-  const handleDeleteUser = async (userId) => {
-    if (!window.confirm("Delete this user? This action cannot be undone.")) return;
-    try {
-      await dispatch(deleteAdminUser(userId)).unwrap();
-      dispatch(fetchAdminUsers());
-      alert("User deleted successfully.");
-    } catch (error) {
-      alert(error || "Failed to delete user");
-    }
-  };
-
-  const resetUserForm = () => {
-    setUserForm({ username: '', password: '', displayName: '', email: '', members: '' });
-    setEditingUser(null);
-  };
-
-  const handleUpdateSubmissionStatus = async (submissionId, status) => {
-    try {
-      await dispatch(updateAdminSubmissionStatus({
-        id: submissionId,
-        payload: {
-          status,
-          reviewerNotes: reviewNotes
-        }
-      })).unwrap();
-      setSelectedSubmission(null);
-      setReviewNotes('');
-      dispatch(fetchAdminSubmissions());
-      alert('Submission status updated!');
-    } catch (error) {
-      alert(error || 'Failed to update status');
-    }
-  };
-
-  const handleExportCSV = async () => {
-    try {
-      const blobData = await dispatch(exportAdminSubmissions()).unwrap();
-      const url = window.URL.createObjectURL(new Blob([blobData]));
-      const link = document.createElement('a');
-      link.href = url;
-      link.setAttribute('download', 'submissions.csv');
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-    } catch (error) {
-      alert(error || 'Failed to export CSV');
-    }
-  };
-
-  const handleCreateMilestoneCategory = async (e) => {
-    e.preventDefault();
-    try {
-      await dispatch(createAdminMilestoneCategory({
-        key: milestoneCategoryForm.key,
-        name: milestoneCategoryForm.name,
-        description: milestoneCategoryForm.description,
-        order: parseInt(milestoneCategoryForm.order || 0),
-        isActive: milestoneCategoryForm.isActive
-      })).unwrap();
-      setMilestoneCategoryForm({ key: '', name: '', description: '', order: 0, isActive: true });
-      dispatch(fetchAdminMilestoneCategories());
-      alert('Category created successfully!');
-    } catch (error) {
-      alert(error || 'Failed to create category');
-    }
-  };
-
-  const handleEditMilestoneCategory = (category) => {
-    setEditingMilestoneCategoryId(category._id);
-    setMilestoneCategoryForm({
-      key: category.key,
-      name: category.name,
-      description: category.description || '',
-      order: category.order || 0,
-      isActive: category.isActive
-    });
-  };
-
-  const handleUpdateMilestoneCategory = async (e) => {
-    e.preventDefault();
-    if (!editingMilestoneCategoryId) return;
-    try {
-      await dispatch(updateAdminMilestoneCategory({
-        id: editingMilestoneCategoryId,
-        payload: {
-          key: milestoneCategoryForm.key,
-          name: milestoneCategoryForm.name,
-          description: milestoneCategoryForm.description,
-          order: parseInt(milestoneCategoryForm.order || 0),
-          isActive: milestoneCategoryForm.isActive
-        }
-      })).unwrap();
-      setEditingMilestoneCategoryId(null);
-      setMilestoneCategoryForm({ key: '', name: '', description: '', order: 0, isActive: true });
-      dispatch(fetchAdminMilestoneCategories());
-      alert('Category updated successfully!');
-    } catch (error) {
-      alert(error || 'Failed to update category');
-    }
-  };
-
-  const handleDeleteMilestoneCategory = async (id) => {
-    if (!window.confirm('Delete this category?')) return;
-    try {
-      await dispatch(deleteAdminMilestoneCategory(id)).unwrap();
-      dispatch(fetchAdminMilestoneCategories());
-    } catch (error) {
-      alert(error || 'Failed to delete category');
-    }
-  };
-
-  const handleCreateMilestoneLevel = async (e) => {
-    e.preventDefault();
-    try {
-      await dispatch(createAdminMilestoneLevel({
-        categoryId: milestoneLevelForm.categoryId,
-        levelNumber: parseInt(milestoneLevelForm.levelNumber),
-        title: milestoneLevelForm.title,
-        description: milestoneLevelForm.description,
-        isActive: milestoneLevelForm.isActive
-      })).unwrap();
-      setMilestoneLevelForm({ categoryId: '', levelNumber: '', title: '', description: '', isActive: true });
-      dispatch(fetchAdminMilestoneLevels());
-      alert('Level created successfully!');
-    } catch (error) {
-      alert(error || 'Failed to create level');
-    }
-  };
-
-  const handleEditMilestoneLevel = (level) => {
-    setEditingMilestoneLevelId(level._id);
-    setMilestoneLevelForm({
-      categoryId: level.categoryId?._id || level.categoryId,
-      levelNumber: level.levelNumber,
-      title: level.title,
-      description: level.description || '',
-      isActive: level.isActive
-    });
-  };
-
-  const handleUpdateMilestoneLevel = async (e) => {
-    e.preventDefault();
-    if (!editingMilestoneLevelId) return;
-    try {
-      await dispatch(updateAdminMilestoneLevel({
-        id: editingMilestoneLevelId,
-        payload: {
-          levelNumber: parseInt(milestoneLevelForm.levelNumber),
-          title: milestoneLevelForm.title,
-          description: milestoneLevelForm.description,
-          isActive: milestoneLevelForm.isActive
-        }
-      })).unwrap();
-      setEditingMilestoneLevelId(null);
-      setMilestoneLevelForm({ categoryId: '', levelNumber: '', title: '', description: '', isActive: true });
-      dispatch(fetchAdminMilestoneLevels());
-      alert('Level updated successfully!');
-    } catch (error) {
-      alert(error || 'Failed to update level');
-    }
-  };
-
-  const handleDeleteMilestoneLevel = async (id) => {
-    if (!window.confirm('Delete this level?')) return;
-    try {
-      await dispatch(deleteAdminMilestoneLevel(id)).unwrap();
-      dispatch(fetchAdminMilestoneLevels());
-    } catch (error) {
-      alert(error || 'Failed to delete level');
-    }
-  };
-
-  const handleCreateMilestoneChallenge = async (e) => {
-    e.preventDefault();
-    try {
-      const requirements = milestoneChallengeForm.requirements
-        ? milestoneChallengeForm.requirements.split(',').map(s => s.trim()).filter(Boolean)
-        : [];
-      const resources = milestoneChallengeForm.resources
-        ? milestoneChallengeForm.resources.split(',').map(s => s.trim()).filter(Boolean)
-        : [];
-      const tags = milestoneChallengeForm.tags
-        ? milestoneChallengeForm.tags.split(',').map(s => s.trim()).filter(Boolean)
-        : [];
-      await dispatch(createAdminMilestoneChallenge({
-        categoryId: milestoneChallengeForm.categoryId,
-        levelId: milestoneChallengeForm.levelId,
-        title: milestoneChallengeForm.title,
-        description: milestoneChallengeForm.description,
-        requirements,
-        resources,
-        tags,
-        difficulty: milestoneChallengeForm.difficulty,
-        isActive: milestoneChallengeForm.isActive
-      })).unwrap();
-      setMilestoneChallengeForm({ categoryId: '', levelId: '', title: '', description: '', requirements: '', resources: '', tags: '', difficulty: 'beginner', isActive: true });
-      dispatch(fetchAdminMilestoneChallenges());
-      alert('Challenge created successfully!');
-    } catch (error) {
-      alert(error || 'Failed to create challenge');
-    }
-  };
-
-  const handleEditMilestoneChallenge = (challenge) => {
-    setEditingMilestoneChallengeId(challenge._id);
-    setMilestoneChallengeForm({
-      categoryId: challenge.categoryId?._id || challenge.categoryId,
-      levelId: challenge.levelId?._id || challenge.levelId,
-      title: challenge.title,
-      description: challenge.description || '',
-      requirements: (challenge.requirements || []).join(', '),
-      resources: (challenge.resources || []).join(', '),
-      tags: (challenge.tags || []).join(', '),
-      difficulty: challenge.difficulty || 'beginner',
-      isActive: challenge.isActive
-    });
-  };
-
-  const handleUpdateMilestoneChallenge = async (e) => {
-    e.preventDefault();
-    if (!editingMilestoneChallengeId) return;
-    try {
-      const requirements = milestoneChallengeForm.requirements
-        ? milestoneChallengeForm.requirements.split(',').map(s => s.trim()).filter(Boolean)
-        : [];
-      const resources = milestoneChallengeForm.resources
-        ? milestoneChallengeForm.resources.split(',').map(s => s.trim()).filter(Boolean)
-        : [];
-      const tags = milestoneChallengeForm.tags
-        ? milestoneChallengeForm.tags.split(',').map(s => s.trim()).filter(Boolean)
-        : [];
-      await dispatch(updateAdminMilestoneChallenge({
-        id: editingMilestoneChallengeId,
-        payload: {
-          title: milestoneChallengeForm.title,
-          description: milestoneChallengeForm.description,
-          requirements,
-          resources,
-          tags,
-          difficulty: milestoneChallengeForm.difficulty,
-          isActive: milestoneChallengeForm.isActive
-        }
-      })).unwrap();
-      setEditingMilestoneChallengeId(null);
-      setMilestoneChallengeForm({ categoryId: '', levelId: '', title: '', description: '', requirements: '', resources: '', tags: '', difficulty: 'beginner', isActive: true });
-      dispatch(fetchAdminMilestoneChallenges());
-      alert('Challenge updated successfully!');
-    } catch (error) {
-      alert(error || 'Failed to update challenge');
-    }
-  };
-
-  const handleDeleteMilestoneChallenge = async (id) => {
-    if (!window.confirm('Delete this challenge?')) return;
-    try {
-      await dispatch(deleteAdminMilestoneChallenge(id)).unwrap();
-      dispatch(fetchAdminMilestoneChallenges());
-    } catch (error) {
-      alert(error || 'Failed to delete challenge');
-    }
-  };
-
-  const handleUpdateMilestoneSubmissionStatus = async (submissionId, status) => {
-    try {
-      await dispatch(updateAdminMilestoneSubmissionStatus({
-        id: submissionId,
-        payload: { status, reviewerNotes: milestoneReviewNotes }
-      })).unwrap();
-      setSelectedMilestoneSubmission(null);
-      setMilestoneReviewNotes('');
-      dispatch(fetchAdminMilestoneSubmissions());
-      alert('Milestone submission status updated!');
-    } catch (error) {
-      alert(error || 'Failed to update milestone submission');
-    }
-  };
-
-  const filteredLevelsForCategory = useMemo(() => {
-    if (!milestoneChallengeForm.categoryId) return [];
-    return milestoneLevels.filter(lvl => (lvl.categoryId?._id || lvl.categoryId) === milestoneChallengeForm.categoryId);
-  }, [milestoneLevels, milestoneChallengeForm.categoryId]);
 
   return (
-    <>
+    <div
+      className={`min-h-screen transition-colors duration-300 font-sans ${styles.bg} ${styles.textMain}`}
+    >
       <Navbar />
-      <div className="container" style={{ marginTop: '32px' }}>
-        <h1 style={{ marginBottom: '24px' }}>Admin Panel</h1>
+      <div className="max-w-[1600px] mx-auto flex flex-col md:flex-row h-full md:h-[calc(100vh-64px)] overflow-hidden">
+        <aside
+          className={`w-full md:w-72 border-b md:border-b-0 md:border-r ${styles.panel} ${styles.border} flex shrink-0 md:flex-col overflow-x-auto no-scrollbar`}
+        >
+          <div className="p-8 hidden md:block">
+            <h2 className="text-[11px] font-bold uppercase tracking-[0.4em] text-blue-500 italic">
+              Command Center
+            </h2>
+          </div>
+          <nav className="flex md:flex-col px-2 md:px-0">
+            {[
+              { id: "stats", label: "Overview", icon: BarChart3 },
+              { id: "submissions", label: "Week Queue", icon: CheckSquare },
+              { id: "milestone-subs", label: "Atlas Queue", icon: Layers },
+              { id: "weeks", label: "Weekly Map", icon: Calendar },
+              { id: "milestones", label: "Atlas Tree", icon: ListTree },
+              { id: "users", label: "Identity Directory", icon: Users },
+            ].map((item) => (
+              <button
+                key={item.id}
+                onClick={() => handleTabChange(item.id)}
+                className={`flex items-center gap-4 px-8 py-5 text-[11px] font-bold transition-all whitespace-nowrap ${activeTab === item.id ? "text-blue-500 bg-blue-500/5 border-l-2 border-blue-500" : "opacity-40 hover:opacity-100 hover:bg-black/5"}`}
+              >
+                <item.icon size={18} />
+                <span className="uppercase tracking-widest">{item.label}</span>
+              </button>
+            ))}
+          </nav>
+        </aside>
 
-        <div style={{ display: 'flex', gap: '8px', marginBottom: '24px', flexWrap: 'wrap' }}>
-          <button
-            className={`btn ${activeTab === 'weeks' ? 'btn-primary' : 'btn-secondary'}`}
-            onClick={() => setActiveTab('weeks')}
-          >
-            Weeks
-          </button>
-          <button
-            className={`btn ${activeTab === 'users' ? 'btn-primary' : 'btn-secondary'}`}
-            onClick={() => {
-              setActiveTab('users');
-              setSearchParams({ tab: 'users' });
-            }}
-          >
-            Users
-          </button>
-          <button
-            className={`btn ${activeTab === 'submissions' ? 'btn-primary' : 'btn-secondary'}`}
-            onClick={() => {
-              setActiveTab('submissions');
-              setSearchParams({ tab: 'submissions' });
-            }}
-          >
-            Submissions
-          </button>
-          <button
-            className={`btn ${activeTab === 'stats' ? 'btn-primary' : 'btn-secondary'}`}
-            onClick={() => {
-              setActiveTab('stats');
-              setSearchParams({ tab: 'stats' });
-            }}
-          >
-            Statistics
-          </button>
-          <button
-            className={`btn ${activeTab === 'milestone-categories' ? 'btn-primary' : 'btn-secondary'}`}
-            onClick={() => {
-              setActiveTab('milestone-categories');
-              setSearchParams({ tab: 'milestone-categories' });
-            }}
-          >
-            Milestone Categories
-          </button>
-          <button
-            className={`btn ${activeTab === 'milestone-levels' ? 'btn-primary' : 'btn-secondary'}`}
-            onClick={() => {
-              setActiveTab('milestone-levels');
-              setSearchParams({ tab: 'milestone-levels' });
-            }}
-          >
-            Milestone Levels
-          </button>
-          <button
-            className={`btn ${activeTab === 'milestone-challenges' ? 'btn-primary' : 'btn-secondary'}`}
-            onClick={() => {
-              setActiveTab('milestone-challenges');
-              setSearchParams({ tab: 'milestone-challenges' });
-            }}
-          >
-            Milestone Challenges
-          </button>
-          <button
-            className={`btn ${activeTab === 'milestone-submissions' ? 'btn-primary' : 'btn-secondary'}`}
-            onClick={() => {
-              setActiveTab('milestone-submissions');
-              setSearchParams({ tab: 'milestone-submissions' });
-            }}
-          >
-            Milestone Submissions
-          </button>
-        </div>
+        <main className="flex-1 overflow-y-auto p-6 md:p-12 relative">
+          <header className="mb-12 flex flex-col lg:flex-row justify-between items-start lg:items-end gap-6">
+            <div className="space-y-1">
+              <span className="text-blue-500 text-[10px] font-bold uppercase tracking-[0.5em] block">
+                System Data Stream
+              </span>
+              <h1
+                className={`text-5xl font-black tracking-tighter ${styles.textHead}`}
+              >
+                {activeTab.replace("-", " ")}
+              </h1>
+            </div>
 
-        {loading ? (
-          <div className="loading">Loading...</div>
-        ) : (
-          <>
-            {activeTab === 'weeks' && (
-              <div>
-                <div className="card" style={{ marginBottom: '24px' }}>
-                  <h2 style={{ marginBottom: '16px' }}>
-                    {editingWeek ? `Edit Week ${editingWeek.week_number}` : 'Create New Week'}
-                  </h2>
-                  <form onSubmit={editingWeek ? handleUpdateWeek : handleCreateWeek}>
-                    {!editingWeek && (
-                      <div className="form-group">
-                        <label className="form-label">Week Number *</label>
-                        <input
-                          type="number"
-                          className="form-input"
-                          value={weekForm.week_number}
-                          onChange={(e) => setWeekForm({ ...weekForm, week_number: e.target.value })}
-                          required
-                        />
-                      </div>
-                    )}
-                    <div className="form-group">
-                      <label className="form-label">Title</label>
-                      <input
-                        type="text"
-                        className="form-input"
-                        value={weekForm.title}
-                        onChange={(e) => setWeekForm({ ...weekForm, title: e.target.value })}
-                      />
-                    </div>
-                    <div className="form-group">
-                      <label className="form-label">Description</label>
-                      <textarea
-                        className="form-textarea"
-                        value={weekForm.description}
-                        onChange={(e) => setWeekForm({ ...weekForm, description: e.target.value })}
-                      />
-                    </div>
-                    <div className="form-group">
-                      <label className="form-label">Start Date</label>
-                      <input
-                        type="datetime-local"
-                        className="form-input"
-                        value={weekForm.startDate}
-                        onChange={(e) => setWeekForm({ ...weekForm, startDate: e.target.value })}
-                      />
-                    </div>
-                    <div className="form-group">
-                      <label className="form-label">Deadline</label>
-                      <input
-                        type="datetime-local"
-                        className="form-input"
-                        value={weekForm.deadlineDate}
-                        onChange={(e) => setWeekForm({ ...weekForm, deadlineDate: e.target.value })}
-                      />
-                    </div>
-                    <div className="form-group">
-                      <label className="form-label">Resources (comma-separated URLs)</label>
-                      <input
-                        type="text"
-                        className="form-input"
-                        value={weekForm.resources}
-                        onChange={(e) => setWeekForm({ ...weekForm, resources: e.target.value })}
-                        placeholder="https://example.com/resource1, https://example.com/resource2"
-                      />
-                    </div>
-                    <div className="form-group">
-                      <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
-                        <input
-                          type="checkbox"
-                          checked={weekForm.isActive}
-                          onChange={(e) => setWeekForm({ ...weekForm, isActive: e.target.checked })}
-                        />
-                        Active Week
-                      </label>
-                    </div>
-                    <div style={{ display: 'flex', gap: '8px' }}>
-                      <button type="submit" className="btn btn-primary" disabled={actionLoading}>
-                        {editingWeek ? 'Update Week' : 'Create Week'}
-                      </button>
-                      {editingWeek && (
-                        <button type="button" onClick={resetWeekForm} className="btn btn-secondary">
-                          Cancel
-                        </button>
-                      )}
-                    </div>
-                  </form>
+            <div className="flex flex-wrap gap-3">
+              {activeTab.includes("subs") && (
+                <button
+                  onClick={() => dispatch(exportAdminSubmissions())}
+                  className="flex items-center gap-2 px-5 py-2.5 border border-blue-500/20 text-blue-500 text-[11px] font-bold uppercase tracking-widest rounded hover:bg-blue-500/5 transition-all"
+                >
+                  <Download size={14} /> Export CSV
+                </button>
+              )}
+              {activeTab === "milestones" && (
+                <div className="flex items-center gap-3">
+                  <span className="text-[10px] uppercase tracking-[0.3em] opacity-50">
+                    Scope
+                  </span>
+                  <select
+                    value={milestoneScope}
+                    onChange={(e) => setMilestoneScope(e.target.value)}
+                    className={`px-4 py-2 rounded border text-[10px] font-black uppercase tracking-widest ${styles.input}`}
+                  >
+                    <option value="categories">Categories</option>
+                    <option value="levels">Levels</option>
+                    <option value="challenges">Challenges</option>
+                  </select>
                 </div>
+              )}
+              {["weeks", "milestones", "users"].includes(activeTab) && (
+                <button
+                  onClick={() =>
+                    openModal(
+                      "create",
+                      activeTab === "weeks"
+                        ? "week"
+                        : activeTab === "users"
+                          ? "user"
+                          : milestoneScope === "levels"
+                            ? "level"
+                            : milestoneScope === "challenges"
+                              ? "challenge"
+                              : "category",
+                    )
+                  }
+                  className="flex items-center gap-2 px-6 py-2.5 bg-blue-600 text-white text-[11px] font-bold uppercase tracking-widest rounded shadow-xl shadow-blue-600/20 hover:bg-blue-700 transition-all"
+                >
+                  <Plus size={14} /> New Record
+                </button>
+              )}
+            </div>
+          </header>
 
-                <h2 style={{ marginBottom: '16px' }}>All Weeks</h2>
-                <div className="grid grid-2">
-                  {weeks.map(week => (
-                    <div key={week._id} className="card">
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: '12px' }}>
-                        <h3>Week {week.week_number}: {week.title || 'Untitled'}</h3>
-                        {week.isActive && <span className="badge badge-success">Active</span>}
-                      </div>
-                      {week.description && <p style={{ color: 'var(--text-secondary)', marginTop: '8px', marginBottom: '12px' }}>{week.description}</p>}
-                      <button
-                        onClick={() => loadWeekForEdit(week._id)}
-                        className="btn btn-secondary"
-                        style={{ width: '100%', marginTop: '8px' }}
+          {loading ? (
+            <div className="h-96 flex items-center justify-center opacity-20 text-[12px] font-bold uppercase tracking-[0.6em] animate-pulse">
+              Syncing with Atlas...
+            </div>
+          ) : (
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={activeTab}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3 }}
+                className="space-y-6"
+              >
+                {activeTab === "stats" && stats && (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-5 gap-4">
+                    {[
+                      {
+                        l: "Total Users",
+                        v: stats.totalUsers,
+                        c: "text-blue-500",
+                      },
+                      {
+                        l: "Total Weeks",
+                        v: stats.totalWeeks,
+                        c: "text-purple-500",
+                      },
+                      {
+                        l: "Week Subs",
+                        v: stats.totalSubmissions,
+                        c: "text-emerald-500",
+                      },
+                      {
+                        l: "Atlas Subs",
+                        v: mSubmissions.length,
+                        c: "text-amber-500",
+                      },
+                      {
+                        l: "Approved",
+                        v: stats.approvedSubmissions,
+                        c: "text-blue-400",
+                      },
+                    ].map((s, i) => (
+                      <div
+                        key={i}
+                        className={`p-8 rounded-lg border ${styles.panel} ${styles.border} shadow-sm`}
                       >
-                        Edit
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
+                        <p className="text-[10px] font-bold uppercase opacity-30 mb-3 tracking-widest">
+                          {s.l}
+                        </p>
+                        <p className={`text-4xl font-black ${s.c}`}>{s.v}</p>
+                      </div>
+                    ))}
+                  </div>
+                )}
 
-            {activeTab === 'users' && (
-              <div>
-                <div className="card" style={{ marginBottom: '24px' }}>
-                  <h2 style={{ marginBottom: '16px' }}>
-                    {editingUser ? `Edit Group: ${editingUser.username}` : 'Create New Group'}
-                  </h2>
-                  <form onSubmit={editingUser ? handleUpdateUser : handleCreateUser}>
-                    {!editingUser && (
-                      <>
-                        <div className="form-group">
-                          <label className="form-label">Username *</label>
-                          <input
-                            type="text"
-                            className="form-input"
-                            value={userForm.username}
-                            onChange={(e) => setUserForm({ ...userForm, username: e.target.value })}
-                            required
-                          />
-                        </div>
-                        <div className="form-group">
-                          <label className="form-label">Password *</label>
-                          <input
-                            type="password"
-                            className="form-input"
-                            value={userForm.password}
-                            onChange={(e) => setUserForm({ ...userForm, password: e.target.value })}
-                            required
-                          />
-                          <small style={{ color: 'var(--text-secondary)' }}>8+ characters, letters + numbers</small>
-                        </div>
-                      </>
-                    )}
-                    <div className="form-group">
-                      <label className="form-label">Display Name</label>
-                      <input
-                        type="text"
-                        className="form-input"
-                        value={userForm.displayName}
-                        onChange={(e) => setUserForm({ ...userForm, displayName: e.target.value })}
-                      />
-                    </div>
-                    <div className="form-group">
-                      <label className="form-label">Email</label>
-                      <input
-                        type="email"
-                        className="form-input"
-                        value={userForm.email}
-                        onChange={(e) => setUserForm({ ...userForm, email: e.target.value })}
-                      />
-                    </div>
-                    <div className="form-group">
-                      <label className="form-label">Members (comma-separated names)</label>
-                      <input
-                        type="text"
-                        className="form-input"
-                        value={userForm.members}
-                        onChange={(e) => setUserForm({ ...userForm, members: e.target.value })}
-                        placeholder="Alice, Bob, Charlie"
-                      />
-                    </div>
-                    <div style={{ display: 'flex', gap: '8px' }}>
-                      <button type="submit" className="btn btn-primary" disabled={actionLoading}>
-                        {editingUser ? 'Update Group' : 'Create Group'}
-                      </button>
-                      {editingUser && (
-                        <button type="button" onClick={resetUserForm} className="btn btn-secondary">
-                          Cancel
-                        </button>
-                      )}
-                    </div>
-                  </form>
-                </div>
-
-                <h2 style={{ marginBottom: '16px' }}>All Groups</h2>
-                <div className="grid grid-2">
-                  {users.map(user => (
-                    <div key={user._id} className="card">
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: '12px' }}>
-                        <div>
-                          <h3>{user.displayName || user.username}</h3>
-                          <p style={{ color: 'var(--text-secondary)' }}>Username: {user.username}</p>
-                          {user.members && user.members.length > 0 && (
-                            <p style={{ color: 'var(--text-secondary)', marginTop: '8px' }}>
-                              Members: {user.members.map(m => m.name).join(', ')}
-                            </p>
-                          )}
-                        </div>
-                        <button
-                          onClick={() => loadUserForEdit(user._id)}
-                          className="btn btn-secondary"
-                          style={{ padding: '6px 12px', fontSize: '14px' }}
-                        >
-                          Edit
-                        </button>
-                      </div>
-                      <div style={{ display: 'flex', gap: '8px' }}>
-                        <button
-                          onClick={() => handleResetUserPassword(user._id)}
-                          className="btn btn-outline"
-                          style={{ padding: '6px 12px', fontSize: '14px' }}
-                        >
-                          Reset Password
-                        </button>
-                        <button
-                          onClick={() => handleDeleteUser(user._id)}
-                          className="btn btn-danger"
-                          style={{ padding: '6px 12px', fontSize: '14px' }}
-                        >
-                          Delete
-                        </button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {activeTab === 'submissions' && (
-              <div>
-                <div style={{ marginBottom: '16px' }}>
-                  <button onClick={handleExportCSV} className="btn btn-success" disabled={actionLoading}>
-                    Export CSV
-                  </button>
-                </div>
-                <div className="grid grid-2">
-                  {submissions.map(submission => (
-                    <div key={submission._id} className="card">
-                      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '12px' }}>
-                        <h3>{submission.user_id?.displayName || submission.user_id?.username}</h3>
-                        <span className={`badge ${
-                          submission.status === 'approved' ? 'badge-success' :
-                          submission.status === 'rejected' ? 'badge-danger' : 'badge-warning'
-                        }`}>
-                          {submission.status}
-                        </span>
-                      </div>
-                      <p style={{ color: 'var(--text-secondary)', marginBottom: '8px' }}>
-                        Week {submission.week_id?.week_number || 'N/A'}
-                      </p>
-                      {submission.description && (
-                        <p style={{ marginBottom: '12px' }}>{submission.description}</p>
-                      )}
-                      <div style={{ marginBottom: '12px' }}>
-                        <a href={submission.github_repo_url} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--primary)', marginRight: '12px' }}>
-                          GitHub
-                        </a>
-                        {submission.github_live_demo_url && (
-                          <a href={submission.github_live_demo_url} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--primary)' }}>
-                            Live Demo
-                          </a>
-                        )}
-                      </div>
-                      <div style={{ display: 'flex', gap: '8px' }}>
-                        <button
-                          onClick={() => handleUpdateSubmissionStatus(submission._id, 'approved')}
-                          className="btn btn-success"
-                          style={{ padding: '6px 12px', fontSize: '14px' }}
-                        >
-                          Approve
-                        </button>
-                        <button
-                          onClick={() => setSelectedSubmission(submission)}
-                          className="btn btn-danger"
-                          style={{ padding: '6px 12px', fontSize: '14px' }}
-                        >
-                          Reject
-                        </button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-
-                {selectedSubmission && (
-                  <div style={{
-                    position: 'fixed',
-                    top: 0,
-                    left: 0,
-                    right: 0,
-                    bottom: 0,
-                    backgroundColor: 'rgba(0,0,0,0.5)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    zIndex: 1000
-                  }}>
-                    <div className="card" style={{ maxWidth: '500px', width: '90%' }}>
-                      <h2 style={{ marginBottom: '16px' }}>Reject Submission</h2>
-                      <div className="form-group">
-                        <label className="form-label">Reviewer Notes</label>
-                        <textarea
-                          className="form-textarea"
-                          value={reviewNotes}
-                          onChange={(e) => setReviewNotes(e.target.value)}
-                          placeholder="Explain why this submission was rejected..."
-                        />
-                      </div>
-                      <div style={{ display: 'flex', gap: '8px' }}>
-                        <button
-                          onClick={() => handleUpdateSubmissionStatus(selectedSubmission._id, 'rejected')}
-                          className="btn btn-danger"
-                        >
-                          Confirm Reject
-                        </button>
-                        <button
-                          onClick={() => {
-                            setSelectedSubmission(null);
-                            setReviewNotes('');
-                          }}
-                          className="btn btn-secondary"
-                        >
-                          Cancel
-                        </button>
-                      </div>
+                {activeTab !== "stats" && (
+                  <div
+                    className={`rounded-lg border ${styles.panel} ${styles.border} overflow-hidden shadow-2xl`}
+                  >
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-left">
+                        <thead className="bg-black/20 text-[10px] font-bold uppercase opacity-40 border-b border-white/5">
+                          <tr>
+                            <th className="px-8 py-5">Identification</th>
+                            <th className="px-8 py-5">Object Metadata</th>
+                            <th className="px-8 py-5 text-center">
+                              Status / Access
+                            </th>
+                            <th className="px-8 py-5 text-right">Actions</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-white/5">
+                          {(activeTab === "weeks"
+                            ? weeks
+                            : activeTab === "users"
+                              ? users
+                              : activeTab === "milestones"
+                                ? milestoneScope === "levels"
+                                  ? levels
+                                  : milestoneScope === "challenges"
+                                    ? challenges
+                                    : categories
+                                : activeTab === "submissions"
+                                  ? submissions
+                                  : mSubmissions
+                          ).map((item) => (
+                            <tr
+                              key={item._id}
+                              className="hover:bg-blue-500/[0.03] transition-colors group"
+                            >
+                              <td className="px-8 py-5">
+                                <div
+                                  className={`text-[14px] font-bold ${styles.textHead}`}
+                                >
+                                  {item.username ||
+                                    item.title ||
+                                    item.name ||
+                                    (item.week_number
+                                      ? `Week ${item.week_number}`
+                                      : "") ||
+                                    (item.levelNumber
+                                      ? `Level ${item.levelNumber}`
+                                      : "") ||
+                                    item.user_id?.username ||
+                                    item.userId?.username}
+                                </div>
+                                <div className="text-[11px] opacity-40 font-mono italic tracking-tighter">
+                                  {item.email ||
+                                    `SYS-REF: ${item._id.slice(-8)}`}
+                                </div>
+                              </td>
+                              <td className="px-8 py-5">
+                                <div className="text-[12px] opacity-70 max-w-[300px] truncate">
+                                  {item.description ||
+                                    (item.levelNumber
+                                      ? `Level ${item.levelNumber}`
+                                      : "") ||
+                                    item.week_id?.title ||
+                                    item.challengeId?.title ||
+                                    "System Resource Path"}
+                                </div>
+                                {(item.github_repo_url || item.repoUrl) && (
+                                  <a
+                                    href={item.github_repo_url || item.repoUrl}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    className="text-blue-500 text-[10px] font-bold hover:underline flex items-center gap-1.5 mt-2 tracking-widest"
+                                  >
+                                    <LinkIcon size={12} /> OPEN SOURCE
+                                  </a>
+                                )}
+                              </td>
+                              <td className="px-8 py-5 text-center">
+                                <span
+                                  className={`px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest ${item.status === "approved" || item.role === "admin" ? "bg-emerald-500/10 text-emerald-500" : "bg-amber-500/10 text-amber-500"}`}
+                                >
+                                  {item.status || item.role || "ACTIVE"}
+                                </span>
+                              </td>
+                              <td className="px-8 py-5 text-right space-x-1">
+                                {activeTab.includes("subs") ? (
+                                  <div className="flex justify-end gap-2">
+                                    <select
+                                      value={item.status}
+                                      disabled={actionLoading}
+                                      onChange={(e) => {
+                                        const action =
+                                          activeTab === "submissions"
+                                            ? updateAdminSubmissionStatus
+                                            : updateAdminMilestoneSubmissionStatus;
+                                        dispatch(
+                                          action({
+                                            id: item._id,
+                                            payload: { status: e.target.value },
+                                          }),
+                                        );
+                                      }}
+                                      className={`text-[10px] font-black p-2 rounded border focus:border-blue-500 outline-none transition-all ${styles.input}`}
+                                    >
+                                      <option value="pending">PENDING</option>
+                                      <option value="approved">APPROVE</option>
+                                      <option value="rejected">REJECT</option>
+                                    </select>
+                                  </div>
+                                ) : (
+                                  <div className="flex justify-end items-center gap-2">
+                                    <button
+                                      onClick={() =>
+                                        openModal(
+                                          "edit",
+                                          activeTab === "milestones"
+                                            ? milestoneScope === "levels"
+                                              ? "level"
+                                              : milestoneScope === "challenges"
+                                                ? "challenge"
+                                                : "category"
+                                            : activeTab.slice(0, -1),
+                                          item,
+                                        )
+                                      }
+                                      className="p-2.5 text-blue-500 hover:bg-blue-500/10 rounded transition-all"
+                                    >
+                                      <Edit3 size={16} />
+                                    </button>
+                                    <button
+                                      onClick={() => {
+                                        if (
+                                          window.confirm(
+                                            "IRREVERSIBLE: Delete this record from Atlas?",
+                                          )
+                                        ) {
+                                          if (activeTab === "weeks")
+                                            dispatch(deleteAdminWeek(item._id));
+                                          if (activeTab === "users")
+                                            dispatch(deleteAdminUser(item._id));
+                                          if (activeTab === "milestones") {
+                                            if (milestoneScope === "levels") {
+                                              dispatch(
+                                                deleteAdminMilestoneLevel(
+                                                  item._id,
+                                                ),
+                                              );
+                                            } else if (
+                                              milestoneScope === "challenges"
+                                            ) {
+                                              dispatch(
+                                                deleteAdminMilestoneChallenge(
+                                                  item._id,
+                                                ),
+                                              );
+                                            } else {
+                                              dispatch(
+                                                deleteAdminMilestoneCategory(
+                                                  item._id,
+                                                ),
+                                              );
+                                            }
+                                          }
+                                        }
+                                      }}
+                                      className="p-2.5 text-red-500/40 hover:text-red-500 hover:bg-red-500/10 rounded transition-all"
+                                    >
+                                      <Trash2 size={16} />
+                                    </button>
+                                  </div>
+                                )}
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
                     </div>
                   </div>
                 )}
-              </div>
-            )}
+              </motion.div>
+            </AnimatePresence>
+          )}
+        </main>
+      </div>
 
-            {activeTab === 'milestone-categories' && (
-              <div style={{ display: 'grid', gridTemplateColumns: '320px 1fr', gap: '24px', alignItems: 'start' }}>
-                <div className="card" style={{ marginBottom: '24px', gridColumn: '2' }}>
-                  <h2 style={{ marginBottom: '16px' }}>
-                    {editingMilestoneCategoryId ? 'Edit Milestone Category' : 'Create Milestone Category'}
-                  </h2>
-                  <form onSubmit={editingMilestoneCategoryId ? handleUpdateMilestoneCategory : handleCreateMilestoneCategory}>
-                    <div className="form-group">
-                      <label className="form-label">Key *</label>
-                      <input
-                        type="text"
-                        className="form-input"
-                        value={milestoneCategoryForm.key}
-                        onChange={(e) => setMilestoneCategoryForm({ ...milestoneCategoryForm, key: e.target.value })}
-                        required
-                      />
-                    </div>
-                    <div className="form-group">
-                      <label className="form-label">Name *</label>
-                      <input
-                        type="text"
-                        className="form-input"
-                        value={milestoneCategoryForm.name}
-                        onChange={(e) => setMilestoneCategoryForm({ ...milestoneCategoryForm, name: e.target.value })}
-                        required
-                      />
-                    </div>
-                    <div className="form-group">
-                      <label className="form-label">Description</label>
-                      <textarea
-                        className="form-textarea"
-                        value={milestoneCategoryForm.description}
-                        onChange={(e) => setMilestoneCategoryForm({ ...milestoneCategoryForm, description: e.target.value })}
-                      />
-                    </div>
-                    <div className="form-group">
-                      <label className="form-label">Order</label>
-                      <input
-                        type="number"
-                        className="form-input"
-                        value={milestoneCategoryForm.order}
-                        onChange={(e) => setMilestoneCategoryForm({ ...milestoneCategoryForm, order: e.target.value })}
-                      />
-                    </div>
-                    <div className="form-group">
-                      <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
+      <AnimatePresence>
+        {isModalOpen && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setIsModalOpen(false)}
+              className="absolute inset-0 bg-black/95 backdrop-blur-md"
+            />
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0, y: 20 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.9, opacity: 0, y: 20 }}
+              className={`relative w-full max-w-xl p-10 rounded-2xl border shadow-2xl ${styles.panel} ${styles.border}`}
+            >
+              <div className="flex justify-between items-center mb-10">
+                <div className="flex items-center gap-3">
+                  <div className="w-1.5 h-6 bg-blue-600 rounded-full" />
+                  <h3 className="text-[14px] font-black uppercase tracking-[0.3em] text-white">
+                    {modalMode} {targetType}
+                  </h3>
+                </div>
+                <button
+                  onClick={() => setIsModalOpen(false)}
+                  className="p-2 hover:bg-white/10 rounded-full transition-all text-white"
+                >
+                  <X size={24} />
+                </button>
+              </div>
+
+              <form onSubmit={handleFormSubmit} className="space-y-6">
+                {targetType === "week" && (
+                  <div className="space-y-4">
+                    <div className="grid grid-cols-4 gap-4">
+                      <div className="col-span-1">
+                        <label className="text-[10px] font-bold uppercase opacity-30 block mb-2 tracking-widest">
+                          Sequence
+                        </label>
                         <input
-                          type="checkbox"
-                          checked={milestoneCategoryForm.isActive}
-                          onChange={(e) => setMilestoneCategoryForm({ ...milestoneCategoryForm, isActive: e.target.checked })}
+                          type="number"
+                          required
+                          disabled={modalMode === "edit"}
+                          className={`w-full p-4 rounded-xl border text-[15px] font-bold ${styles.input}`}
+                          value={formData.week_number || ""}
+                          onChange={(e) =>
+                            setFormData({
+                              ...formData,
+                              week_number: e.target.value,
+                            })
+                          }
                         />
-                        Active Category
+                      </div>
+                      <div className="col-span-3">
+                        <label className="text-[10px] font-bold uppercase opacity-30 block mb-2 tracking-widest">
+                          Mission Title
+                        </label>
+                        <input
+                          type="text"
+                          required
+                          className={`w-full p-4 rounded-xl border text-[15px] font-bold ${styles.input}`}
+                          value={formData.title || ""}
+                          onChange={(e) =>
+                            setFormData({ ...formData, title: e.target.value })
+                          }
+                        />
+                      </div>
+                    </div>
+                    <div>
+                      <label className="text-[10px] font-bold uppercase opacity-30 block mb-2 tracking-widest">
+                        Objective Parameters
                       </label>
-                    </div>
-                    <div style={{ display: 'flex', gap: '8px' }}>
-                      <button type="submit" className="btn btn-primary" disabled={actionLoading}>
-                        {editingMilestoneCategoryId ? 'Update Category' : 'Create Category'}
-                      </button>
-                      {editingMilestoneCategoryId && (
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setEditingMilestoneCategoryId(null);
-                            setMilestoneCategoryForm({ key: '', name: '', description: '', order: 0, isActive: true });
-                          }}
-                          className="btn btn-secondary"
-                        >
-                          Cancel
-                        </button>
-                      )}
-                    </div>
-                  </form>
-                </div>
-
-                <div style={{ gridColumn: '1' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-                    <h2 style={{ marginBottom: 0 }}>Categories</h2>
-                    <button
-                      type="button"
-                      className="btn btn-secondary"
-                      onClick={() => {
-                        setEditingMilestoneCategoryId(null);
-                        setMilestoneCategoryForm({ key: '', name: '', description: '', order: 0, isActive: true });
-                      }}
-                    >
-                      New
-                    </button>
-                  </div>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                    {milestoneCategories.map(category => (
-                      <button
-                        key={category._id}
-                        type="button"
-                        onClick={() => handleEditMilestoneCategory(category)}
-                        className={`btn ${editingMilestoneCategoryId === category._id ? 'btn-primary' : 'btn-secondary'}`}
-                        style={{ textAlign: 'left', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
-                      >
-                        <span>{category.name}</span>
-                        {category.isActive && <span className="badge badge-success">Active</span>}
-                      </button>
-                    ))}
-                    {milestoneCategories.length === 0 && (
-                      <p style={{ color: 'var(--text-secondary)' }}>No categories yet.</p>
-                    )}
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {activeTab === 'milestone-levels' && (
-              <div style={{ display: 'grid', gridTemplateColumns: '320px 1fr', gap: '24px', alignItems: 'start' }}>
-                <div className="card" style={{ marginBottom: '24px', gridColumn: '2' }}>
-                  <h2 style={{ marginBottom: '16px' }}>
-                    {editingMilestoneLevelId ? 'Edit Milestone Level' : 'Create Milestone Level'}
-                  </h2>
-                  <form onSubmit={editingMilestoneLevelId ? handleUpdateMilestoneLevel : handleCreateMilestoneLevel}>
-                    <div className="form-group">
-                      <label className="form-label">Category *</label>
-                      <select
-                        className="form-input"
-                        value={milestoneLevelForm.categoryId}
-                        onChange={(e) => setMilestoneLevelForm({ ...milestoneLevelForm, categoryId: e.target.value })}
-                        disabled={!!editingMilestoneLevelId}
-                        required
-                      >
-                        <option value="">Select category</option>
-                        {milestoneCategories.map(category => (
-                          <option key={category._id} value={category._id}>
-                            {category.name}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-                    <div className="form-group">
-                      <label className="form-label">Level Number *</label>
-                      <input
-                        type="number"
-                        className="form-input"
-                        value={milestoneLevelForm.levelNumber}
-                        onChange={(e) => setMilestoneLevelForm({ ...milestoneLevelForm, levelNumber: e.target.value })}
-                        required
+                      <textarea
+                        rows={5}
+                        className={`w-full p-4 rounded-xl border text-[14px] leading-relaxed ${styles.input}`}
+                        value={formData.description || ""}
+                        onChange={(e) =>
+                          setFormData({
+                            ...formData,
+                            description: e.target.value,
+                          })
+                        }
                       />
                     </div>
-                    <div className="form-group">
-                      <label className="form-label">Title *</label>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="text-[10px] font-bold uppercase opacity-30 block mb-2 tracking-widest">
+                          Start Date
+                        </label>
+                        <input
+                          type="datetime-local"
+                          className={`w-full p-4 rounded-xl border text-[13px] ${styles.input}`}
+                          value={formData.startDate || ""}
+                          onChange={(e) =>
+                            setFormData({
+                              ...formData,
+                              startDate: e.target.value,
+                            })
+                          }
+                        />
+                      </div>
+                      <div>
+                        <label className="text-[10px] font-bold uppercase opacity-30 block mb-2 tracking-widest">
+                          Deadline
+                        </label>
+                        <input
+                          type="datetime-local"
+                          className={`w-full p-4 rounded-xl border text-[13px] ${styles.input}`}
+                          value={formData.deadlineDate || ""}
+                          onChange={(e) =>
+                            setFormData({
+                              ...formData,
+                              deadlineDate: e.target.value,
+                            })
+                          }
+                        />
+                      </div>
+                    </div>
+                    <div>
+                      <label className="text-[10px] font-bold uppercase opacity-30 block mb-2 tracking-widest">
+                        Resources (comma-separated)
+                      </label>
                       <input
                         type="text"
-                        className="form-input"
-                        value={milestoneLevelForm.title}
-                        onChange={(e) => setMilestoneLevelForm({ ...milestoneLevelForm, title: e.target.value })}
+                        className={`w-full p-4 rounded-xl border text-[14px] ${styles.input}`}
+                        value={formData.resources || ""}
+                        onChange={(e) =>
+                          setFormData({
+                            ...formData,
+                            resources: e.target.value,
+                          })
+                        }
+                      />
+                    </div>
+                    <label className="flex items-center gap-3 text-[11px] font-bold uppercase tracking-widest opacity-60">
+                      <input
+                        type="checkbox"
+                        checked={!!formData.isActive}
+                        onChange={(e) =>
+                          setFormData({
+                            ...formData,
+                            isActive: e.target.checked,
+                          })
+                        }
+                      />
+                      Active Week
+                    </label>
+                  </div>
+                )}
+
+                {targetType === "user" && (
+                  <div className="space-y-4">
+                    <input
+                      type="text"
+                      placeholder="Identity Handle"
+                      required={modalMode === "create"}
+                      disabled={modalMode === "edit"}
+                      className={`w-full p-4 rounded-xl border text-[15px] ${styles.input}`}
+                      value={formData.username || ""}
+                      onChange={(e) =>
+                        setFormData({ ...formData, username: e.target.value })
+                      }
+                    />
+                    {modalMode === "create" && (
+                      <input
+                        type="password"
+                        placeholder="Temporary Access Key"
                         required
+                        className={`w-full p-4 rounded-xl border text-[15px] ${styles.input}`}
+                        value={formData.password || ""}
+                        onChange={(e) =>
+                          setFormData({ ...formData, password: e.target.value })
+                        }
                       />
-                    </div>
-                    <div className="form-group">
-                      <label className="form-label">Description</label>
-                      <textarea
-                        className="form-textarea"
-                        value={milestoneLevelForm.description}
-                        onChange={(e) => setMilestoneLevelForm({ ...milestoneLevelForm, description: e.target.value })}
-                      />
-                    </div>
-                    <div className="form-group">
-                      <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
-                        <input
-                          type="checkbox"
-                          checked={milestoneLevelForm.isActive}
-                          onChange={(e) => setMilestoneLevelForm({ ...milestoneLevelForm, isActive: e.target.checked })}
-                        />
-                        Active Level
-                      </label>
-                    </div>
-                    <div style={{ display: 'flex', gap: '8px' }}>
-                      <button type="submit" className="btn btn-primary" disabled={actionLoading}>
-                        {editingMilestoneLevelId ? 'Update Level' : 'Create Level'}
-                      </button>
-                      {editingMilestoneLevelId && (
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setEditingMilestoneLevelId(null);
-                            setMilestoneLevelForm({ categoryId: '', levelNumber: '', title: '', description: '', isActive: true });
-                          }}
-                          className="btn btn-secondary"
-                        >
-                          Cancel
-                        </button>
-                      )}
-                    </div>
-                  </form>
-                </div>
-
-                <div style={{ gridColumn: '1' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-                    <h2 style={{ marginBottom: 0 }}>Levels</h2>
-                    <button
-                      type="button"
-                      className="btn btn-secondary"
-                      onClick={() => {
-                        setEditingMilestoneLevelId(null);
-                        setMilestoneLevelForm({ categoryId: '', levelNumber: '', title: '', description: '', isActive: true });
-                      }}
-                    >
-                      New
-                    </button>
-                  </div>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                    {milestoneLevels.map(level => (
-                      <button
-                        key={level._id}
-                        type="button"
-                        onClick={() => handleEditMilestoneLevel(level)}
-                        className={`btn ${editingMilestoneLevelId === level._id ? 'btn-primary' : 'btn-secondary'}`}
-                        style={{ textAlign: 'left', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
-                      >
-                        <span>Level {level.levelNumber}: {level.title}</span>
-                        {level.isActive && <span className="badge badge-success">Active</span>}
-                      </button>
-                    ))}
-                    {milestoneLevels.length === 0 && (
-                      <p style={{ color: 'var(--text-secondary)' }}>No levels yet.</p>
                     )}
-                  </div>
-                </div>
-              </div>
-            )}
-
-                        {activeTab === "milestone-challenges" && (
-              <div style={{ display: "grid", gridTemplateColumns: "320px 1fr", gap: "24px", alignItems: "start" }}>
-                <div className="card" style={{ marginBottom: "24px", gridColumn: "2" }}>
-                  <h2 style={{ marginBottom: "16px" }}>
-                    {editingMilestoneChallengeId ? "Edit Milestone Challenge" : "Create Milestone Challenge"}
-                  </h2>
-                  <form onSubmit={editingMilestoneChallengeId ? handleUpdateMilestoneChallenge : handleCreateMilestoneChallenge}>
-                    <div className="form-group">
-                      <label className="form-label">Category *</label>
-                      <select
-                        className="form-input"
-                        value={milestoneChallengeForm.categoryId}
-                        onChange={(e) => {
-                          setMilestoneChallengeForm({
-                            ...milestoneChallengeForm,
-                            categoryId: e.target.value,
-                            levelId: ""
-                          });
+                    <input
+                      type="text"
+                      placeholder="Display Name"
+                      className={`w-full p-4 rounded-xl border text-[15px] ${styles.input}`}
+                      value={formData.displayName || ""}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          displayName: e.target.value,
+                        })
+                      }
+                    />
+                    <input
+                      type="email"
+                      placeholder="Network Address (Email)"
+                      className={`w-full p-4 rounded-xl border text-[15px] ${styles.input}`}
+                      value={formData.email || ""}
+                      onChange={(e) =>
+                        setFormData({ ...formData, email: e.target.value })
+                      }
+                    />
+                    <input
+                      type="email"
+                      placeholder="Contact Email (optional)"
+                      className={`w-full p-4 rounded-xl border text-[15px] ${styles.input}`}
+                      value={formData.contactEmail || ""}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          contactEmail: e.target.value,
+                        })
+                      }
+                    />
+                    <input
+                      type="text"
+                      placeholder="Members (comma-separated)"
+                      className={`w-full p-4 rounded-xl border text-[15px] ${styles.input}`}
+                      value={formData.members || ""}
+                      onChange={(e) =>
+                        setFormData({ ...formData, members: e.target.value })
+                      }
+                    />
+                    {modalMode === "edit" && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const newPassword = window.prompt(
+                            "Enter a new password for this user:",
+                          );
+                          if (!newPassword) return;
+                          dispatch(
+                            resetAdminUserPassword({
+                              id: formData._id,
+                              payload: { newPassword },
+                            }),
+                          );
                         }}
-                        disabled={!!editingMilestoneChallengeId}
-                        required
+                        className="w-full py-4 border border-amber-500/20 text-amber-500 text-[10px] font-black uppercase tracking-widest rounded-xl flex items-center justify-center gap-3 hover:bg-amber-500/5 transition-all"
                       >
-                        <option value="">Select category</option>
-                        {milestoneCategories.map(category => (
-                          <option key={category._id} value={category._id}>
-                            {category.name}
-                          </option>
-                        ))}
-                      </select>
+                        <Key size={16} /> Override Password Hash
+                      </button>
+                    )}
+                  </div>
+                )}
+
+                {targetType === "category" && (
+                  <div className="space-y-6">
+                    <input
+                      type="text"
+                      placeholder="Category Key (unique)"
+                      required
+                      className={`w-full p-4 rounded-xl border text-[15px] font-bold ${styles.input}`}
+                      value={formData.key || ""}
+                      onChange={(e) =>
+                        setFormData({ ...formData, key: e.target.value })
+                      }
+                    />
+                    <input
+                      type="text"
+                      placeholder="Atlas Category Name"
+                      required
+                      className={`w-full p-4 rounded-xl border text-[15px] font-bold ${styles.input}`}
+                      value={formData.name || ""}
+                      onChange={(e) =>
+                        setFormData({ ...formData, name: e.target.value })
+                      }
+                    />
+                    <textarea
+                      rows={4}
+                      placeholder="Description"
+                      className={`w-full p-4 rounded-xl border text-[14px] leading-relaxed ${styles.input}`}
+                      value={formData.description || ""}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          description: e.target.value,
+                        })
+                      }
+                    />
+                    <div className="grid grid-cols-2 gap-4">
+                      <input
+                        type="number"
+                        placeholder="Order"
+                        className={`w-full p-4 rounded-xl border text-[14px] ${styles.input}`}
+                        value={formData.order || ""}
+                        onChange={(e) =>
+                          setFormData({ ...formData, order: e.target.value })
+                        }
+                      />
+                      <label className="flex items-center gap-3 text-[11px] font-bold uppercase tracking-widest opacity-60">
+                        <input
+                          type="checkbox"
+                          checked={
+                            formData.isActive !== undefined
+                              ? !!formData.isActive
+                              : true
+                          }
+                          onChange={(e) =>
+                            setFormData({
+                              ...formData,
+                              isActive: e.target.checked,
+                            })
+                          }
+                        />
+                        Active
+                      </label>
                     </div>
-                    <div className="form-group">
-                      <label className="form-label">Level *</label>
-                      <select
-                        className="form-input"
-                        value={milestoneChallengeForm.levelId}
-                        onChange={(e) => setMilestoneChallengeForm({ ...milestoneChallengeForm, levelId: e.target.value })}
-                        disabled={!milestoneChallengeForm.categoryId || !!editingMilestoneChallengeId}
-                        required
-                      >
-                        <option value="">Select level</option>
-                        {filteredLevelsForCategory.map(level => (
+                    <div className="p-4 rounded-xl bg-blue-500/5 border border-blue-500/10">
+                      <p className="text-[11px] opacity-60 leading-relaxed italic">
+                        Categories serve as the root for levels and individual
+                        milestone challenges.
+                      </p>
+                    </div>
+                  </div>
+                )}
+
+                {targetType === "level" && (
+                  <div className="space-y-4">
+                    <select>
+                      required className=
+                      {`w-full p-4 rounded-xl border text-[12px] font-black uppercase tracking-widest ${styles.input}`}
+                      value={formData.categoryId || ""}
+                      onChange=
+                      {(e) =>
+                        setFormData({
+                          ...formData,
+                          categoryId: e.target.value,
+                        })
+                      }
+                      <option value="">Select Category</option>
+                      {categories.map((category) => (
+                        <option key={category._id} value={category._id}>
+                          {category.name}
+                        </option>
+                      ))}
+                    </select>
+                    <input
+                      type="number"
+                      placeholder="Level Number"
+                      required
+                      className={`w-full p-4 rounded-xl border text-[15px] font-bold ${styles.input}`}
+                      value={formData.levelNumber || ""}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          levelNumber: e.target.value,
+                        })
+                      }
+                    />
+                    <input
+                      type="text"
+                      placeholder="Level Title"
+                      required
+                      className={`w-full p-4 rounded-xl border text-[15px] ${styles.input}`}
+                      value={formData.title || ""}
+                      onChange={(e) =>
+                        setFormData({ ...formData, title: e.target.value })
+                      }
+                    />
+                    <textarea
+                      rows={4}
+                      placeholder="Description"
+                      className={`w-full p-4 rounded-xl border text-[14px] leading-relaxed ${styles.input}`}
+                      value={formData.description || ""}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          description: e.target.value,
+                        })
+                      }
+                    />
+                    <label className="flex items-center gap-3 text-[11px] font-bold uppercase tracking-widest opacity-60">
+                      <input
+                        type="checkbox"
+                        checked={
+                          formData.isActive !== undefined
+                            ? !!formData.isActive
+                            : true
+                        }
+                        onChange={(e) =>
+                          setFormData({
+                            ...formData,
+                            isActive: e.target.checked,
+                          })
+                        }
+                      />
+                      Active Level
+                    </label>
+                  </div>
+                )}
+
+                {targetType === "challenge" && (
+                  <div className="space-y-4">
+                    <select>
+                      required className=
+                      {`w-full p-4 rounded-xl border text-[12px] font-black uppercase tracking-widest ${styles.input}`}
+                      value={formData.categoryId || ""}
+                      onChange=
+                      {(e) =>
+                        setFormData({
+                          ...formData,
+                          categoryId: e.target.value,
+                          levelId: "",
+                        })
+                      }
+                      <option value="">Select Category</option>
+                      {categories.map((category) => (
+                        <option key={category._id} value={category._id}>
+                          {category.name}
+                        </option>
+                      ))}
+                    </select>
+                    <select>
+                      required className=
+                      {`w-full p-4 rounded-xl border text-[12px] font-black uppercase tracking-widest ${styles.input}`}
+                      value={formData.levelId || ""}
+                      onChange=
+                      {(e) =>
+                        setFormData({ ...formData, levelId: e.target.value })
+                      }
+                      <option value="">Select Level</option>
+                      {levels
+                        .filter((level) => {
+                          const categoryId =
+                            level.categoryId?._id || level.categoryId;
+                          return formData.categoryId
+                            ? categoryId === formData.categoryId
+                            : true;
+                        })
+                        .map((level) => (
                           <option key={level._id} value={level._id}>
                             Level {level.levelNumber}: {level.title}
                           </option>
                         ))}
-                      </select>
-                    </div>
-                    <div className="form-group">
-                      <label className="form-label">Title *</label>
-                      <input
-                        type="text"
-                        className="form-input"
-                        value={milestoneChallengeForm.title}
-                        onChange={(e) => setMilestoneChallengeForm({ ...milestoneChallengeForm, title: e.target.value })}
-                        required
-                      />
-                    </div>
-                    <div className="form-group">
-                      <label className="form-label">Description</label>
-                      <textarea
-                        className="form-textarea"
-                        value={milestoneChallengeForm.description}
-                        onChange={(e) => setMilestoneChallengeForm({ ...milestoneChallengeForm, description: e.target.value })}
-                      />
-                    </div>
-                    <div className="form-group">
-                      <label className="form-label">Requirements (comma-separated)</label>
-                      <input
-                        type="text"
-                        className="form-input"
-                        value={milestoneChallengeForm.requirements}
-                        onChange={(e) => setMilestoneChallengeForm({ ...milestoneChallengeForm, requirements: e.target.value })}
-                      />
-                    </div>
-                    <div className="form-group">
-                      <label className="form-label">Resources (comma-separated)</label>
-                      <input
-                        type="text"
-                        className="form-input"
-                        value={milestoneChallengeForm.resources}
-                        onChange={(e) => setMilestoneChallengeForm({ ...milestoneChallengeForm, resources: e.target.value })}
-                      />
-                    </div>
-                    <div className="form-group">
-                      <label className="form-label">Tags (comma-separated)</label>
-                      <input
-                        type="text"
-                        className="form-input"
-                        value={milestoneChallengeForm.tags}
-                        onChange={(e) => setMilestoneChallengeForm({ ...milestoneChallengeForm, tags: e.target.value })}
-                      />
-                    </div>
-                    <div className="form-group">
-                      <label className="form-label">Difficulty</label>
-                      <select
-                        className="form-input"
-                        value={milestoneChallengeForm.difficulty}
-                        onChange={(e) => setMilestoneChallengeForm({ ...milestoneChallengeForm, difficulty: e.target.value })}
-                      >
-                        <option value="beginner">Beginner</option>
-                        <option value="intermediate">Intermediate</option>
-                        <option value="advanced">Advanced</option>
-                      </select>
-                    </div>
-                    <div className="form-group">
-                      <label style={{ display: "flex", alignItems: "center", gap: "8px", cursor: "pointer" }}>
-                        <input
-                          type="checkbox"
-                          checked={milestoneChallengeForm.isActive}
-                          onChange={(e) => setMilestoneChallengeForm({ ...milestoneChallengeForm, isActive: e.target.checked })}
-                        />
-                        Active Challenge
-                      </label>
-                    </div>
-                    <div style={{ display: "flex", gap: "8px" }}>
-                      <button type="submit" className="btn btn-primary" disabled={actionLoading}>
-                        {editingMilestoneChallengeId ? "Update Challenge" : "Create Challenge"}
-                      </button>
-                      {editingMilestoneChallengeId && (
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setEditingMilestoneChallengeId(null);
-                            setMilestoneChallengeForm({ categoryId: "", levelId: "", title: "", description: "", requirements: "", resources: "", tags: "", difficulty: "beginner", isActive: true });
-                          }}
-                          className="btn btn-secondary"
-                        >
-                          Cancel
-                        </button>
-                      )}
-                    </div>
-                  </form>
-                </div>
-
-                <div style={{ gridColumn: "1" }}>
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px" }}>
-                    <h2 style={{ marginBottom: 0 }}>Challenges</h2>
-                    <button
-                      type="button"
-                      className="btn btn-secondary"
-                      onClick={() => {
-                        setEditingMilestoneChallengeId(null);
-                        setMilestoneChallengeForm({ categoryId: "", levelId: "", title: "", description: "", requirements: "", resources: "", tags: "", difficulty: "beginner", isActive: true });
-                      }}
+                    </select>
+                    <input
+                      type="text"
+                      placeholder="Challenge Title"
+                      required
+                      className={`w-full p-4 rounded-xl border text-[15px] ${styles.input}`}
+                      value={formData.title || ""}
+                      onChange={(e) =>
+                        setFormData({ ...formData, title: e.target.value })
+                      }
+                    />
+                    <textarea
+                      rows={4}
+                      placeholder="Description"
+                      className={`w-full p-4 rounded-xl border text-[14px] leading-relaxed ${styles.input}`}
+                      value={formData.description || ""}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          description: e.target.value,
+                        })
+                      }
+                    />
+                    <input
+                      type="text"
+                      placeholder="Requirements (comma-separated)"
+                      className={`w-full p-4 rounded-xl border text-[14px] ${styles.input}`}
+                      value={formData.requirements || ""}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          requirements: e.target.value,
+                        })
+                      }
+                    />
+                    <input
+                      type="text"
+                      placeholder="Resources (comma-separated)"
+                      className={`w-full p-4 rounded-xl border text-[14px] ${styles.input}`}
+                      value={formData.resources || ""}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          resources: e.target.value,
+                        })
+                      }
+                    />
+                    <input
+                      type="text"
+                      placeholder="Tags (comma-separated)"
+                      className={`w-full p-4 rounded-xl border text-[14px] ${styles.input}`}
+                      value={formData.tags || ""}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          tags: e.target.value,
+                        })
+                      }
+                    />
+                    <select
+                      className={`w-full p-4 rounded-xl border text-[12px] font-black uppercase tracking-widest ${styles.input}`}
+                      value={formData.difficulty || "beginner"}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          difficulty: e.target.value,
+                        })
+                      }
                     >
-                      New
-                    </button>
-                  </div>
-                  <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-                    {milestoneChallenges.map(challenge => (
-                      <button
-                        key={challenge._id}
-                        type="button"
-                        onClick={() => handleEditMilestoneChallenge(challenge)}
-                        className={`btn ${editingMilestoneChallengeId === challenge._id ? "btn-primary" : "btn-secondary"}`}
-                        style={{ textAlign: "left", display: "flex", justifyContent: "space-between", alignItems: "center" }}
-                      >
-                        <span>{challenge.title}</span>
-                        {challenge.isActive && <span className="badge badge-success">Active</span>}
-                      </button>
-                    ))}
-                    {milestoneChallenges.length === 0 && (
-                      <p style={{ color: "var(--text-secondary)" }}>No challenges yet.</p>
-                    )}
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {activeTab === 'milestone-submissions' && (
-              <div>
-                <div className="grid grid-2">
-                  {milestoneSubmissions.map(submission => (
-                    <div key={submission._id} className="card">
-                      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '12px' }}>
-                        <h3>{submission.userId?.displayName || submission.userId?.username || 'Unknown User'}</h3>
-                        <span className={`badge ${
-                          submission.status === 'approved' ? 'badge-success' :
-                          submission.status === 'rejected' ? 'badge-danger' : 'badge-warning'
-                        }`}>
-                          {submission.status}
-                        </span>
-                      </div>
-                      <p style={{ color: 'var(--text-secondary)', marginBottom: '8px' }}>
-                        {submission.categoryId?.name || 'Category'} · Level {submission.levelId?.levelNumber || 'N/A'}
-                      </p>
-                      {submission.challengeId?.title && (
-                        <p style={{ color: 'var(--text-secondary)', marginBottom: '8px' }}>
-                          Challenge: {submission.challengeId.title}
-                        </p>
-                      )}
-                      {submission.description && (
-                        <p style={{ marginBottom: '12px' }}>{submission.description}</p>
-                      )}
-                      <div style={{ marginBottom: '12px' }}>
-                        {submission.repoUrl && (
-                          <a href={submission.repoUrl} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--primary)', marginRight: '12px' }}>
-                            GitHub
-                          </a>
-                        )}
-                        {submission.demoUrl && (
-                          <a href={submission.demoUrl} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--primary)' }}>
-                            Live Demo
-                          </a>
-                        )}
-                      </div>
-                      <div style={{ display: 'flex', gap: '8px' }}>
-                        <button
-                          onClick={() => handleUpdateMilestoneSubmissionStatus(submission._id, 'approved')}
-                          className="btn btn-success"
-                          style={{ padding: '6px 12px', fontSize: '14px' }}
-                        >
-                          Approve
-                        </button>
-                        <button
-                          onClick={() => setSelectedMilestoneSubmission(submission)}
-                          className="btn btn-danger"
-                          style={{ padding: '6px 12px', fontSize: '14px' }}
-                        >
-                          Reject
-                        </button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-
-                {selectedMilestoneSubmission && (
-                  <div style={{
-                    position: 'fixed',
-                    top: 0,
-                    left: 0,
-                    right: 0,
-                    bottom: 0,
-                    backgroundColor: 'rgba(0,0,0,0.5)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    zIndex: 1000
-                  }}>
-                    <div className="card" style={{ maxWidth: '500px', width: '90%' }}>
-                      <h2 style={{ marginBottom: '16px' }}>Reject Milestone Submission</h2>
-                      <div className="form-group">
-                        <label className="form-label">Reviewer Notes</label>
-                        <textarea
-                          className="form-textarea"
-                          value={milestoneReviewNotes}
-                          onChange={(e) => setMilestoneReviewNotes(e.target.value)}
-                          placeholder="Explain why this submission was rejected..."
-                        />
-                      </div>
-                      <div style={{ display: 'flex', gap: '8px' }}>
-                        <button
-                          onClick={() => handleUpdateMilestoneSubmissionStatus(selectedMilestoneSubmission._id, 'rejected')}
-                          className="btn btn-danger"
-                        >
-                          Confirm Reject
-                        </button>
-                        <button
-                          onClick={() => {
-                            setSelectedMilestoneSubmission(null);
-                            setMilestoneReviewNotes('');
-                          }}
-                          className="btn btn-secondary"
-                        >
-                          Cancel
-                        </button>
-                      </div>
-                    </div>
+                      <option value="beginner">Beginner</option>
+                      <option value="intermediate">Intermediate</option>
+                      <option value="advanced">Advanced</option>
+                    </select>
+                    <label className="flex items-center gap-3 text-[11px] font-bold uppercase tracking-widest opacity-60">
+                      <input
+                        type="checkbox"
+                        checked={
+                          formData.isActive !== undefined
+                            ? !!formData.isActive
+                            : true
+                        }
+                        onChange={(e) =>
+                          setFormData({
+                            ...formData,
+                            isActive: e.target.checked,
+                          })
+                        }
+                      />
+                      Active Challenge
+                    </label>
                   </div>
                 )}
-              </div>
-            )}
 
-            {activeTab === 'stats' && stats && (
-              <div className="grid grid-3">
-                <div className="card">
-                  <h3>Total Users</h3>
-                  <p style={{ fontSize: '32px', fontWeight: 'bold', color: 'var(--primary)' }}>{stats.totalUsers}</p>
-                </div>
-                <div className="card">
-                  <h3>Total Weeks</h3>
-                  <p style={{ fontSize: '32px', fontWeight: 'bold', color: 'var(--primary)' }}>{stats.totalWeeks}</p>
-                </div>
-                <div className="card">
-                  <h3>Total Submissions</h3>
-                  <p style={{ fontSize: '32px', fontWeight: 'bold', color: 'var(--primary)' }}>{stats.totalSubmissions}</p>
-                </div>
-                <div className="card">
-                  <h3>Approved</h3>
-                  <p style={{ fontSize: '32px', fontWeight: 'bold', color: 'var(--success)' }}>{stats.approvedSubmissions}</p>
-                </div>
-                <div className="card">
-                  <h3>Pending</h3>
-                  <p style={{ fontSize: '32px', fontWeight: 'bold', color: 'var(--warning)' }}>{stats.pendingSubmissions}</p>
-                </div>
-              </div>
-            )}
-          </>
+                <button
+                  type="submit"
+                  disabled={actionLoading}
+                  className="w-full py-5 bg-blue-600 text-white font-black text-[12px] uppercase tracking-[0.3em] rounded-xl shadow-2xl shadow-blue-600/40 hover:bg-blue-500 transition-all flex items-center justify-center gap-2"
+                >
+                  {actionLoading ? (
+                    "COMMITTING..."
+                  ) : (
+                    <>
+                      <Save size={18} /> COMMIT TO ATLAS
+                    </>
+                  )}
+                </button>
+              </form>
+            </motion.div>
+          </div>
         )}
-      </div>
-    </>
+      </AnimatePresence>
+    </div>
   );
 };
 
 export default AdminPanel;
-
-
-

@@ -93,13 +93,12 @@ const Dashboard = () => {
               {submissions.map((submission) => (
                 <div
                   key={submission._id}
-                    style={{
+                  style={{
                       padding: '16px',
                       border: '1px solid var(--border-color)',
                       borderRadius: '6px',
                       backgroundColor: 'var(--bg-tertiary)'
-                    }}
-                >
+                    }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: '12px' }}>
                     <div>
                       <h3 style={{ marginBottom: '4px' }}>
@@ -155,3 +154,5 @@ const Dashboard = () => {
 };
 
 export default Dashboard;
+
+

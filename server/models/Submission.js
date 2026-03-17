@@ -56,7 +56,7 @@ const submissionSchema = new mongoose.Schema({
   }
 });
 
-// Update timestamp on save
+
 submissionSchema.pre('save', function(next) {
   this.updated_at = Date.now();
   next();

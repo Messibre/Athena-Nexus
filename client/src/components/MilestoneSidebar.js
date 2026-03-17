@@ -62,6 +62,7 @@ const MilestoneSidebar = ({
                 onClick={() => onSelectCategory(category._id)}
                 type="button"
               >
+              >
                 <span style={{ display: "flex", alignItems: "center", gap: "8px" }}>
                   {isActive ? <FolderOpen size={16} /> : <Folder size={16} />}
                   {category.name}
@@ -94,11 +95,14 @@ const MilestoneSidebar = ({
                   onClick={() => onSelectLevel(level._id)}
                   className={`tree-item ${isActive ? "active" : ""}`}
                 >
+                >
                   <span style={{ display: "flex", alignItems: "center", gap: "8px" }}>
                     <Milestone size={16} />
                     Level {level.levelNumber}: {level.title}
                   </span>
                   <span className={`status-pill ${
+                  >
+                  >
                     badge.className === "badge-success" ? "status-success" :
                     badge.className === "badge-info" ? "status-info" :
                     "status-warning"
@@ -118,6 +122,7 @@ const MilestoneSidebar = ({
             type="button"
             onClick={onChangeChallenge}
             className="sidebar-link"
+          >
           >
             <Layers size={16} />
             Change challenge

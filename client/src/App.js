@@ -7,7 +7,7 @@ import { fetchMe } from './redux/thunks/authThunks';
 import { selectTheme } from './redux/selectors/themeSelectors';
 import { selectAuthToken, selectUser } from './redux/selectors/authSelectors';
 
-// Pages
+
 import Home from './pages/Home';
 import Login from './pages/Login';
 import Signup from './pages/Signup';
