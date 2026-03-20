@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Space+Grotesk:wght@400;500;600;700&display=swap');
+@import url("https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Space+Grotesk:wght@400;500;600;700&display=swap");
 
 * {
   margin: 0;
@@ -7,125 +7,61 @@
 }
 
 :root {
-  
   --bg-primary: #ffffff;
-  --bg-secondary: #f5f5f5;
-  --bg-tertiary: #f9fafb;
-  --text-primary: #111827;
-  --text-secondary: #6b7280;
-  --text-tertiary: #374151;
-  --border-color: #e5e7eb;
-  --border-light: #d1d5db;
-  --shadow: rgba(0, 0, 0, 0.1);
-  --shadow-hover: rgba(0, 0, 0, 0.15);
-  
-  
-  --primary: #6366f1;
-  --primary-hover: #4f46e5;
-  --secondary: #6b7280;
-  --secondary-hover: #4b5563;
+  --bg-secondary: #fafafa;
+  --bg-tertiary: #f5f5f5;
+
+  --text-primary: #0a0a0a;
+  --text-secondary: #525252;
+  --text-tertiary: #737373;
+
+  --border-color: #e5e5e5;
+  --border-light: #f5f5f5;
+
+  --shadow: rgba(0, 0, 0, 0.05);
+  --shadow-hover: rgba(0, 0, 0, 0.1);
+
+  --primary: #0a0a0a;
+  --primary-hover: #262626;
+  --secondary: #737373;
+  --secondary-hover: #525252;
+
   --success: #10b981;
-  --success-hover: #059669;
   --danger: #ef4444;
-  --danger-hover: #dc2626;
-  --warning: #f59e0b;
-  --info: #3b82f6;
-  
-  
-  --badge-success-bg: #d1fae5;
-  --badge-success-text: #065f46;
-  --badge-warning-bg: #fef3c7;
-  --badge-warning-text: #92400e;
-  --badge-danger-bg: #fee2e2;
-  --badge-danger-text: #991b1b;
-  --badge-info-bg: #dbeafe;
-  --badge-info-text: #1e40af;
-  
-  
-  --alert-success-bg: #d1fae5;
-  --alert-success-text: #065f46;
-  --alert-success-border: #10b981;
-  --alert-error-bg: #fee2e2;
-  --alert-error-text: #991b1b;
-  --alert-error-border: #ef4444;
-  --alert-info-bg: #dbeafe;
-  --alert-info-text: #1e40af;
-  --alert-info-border: #3b82f6;
 }
 
 [data-theme="dark"] {
-  
-  --bg-primary: #1f2937;
-  --bg-secondary: #111827;
-  --bg-tertiary: #374151;
-  --text-primary: #f9fafb;
-  --text-secondary: #d1d5db;
-  --text-tertiary: #e5e7eb;
-  --border-color: #4b5563;
-  --border-light: #6b7280;
-  --shadow: rgba(0, 0, 0, 0.3);
-  --shadow-hover: rgba(0, 0, 0, 0.4);
-  
-  
-  --primary: #818cf8;
-  --primary-hover: #6366f1;
-  --secondary: #9ca3af;
-  --secondary-hover: #6b7280;
-  --success: #34d399;
-  --success-hover: #10b981;
-  --danger: #f87171;
-  --danger-hover: #ef4444;
-  --warning: #fbbf24;
-  --info: #60a5fa;
-  
-  
-  --badge-success-bg: #064e3b;
-  --badge-success-text: #6ee7b7;
-  --badge-warning-bg: #78350f;
-  --badge-warning-text: #fde68a;
-  --badge-danger-bg: #7f1d1d;
-  --badge-danger-text: #fca5a5;
-  --badge-info-bg: #1e3a8a;
-  --badge-info-text: #93c5fd;
-  
-  
-  --alert-success-bg: #064e3b;
-  --alert-success-text: #6ee7b7;
-  --alert-success-border: #34d399;
-  --alert-error-bg: #7f1d1d;
-  --alert-error-text: #fca5a5;
-  --alert-error-border: #f87171;
-  --alert-info-bg: #1e3a8a;
-  --alert-info-text: #93c5fd;
-  --alert-info-border: #60a5fa;
+  --bg-primary: #0a0a0a;
+  --bg-secondary: #171717;
+  --bg-tertiary: #262626;
+
+  --text-primary: #fafafa;
+  --text-secondary: #a3a3a3;
+  --text-tertiary: #737373;
+
+  --border-color: #262626;
+  --border-light: #404040;
+
+  --shadow: rgba(0, 0, 0, 0.4);
+  --shadow-hover: rgba(0, 0, 0, 0.6);
+
+  --primary: #ffffff;
+  --primary-hover: #e5e5e5;
+  --secondary: #525252;
+  --secondary-hover: #737373;
 }
 
 body {
-  font-family: 'Space Grotesk', 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  background-color: var(--bg-secondary);
+  font-family: "Space Grotesk", sans-serif;
+  background-color: var(--bg-primary);
   color: var(--text-primary);
-  transition: background-color 0.3s ease, color 0.3s ease;
+  transition:
+    background-color 0.4s ease,
+    color 0.4s ease;
 }
 
-code {
-  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
-    monospace;
+h1,
+h2,
+h3 {
+  font-family: "Fraunces", serif;
 }
-
-a {
-  text-decoration: none;
-  color: inherit;
-}
-
-button {
-  cursor: pointer;
-  border: none;
-  outline: none;
-}
-
-input, textarea, select {
-  outline: none;
-}
-

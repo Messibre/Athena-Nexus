@@ -37,7 +37,6 @@ import {
   selectIsAuthenticated,
 } from "../redux/selectors/authSelectors";
 
-// Replace with your actual theme slice selector
 export const selectTheme = (state) => state.theme.theme;
 
 const Challenges = () => {
@@ -53,7 +52,6 @@ const Challenges = () => {
 
   const [loading, setLoading] = useState(true);
   const [activeWeekId, setActiveWeekId] = useState("");
-  // Mobile state to toggle between the list and the details
   const [showMobileDetails, setShowMobileDetails] = useState(false);
   const navigate = useNavigate();
 
@@ -95,12 +93,10 @@ const Challenges = () => {
 
   const handleSelectWeek = (id) => {
     setActiveWeekId(id);
-    setShowMobileDetails(true); // Switch to detail view on mobile
+    setShowMobileDetails(true);
   };
 
-  const handleToggleTheme = () => {
-    // dispatch(toggleTheme());
-  };
+  const handleToggleTheme = () => {};
 
   const isDeadlinePassed = (date) => date && new Date() > new Date(date);
 

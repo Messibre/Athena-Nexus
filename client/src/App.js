@@ -1,26 +1,30 @@
-import React, { useEffect } from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import { useDispatch, useSelector } from 'react-redux';
-import PrivateRoute from './components/PrivateRoute';
-import AdminRoute from './components/AdminRoute';
-import { fetchMe } from './redux/thunks/authThunks';
-import { selectTheme } from './redux/selectors/themeSelectors';
-import { selectAuthToken, selectUser } from './redux/selectors/authSelectors';
+import React, { useEffect } from "react";
+import {
+  BrowserRouter as Router,
+  Routes,
+  Route,
+  Navigate,
+} from "react-router-dom";
+import { useDispatch, useSelector } from "react-redux";
+import PrivateRoute from "./components/PrivateRoute";
+import AdminRoute from "./components/AdminRoute";
+import { fetchMe } from "./redux/thunks/authThunks";
+import { selectTheme } from "./redux/selectors/themeSelectors";
+import { selectAuthToken, selectUser } from "./redux/selectors/authSelectors";
 
+import Home from "./pages/Home";
+import Login from "./pages/Login";
+import Signup from "./pages/Signup";
+import Dashboard from "./pages/Dashboard";
+import Submit from "./pages/Submit";
+import Settings from "./pages/Settings";
+import Challenges from "./pages/Challenges";
+import Gallery from "./pages/Gallery";
+import AdminPanel from "./pages/AdminPanel";
+import About from "./pages/About";
+import Milestones from "./pages/Milestones";
 
-import Home from './pages/Home';
-import Login from './pages/Login';
-import Signup from './pages/Signup';
-import Dashboard from './pages/Dashboard';
-import Submit from './pages/Submit';
-import Settings from './pages/Settings';
-import Challenges from './pages/Challenges';
-import Gallery from './pages/Gallery';
-import AdminPanel from './pages/AdminPanel';
-import About from './pages/About';
-import Milestones from './pages/Milestones';
-
-import './App.css';
+import "./App.css";
 
 function App() {
   const dispatch = useDispatch();
@@ -29,8 +33,16 @@ function App() {
   const user = useSelector(selectUser);
 
   useEffect(() => {
-    document.documentElement.setAttribute('data-theme', theme);
-    localStorage.setItem('theme', theme);
+    const root = document.documentElement;
+
+    if (theme === "dark") {
+      root.classList.add("dark");
+    } else {
+      root.classList.remove("dark");
+    }
+
+    root.setAttribute("data-theme", theme);
+    localStorage.setItem("theme", theme);
   }, [theme]);
 
   useEffect(() => {
