@@ -104,7 +104,7 @@ const Challenges = () => {
   return (
     <div className="challenges-page" data-theme={theme}>
       <Navbar />
-      <div className="bg-image-layer" />
+      <div className="challenges-bg-image-layer" />
 
       <div className="challenges-layout">
         <header className="challenges-header">

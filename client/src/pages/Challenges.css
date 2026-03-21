@@ -6,7 +6,7 @@
   overflow: hidden;
 }
 
-.bg-image-layer {
+.challenges-bg-image-layer {
   position: fixed;
   inset: 0;
   z-index: 0;
@@ -18,7 +18,7 @@
   pointer-events: none;
 }
 
-[data-theme="dark"] .bg-image-layer {
+[data-theme="dark"] .challenges-bg-image-layer {
   opacity: 0.4;
   filter: saturate(1.2) brightness(0.6) contrast(1.3);
 }
