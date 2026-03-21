@@ -4,6 +4,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { login } from "../redux/thunks/authThunks";
 import Navbar from "../components/Navbar";
 import { selectAuthActionLoading } from "../redux/selectors/authSelectors";
+import { selectTheme } from "../redux/selectors/themeSelectors";
 
 const Login = () => {
   const [username, setUsername] = useState("");
@@ -11,6 +12,7 @@ const Login = () => {
   const [error, setError] = useState("");
   const dispatch = useDispatch();
   const actionLoading = useSelector(selectAuthActionLoading);
+  const theme = useSelector(selectTheme);
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
@@ -26,28 +28,56 @@ const Login = () => {
   };
 
   return (
-    <>
+    <div
+      data-theme={theme}
+      className={`min-h-screen font-['Space_Grotesk'] ${theme === "dark" ? "bg-[#0a0514] text-slate-300" : "bg-slate-50 text-slate-700"}`}
+    >
       <Navbar />
+
       <div
-        className="container"
-        style={{ maxWidth: "400px", marginTop: "60px" }}
-      >
-        <div className="card">
+        className="bg-image-layer"
+        style={{
+          position: "fixed",
+          inset: 0,
+          zIndex: 0,
+          backgroundImage: 'url("/pur1.jpg")',
+          backgroundSize: "cover",
+          backgroundPosition: "center",
+          opacity: theme === "dark" ? 0.4 : 0.85,
+          pointerEvents: "none",
+        }}
+      />
+
+      <div className="relative z-10 max-w-md mx-auto px-4 pt-14 md:pt-16 pb-20">
+        <div
+          className={`rounded-3xl border p-8 md:p-10 shadow-2xl ${theme === "dark" ? "bg-[#120a21]/85 border-[#2e1a47]" : "bg-white/90 border-slate-200"}`}
+        >
+          <p className="text-[10px] font-black uppercase tracking-[0.35em] text-[#8b5cf6] text-center mb-3">
+            Athena Nexus
+          </p>
           <h2
-            className="card-title"
-            style={{ marginBottom: "24px", textAlign: "center" }}
+            className={`text-center text-4xl md:text-5xl font-['Fraunces'] font-black tracking-tight mb-3 ${theme === "dark" ? "text-white" : "text-slate-900"}`}
           >
-            Login to Your Account
+            Login
           </h2>
+          <p className="text-center opacity-70 mb-6 text-sm">
+            Continue your team journey.
+          </p>
 
           {error && <div className="alert alert-error">{error}</div>}
 
-          <form onSubmit={handleSubmit}>
+          <form onSubmit={handleSubmit} className="space-y-4">
             <div className="form-group">
-              <label className="form-label">Username</label>
+              <label className="text-[11px] font-black uppercase tracking-widest opacity-60 block mb-2">
+                Username
+              </label>
               <input
                 type="text"
-                className="form-input"
+                className={`w-full p-4 rounded-xl border outline-none transition-all ${
+                  theme === "dark"
+                    ? "bg-black/30 border-[#2e1a47] text-white focus:border-[#8b5cf6]"
+                    : "bg-white border-slate-200 text-slate-900 focus:border-[#8b5cf6]"
+                }`}
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
                 required
@@ -56,10 +86,16 @@ const Login = () => {
             </div>
 
             <div className="form-group">
-              <label className="form-label">Password</label>
+              <label className="text-[11px] font-black uppercase tracking-widest opacity-60 block mb-2">
+                Password
+              </label>
               <input
                 type="password"
-                className="form-input"
+                className={`w-full p-4 rounded-xl border outline-none transition-all ${
+                  theme === "dark"
+                    ? "bg-black/30 border-[#2e1a47] text-white focus:border-[#8b5cf6]"
+                    : "bg-white border-slate-200 text-slate-900 focus:border-[#8b5cf6]"
+                }`}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
@@ -69,8 +105,7 @@ const Login = () => {
 
             <button
               type="submit"
-              className="btn btn-primary"
-              style={{ width: "100%", marginTop: "8px" }}
+              className="w-full py-4 rounded-xl bg-[#8b5cf6] hover:bg-[#7c3aed] text-white font-black uppercase tracking-[0.2em] transition-all shadow-xl shadow-[#8b5cf6]/30"
               disabled={actionLoading}
             >
               {actionLoading ? "Logging in..." : "Login"}
@@ -78,26 +113,18 @@ const Login = () => {
           </form>
 
           <div
-            style={{
-              marginTop: "24px",
-              textAlign: "center",
-              paddingTop: "24px",
-              borderTop: "1px solid var(--border-color)",
-            }}
+            className={`mt-6 pt-6 border-t text-center ${theme === "dark" ? "border-[#2e1a47]" : "border-slate-200"}`}
           >
-            <p style={{ color: "var(--text-secondary)" }}>
+            <p className="opacity-70">
               Don't have an account?{" "}
-              <Link
-                to="/signup"
-                style={{ color: "var(--primary)", fontWeight: "600" }}
-              >
+              <Link to="/signup" className="text-[#8b5cf6] font-bold">
                 Register your team
               </Link>
             </p>
           </div>
         </div>
       </div>
-    </>
+    </div>
   );
 };
 

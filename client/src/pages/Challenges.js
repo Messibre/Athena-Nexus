@@ -7,9 +7,6 @@ import {
   CheckCircle2,
   Clock,
   Inbox,
-  Shield,
-  User,
-  ChevronRight,
   ChevronLeft,
   Sun,
   Moon,
@@ -19,10 +16,7 @@ import {
 import Navbar from "../components/Navbar";
 import { fetchWeeks } from "../redux/thunks/weeksThunks";
 import { fetchMySubmissions } from "../redux/thunks/submissionsThunks";
-import {
-  fetchAdminSubmissions,
-  deleteAdminWeek,
-} from "../redux/thunks/adminThunks";
+import { fetchAdminSubmissions } from "../redux/thunks/adminThunks";
 import { selectWeeks } from "../redux/selectors/weeksSelectors";
 import {
   selectMySubmissions,
@@ -36,6 +30,7 @@ import {
   selectIsAdmin,
   selectIsAuthenticated,
 } from "../redux/selectors/authSelectors";
+import "./Challenges.css"; // New style import
 
 export const selectTheme = (state) => state.theme.theme;
 
@@ -47,13 +42,11 @@ const Challenges = () => {
   const weeks = useSelector(selectWeeks);
   const submissions = useSelector(selectMySubmissions);
   const submissionsLoading = useSelector(selectSubmissionsLoading);
-  const adminSubmissions = useSelector(selectAdminSubmissions);
   const adminLoading = useSelector(selectAdminLoading);
 
   const [loading, setLoading] = useState(true);
   const [activeWeekId, setActiveWeekId] = useState("");
   const [showMobileDetails, setShowMobileDetails] = useState(false);
-  const navigate = useNavigate();
 
   useEffect(() => {
     const run = async () => {
@@ -96,256 +89,186 @@ const Challenges = () => {
     setShowMobileDetails(true);
   };
 
-  const handleToggleTheme = () => {};
-
   const isDeadlinePassed = (date) => date && new Date() > new Date(date);
 
   if (loading || submissionsLoading || adminLoading) {
     return (
-      <div
-        className={`min-h-screen flex items-center justify-center ${theme === "dark" ? "bg-[#0a0a0a] text-white" : "bg-white text-black"}`}
-      >
-        <div className="text-[11px] uppercase tracking-widest animate-pulse">
-          Synchronizing...
+      <div className="min-h-screen flex items-center justify-center bg-[#0a0514]">
+        <div className="text-[11px] text-white uppercase tracking-[0.4em] animate-pulse font-black">
+          Synchronizing Systems...
         </div>
       </div>
     );
   }
 
   return (
-    <div
-      className={`min-h-screen font-sans transition-colors duration-300 ${theme === "dark" ? "bg-[#0a0a0a] text-slate-300" : "bg-slate-50 text-slate-700"}`}
-    >
+    <div className="challenges-page" data-theme={theme}>
       <Navbar />
+      <div className="bg-image-layer" />
 
-      <div className="max-w-[1400px] mx-auto h-[calc(100vh-64px)] flex flex-col">
-        {/* Responsive Header */}
-        <header
-          className={`flex items-center justify-between px-4 md:px-6 py-3 border-b ${theme === "dark" ? "bg-[#111] border-white/5" : "bg-white border-slate-200"}`}
-        >
-          <div className="flex items-center gap-2 md:gap-3">
+      <div className="challenges-layout">
+        <header className="challenges-header">
+          <div className="flex items-center gap-3">
             {showMobileDetails && (
               <button
                 onClick={() => setShowMobileDetails(false)}
-                className="md:hidden p-1 -ml-1"
+                className="md:hidden text-white"
               >
                 <ChevronLeft size={20} />
               </button>
             )}
-            <h1
-              className={`text-[11px] md:text-sm font-bold tracking-tighter uppercase ${theme === "dark" ? "text-white" : "text-slate-900"}`}
-            >
-              {showMobileDetails ? `Week ${activeWeek?.week_number}` : "Inbox"}
+            <h1 className="header-title">
+              {showMobileDetails
+                ? `Week ${activeWeek?.week_number}`
+                : "Challenge Inbox"}
             </h1>
           </div>
-
-          <div className="flex items-center gap-2 md:gap-4">
-            <button
-              onClick={handleToggleTheme}
-              className="p-2 hover:bg-black/5 rounded-full transition-colors"
-            >
-              {theme === "dark" ? (
-                <Sun size={14} className="text-yellow-500" />
-              ) : (
-                <Moon size={14} className="text-slate-600" />
-              )}
-            </button>
-            <Link
-              to="/milestones"
-              className="text-[10px] md:text-[11px] font-bold text-blue-500 hover:underline"
-            >
-              MILESTONES →
-            </Link>
-          </div>
+          <Link
+            to="/milestones"
+            className="text-[10px] font-black text-white/60 hover:text-white tracking-widest transition-all"
+          >
+            MILESTONES →
+          </Link>
         </header>
 
-        <div className="flex-1 flex overflow-hidden relative">
-          {/* COLUMN 1: WEEKS LIST (Hidden on mobile when detail is shown) */}
+        <div className="flex-1 flex overflow-hidden">
+          {/* SIDEBAR */}
           <aside
-            className={`
-            ${showMobileDetails ? "hidden md:flex" : "flex"} 
-            w-full md:w-80 border-r flex flex-col overflow-y-auto 
-            ${theme === "dark" ? "bg-[#0f0f0f] border-white/5" : "bg-white border-slate-200"}
-          `}
+            className={`weeks-sidebar ${showMobileDetails ? "hidden md:block" : "block"}`}
           >
-            <div className="p-4 border-b border-transparent">
-              <span className="text-[10px] font-bold opacity-30 uppercase tracking-[0.2em]">
-                Chronology
-              </span>
+            <div className="p-6">
+              <span className="section-label">Chronology</span>
             </div>
             {sortedWeeks.map((week) => (
               <button
                 key={week._id}
                 onClick={() => handleSelectWeek(week._id)}
-                className={`group text-left p-4 md:p-5 border-b transition-all ${
-                  activeWeekId === week._id
-                    ? theme === "dark"
-                      ? "bg-blue-600 text-white border-blue-500"
-                      : "bg-blue-50 text-blue-700 border-blue-100"
-                    : theme === "dark"
-                      ? "hover:bg-white/[0.02] border-white/5"
-                      : "hover:bg-slate-50 border-slate-100"
-                }`}
+                className={`week-item ${activeWeekId === week._id ? "active" : ""}`}
               >
-                <div className="flex justify-between items-start mb-1">
-                  <span className="text-[13px] font-bold leading-tight">
+                <div className="flex justify-between items-center mb-1">
+                  <span className="week-label uppercase tracking-tighter">
                     Week {week.week_number}
                   </span>
                   {submissions.find(
                     (s) => (s.week_id?._id || s.week_id) === week._id,
                   )?.status === "approved" && (
-                    <CheckCircle2
-                      size={12}
-                      className={
-                        activeWeekId === week._id
-                          ? "text-white"
-                          : "text-emerald-500"
-                      }
-                    />
+                    <CheckCircle2 size={14} className="text-emerald-400" />
                   )}
                 </div>
-                <div
-                  className={`text-[11px] truncate font-medium ${activeWeekId === week._id ? "opacity-80" : "opacity-40"}`}
-                >
-                  {week.title || "Untitled Challenge"}
+                <div className="text-[11px] font-bold text-white/40 truncate uppercase">
+                  {week.title || "Untitled"}
                 </div>
               </button>
             ))}
           </aside>
 
-          {/* COLUMN 2: DETAIL VIEW (Full width on mobile when shown) */}
+          {/* MAIN DETAIL */}
           <main
-            className={`
-            ${showMobileDetails ? "flex" : "hidden md:flex"} 
-            flex-1 overflow-y-auto relative 
-            ${theme === "dark" ? "bg-[#0a0a0a]" : "bg-white"}
-          `}
+            className={`challenge-detail ${showMobileDetails ? "flex" : "hidden md:flex"} flex-col`}
           >
             <AnimatePresence mode="wait">
               {activeWeek ? (
                 <motion.div
                   key={activeWeek._id}
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="max-w-3xl mx-auto py-8 md:py-16 px-6 md:px-12 w-full"
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -20 }}
+                  className="max-w-4xl mx-auto w-full"
                 >
-                  <header className="mb-10 md:mb-14 text-center">
-                    <span className="text-blue-500 text-[10px] font-bold uppercase tracking-[0.3em]">
-                      Week {activeWeek.week_number}
+                  <header className="mb-12 text-center">
+                    <span className="text-white/60 text-[10px] font-black uppercase tracking-[0.4em]">
+                      Assignment Phase {activeWeek.week_number}
                     </span>
-                    <h2
-                      className={`text-3xl md:text-5xl font-extrabold tracking-tighter mt-2 leading-tight ${theme === "dark" ? "text-white" : "text-slate-900"}`}
-                    >
-                      title: {activeWeek.title?.toLowerCase() || "unnamed"}
+                    <h2 className="challenge-title">
+                      {activeWeek.title?.toLowerCase() || "unnamed"}
                     </h2>
-                    <div className="mt-6 flex flex-wrap items-center justify-center gap-4 md:gap-8 text-[10px] opacity-40 font-bold uppercase tracking-widest">
-                      <span className="flex items-center gap-1.5">
+                    <div className="mt-6 flex justify-center gap-8 text-[10px] text-white/40 font-black uppercase tracking-widest">
+                      <span className="flex items-center gap-2">
                         <Clock size={12} />{" "}
                         {isDeadlinePassed(activeWeek.deadlineDate)
                           ? "Closed"
                           : "Active"}
                       </span>
-                      <span className="flex items-center gap-1.5">
+                      <span className="flex items-center gap-2">
                         <CalendarDays size={12} />{" "}
                         {new Date(activeWeek.deadlineDate).toLocaleDateString()}
                       </span>
                     </div>
                   </header>
 
-                  <div className="space-y-10 md:space-y-16">
-                    {/* Description */}
+                  <div className="space-y-12">
                     <section>
-                      <h4 className="text-[10px] font-bold opacity-30 uppercase tracking-[0.2em] mb-4">
-                        Briefing
-                      </h4>
-                      <p
-                        className={`text-[13px] md:text-[14px] leading-relaxed font-medium ${theme === "dark" ? "text-slate-400" : "text-slate-600"}`}
-                      >
-                        {activeWeek.description ||
-                          "No description provided for this challenge."}
+                      <span className="section-label">
+                        Operational Briefing
+                      </span>
+                      <p className="text-lg font-bold leading-relaxed text-white/80 italic">
+                        {activeWeek.description}
                       </p>
                     </section>
 
-                    {/* Resources */}
                     {activeWeek.resources?.length > 0 && (
                       <section>
-                        <h4 className="text-[10px] font-bold opacity-30 uppercase tracking-[0.2em] mb-4">
-                          Files & Links
-                        </h4>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                        <span className="section-label">
+                          Intelligence Assets
+                        </span>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                           {activeWeek.resources.map((res, i) => (
                             <a
                               key={i}
                               href={res}
                               target="_blank"
                               rel="noreferrer"
-                              className={`p-3 rounded border flex items-center justify-between text-[11px] font-bold transition-all ${
-                                theme === "dark"
-                                  ? "border-white/5 bg-white/[0.03] hover:bg-white/[0.08] text-slate-300"
-                                  : "border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-700"
-                              }`}
+                              className="p-4 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 transition-all flex items-center justify-between group"
                             >
-                              <span className="truncate mr-2">
+                              <span className="text-[11px] font-black text-white/70 group-hover:text-white truncate">
                                 {res.replace(/^https?:\/\//, "")}
                               </span>
-                              <ExternalLink size={12} className="opacity-40" />
+                              <ExternalLink
+                                size={14}
+                                className="text-white/30"
+                              />
                             </a>
                           ))}
                         </div>
                       </section>
                     )}
 
-                    {/* Submission / CTA Area */}
-                    <section
-                      className={`p-6 md:p-10 rounded border text-center ${
-                        theme === "dark"
-                          ? "bg-[#111] border-white/5 shadow-2xl"
-                          : "bg-slate-50 border-slate-200 shadow-sm"
-                      }`}
-                    >
+                    <section className="cta-box">
                       {userSubmission ? (
                         <>
-                          <div className="mb-4 inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-500 text-[9px] font-extrabold uppercase tracking-[0.1em]">
-                            <CheckCircle2 size={10} /> {userSubmission.status}
+                          <div className="mb-6 inline-flex items-center gap-2 px-4 py-2 rounded-full bg-emerald-500/20 text-emerald-400 text-[10px] font-black uppercase tracking-widest">
+                            <CheckCircle2 size={12} /> Transmission{" "}
+                            {userSubmission.status}
                           </div>
-                          <h3
-                            className={`text-lg md:text-xl font-bold mb-6 ${theme === "dark" ? "text-white" : "text-slate-900"}`}
-                          >
-                            Project Received
+                          <h3 className="text-2xl font-black text-white mb-8">
+                            Asset Received
                           </h3>
-                          <div className="flex flex-col sm:flex-row justify-center gap-3">
+                          <div className="flex flex-col sm:flex-row justify-center gap-4">
                             <Link
                               to={`/submit?week=${activeWeek._id}&edit=${userSubmission._id}`}
-                              className="px-8 py-3 bg-blue-600 text-white text-[11px] font-bold uppercase tracking-widest rounded hover:bg-blue-700 transition-all"
+                              className="btn-silver"
                             >
-                              Modify Entry
+                              Reconfigure Entry
                             </Link>
                             {userSubmission.github_repo_url && (
                               <a
                                 href={userSubmission.github_repo_url}
                                 target="_blank"
                                 rel="noreferrer"
-                                className={`px-8 py-3 border text-[11px] font-bold uppercase tracking-widest rounded flex items-center justify-center gap-2 transition-all ${
-                                  theme === "dark"
-                                    ? "border-white/10 text-white hover:bg-white/5"
-                                    : "border-slate-300 text-slate-700 hover:bg-slate-100"
-                                }`}
+                                className="btn-outline flex items-center gap-2"
                               >
-                                <Github size={14} /> Source
+                                <Github size={18} /> Source Code
                               </a>
                             )}
                           </div>
                         </>
                       ) : (
                         <>
-                          <h3
-                            className={`text-lg md:text-xl font-bold mb-2 ${theme === "dark" ? "text-white" : "text-slate-900"}`}
-                          >
-                            Submit Project
+                          <h3 className="text-2xl font-black text-white mb-3 uppercase tracking-tighter">
+                            Initialize Deployment
                           </h3>
-                          <p className="text-[11px] opacity-40 mb-8 font-medium">
-                            Please ensure all requirements are met before
-                            sending.
+                          <p className="text-xs font-bold text-white/40 mb-10 tracking-wide uppercase">
+                            Verify requirements before transmission.
                           </p>
                           <Link
                             to={
@@ -353,17 +276,11 @@ const Challenges = () => {
                                 ? "#"
                                 : `/submit?week=${activeWeek._id}`
                             }
-                            className={`inline-block w-full sm:w-auto px-12 py-4 text-[11px] font-extrabold uppercase tracking-[0.2em] rounded transition-all ${
-                              isDeadlinePassed(activeWeek.deadlineDate)
-                                ? "bg-slate-800 text-slate-500 cursor-not-allowed"
-                                : theme === "dark"
-                                  ? "bg-white text-black hover:bg-slate-200"
-                                  : "bg-slate-900 text-white hover:bg-black"
-                            }`}
+                            className={`btn-silver ${isDeadlinePassed(activeWeek.deadlineDate) ? "opacity-20 grayscale cursor-not-allowed" : ""}`}
                           >
                             {isDeadlinePassed(activeWeek.deadlineDate)
-                              ? "Deadline Expired"
-                              : "Initialize Submission"}
+                              ? "Window Closed"
+                              : "Submit Project"}
                           </Link>
                         </>
                       )}
@@ -371,10 +288,10 @@ const Challenges = () => {
                   </div>
                 </motion.div>
               ) : (
-                <div className="h-full w-full flex flex-col items-center justify-center opacity-10">
-                  <Inbox size={60} strokeWidth={1} />
-                  <span className="text-[10px] uppercase tracking-[0.6em] mt-6 font-bold">
-                    Inbox Empty
+                <div className="h-full w-full flex flex-col items-center justify-center text-white/10">
+                  <Inbox size={80} strokeWidth={1} />
+                  <span className="text-xs uppercase tracking-[1em] mt-8 font-black">
+                    System Idle
                   </span>
                 </div>
               )}

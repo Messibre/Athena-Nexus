@@ -140,20 +140,43 @@ const Milestones = () => {
   };
 
   const styles = {
-    bgMain: theme === "dark" ? "bg-[#0a0a0a]" : "bg-slate-50",
-    bgSide: theme === "dark" ? "bg-[#0f0f0f]" : "bg-white",
-    bgMid: theme === "dark" ? "bg-[#0d0d0d]" : "bg-white",
-    border: theme === "dark" ? "border-white/5" : "border-slate-200",
-    textDim: theme === "dark" ? "text-slate-500" : "text-slate-400",
-    textHead: theme === "dark" ? "text-white" : "text-slate-900",
+    bgMain: "transparent",
+    bgSide:
+      theme === "dark"
+        ? "bg-[#120a21]/80 backdrop-blur-md"
+        : "bg-white/90 backdrop-blur-md",
+    bgMid:
+      theme === "dark"
+        ? "bg-[#1a0f2e]/60 backdrop-blur-md"
+        : "bg-slate-50/90 backdrop-blur-md",
+    border: theme === "dark" ? "border-[#2e1a47]" : "border-slate-200",
+    textDim: theme === "dark" ? "text-slate-400" : "text-slate-500",
+    textHead: theme === "dark" ? "text-[#f3f4f6]" : "text-slate-900", // Silver/White for dark mode
+    accent: "#8b5cf6", // Primary Purple
   };
 
   return (
     <div
-      className={`min-h-screen transition-colors duration-300 ${styles.bgMain} ${theme === "dark" ? "text-slate-300" : "text-slate-700"}`}
+      data-theme={theme}
+      className={`min-h-screen transition-colors duration-300 ${theme === "dark" ? "bg-[#0a0514] text-slate-300" : "bg-white text-slate-700"}`}
     >
       <Navbar />
-      <div className="max-w-[100vw] h-[calc(100vh-64px)] flex flex-col">
+
+      {/* Background Layer to match Home.js */}
+      <div
+        className="bg-image-layer"
+        style={{
+          position: "fixed",
+          inset: 0,
+          zIndex: 0,
+          backgroundImage: 'url("/pur1.jpg")',
+          backgroundSize: "cover",
+          backgroundPosition: "center",
+          pointerEvents: "none",
+        }}
+      />
+
+      <div className="relative z-10 max-w-[100vw] h-[calc(100vh-64px)] flex flex-col">
         <div
           className={`flex items-center justify-between px-4 py-2 border-b ${styles.bgMid} ${styles.border}`}
         >
@@ -182,7 +205,8 @@ const Milestones = () => {
           </div>
           <Link
             to="/challenges"
-            className="text-[10px] text-blue-500 font-bold"
+            className="text-[10px] font-bold"
+            style={{ color: styles.accent }}
           >
             WEEKLY
           </Link>
@@ -196,7 +220,11 @@ const Milestones = () => {
               <div key={cat._id} className={`border-b ${styles.border}`}>
                 <button
                   onClick={() => setActiveCategoryId(cat._id)}
-                  className={`w-full text-left px-4 py-3 text-[12px] ${activeCategoryId === cat._id ? "text-blue-500 bg-blue-500/5" : styles.textDim}`}
+                  className={`w-full text-left px-4 py-3 text-[12px] transition-colors ${activeCategoryId === cat._id ? "bg-[#8b5cf6]/10" : styles.textDim}`}
+                  style={{
+                    color:
+                      activeCategoryId === cat._id ? styles.accent : undefined,
+                  }}
                 >
                   {cat.name}
                 </button>
@@ -208,7 +236,11 @@ const Milestones = () => {
                         setActiveLevelId(lvl._id);
                         setMobileStep("challenges");
                       }}
-                      className={`w-full text-left px-6 py-2 text-[11px] ${activeLevelId === lvl._id ? "text-blue-500 border-l-2 border-blue-500" : styles.textDim}`}
+                      className={`w-full text-left px-6 py-2 text-[11px] border-l-2 transition-all ${activeLevelId === lvl._id ? "border-[#8b5cf6]" : "border-transparent " + styles.textDim}`}
+                      style={{
+                        color:
+                          activeLevelId === lvl._id ? styles.accent : undefined,
+                      }}
                     >
                       Level {lvl.levelNumber}
                     </button>
@@ -233,7 +265,13 @@ const Milestones = () => {
                     setActiveChallengeId(ch._id);
                     setMobileStep("detail");
                   }}
-                  className={`w-full text-left p-4 border-b ${styles.border} ${activeChallengeId === ch._id ? "bg-blue-600 text-white" : "hover:bg-black/5"}`}
+                  className={`w-full text-left p-4 border-b transition-all ${styles.border} ${activeChallengeId === ch._id ? "text-white" : "hover:bg-white/5"}`}
+                  style={{
+                    backgroundColor:
+                      activeChallengeId === ch._id
+                        ? styles.accent
+                        : "transparent",
+                  }}
                 >
                   <div className="flex justify-between items-start font-bold text-[13px]">
                     {ch.title}{" "}
@@ -252,7 +290,7 @@ const Milestones = () => {
           </div>
 
           <div
-            className={`${mobileStep === "detail" ? "flex" : "hidden md:flex"} flex-1 overflow-y-auto ${styles.bgMain} p-6 md:p-12`}
+            className={`${mobileStep === "detail" ? "flex" : "hidden md:flex"} flex-1 overflow-y-auto p-6 md:p-12`}
           >
             {activeChallenge ? (
               <motion.div
@@ -260,32 +298,37 @@ const Milestones = () => {
                 animate={{ opacity: 1 }}
                 className="max-w-2xl mx-auto w-full"
               >
-                <span className="text-blue-500 text-[10px] font-bold uppercase tracking-widest">
+                <span
+                  className="text-[10px] font-bold uppercase tracking-widest"
+                  style={{ color: styles.accent }}
+                >
                   Challenge {challenges.indexOf(activeChallenge) + 1}
                 </span>
                 <h2
                   className={`text-3xl md:text-5xl font-extrabold mt-2 tracking-tighter ${styles.textHead}`}
+                  style={{ fontFamily: "'Fraunces', serif" }}
                 >
-                  title: {activeChallenge.title.toLowerCase()}
+                  {activeChallenge.title.toLowerCase()}
                 </h2>
                 <p className="mt-6 text-[14px] leading-relaxed opacity-60">
                   {activeChallenge.description}
                 </p>
                 <form
                   onSubmit={handleSubmit}
-                  className={`mt-12 p-6 rounded border ${styles.bgSide} ${styles.border} space-y-4`}
+                  className={`mt-12 p-6 rounded-2xl border ${styles.bgSide} ${styles.border} space-y-4 shadow-xl`}
                 >
                   <input
                     type="url"
                     required
                     value={repoUrl}
                     onChange={(e) => setRepoUrl(e.target.value)}
-                    className={`w-full p-2 text-[12px] rounded border ${styles.border} ${theme === "dark" ? "bg-black" : "bg-white"}`}
+                    className={`w-full p-3 text-[12px] rounded-xl border outline-none focus:border-[#8b5cf6] transition-all ${styles.border} ${theme === "dark" ? "bg-black/40" : "bg-white"}`}
                     placeholder="Github Repo URL"
                   />
                   <button
                     type="submit"
-                    className="w-full py-3 bg-blue-600 text-white text-[11px] font-bold uppercase rounded"
+                    className="w-full py-4 text-white text-[11px] font-bold uppercase rounded-xl transition-transform hover:scale-[1.02] active:scale-95 shadow-lg shadow-[#8b5cf6]/20"
+                    style={{ backgroundColor: styles.accent }}
                   >
                     Sync Submission
                   </button>

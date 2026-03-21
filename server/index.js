@@ -18,7 +18,6 @@ const app = express();
 
 app.set("trust proxy", false);
 
-
 app.use(helmet());
 app.use(
   cors({
@@ -28,7 +27,6 @@ app.use(
 );
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-
 
 const connectDB = async () => {
   try {
@@ -45,7 +43,6 @@ const connectDB = async () => {
   }
 };
 
-
 app.use("/api/auth", authRoutes);
 app.use("/api/submissions", submissionRoutes);
 app.use("/api/weeks", weekRoutes);
@@ -54,7 +51,6 @@ app.use("/api/activity", activityRoutes);
 app.use("/api/milestones", milestonesRoutes);
 app.use("/api/admin/milestones", adminMilestonesRoutes);
 app.use("/api/users", usersRoutes);
-
 
 app.get("/api/health", (req, res) => {
   const dbStatus =
@@ -66,7 +62,6 @@ app.get("/api/health", (req, res) => {
   });
 });
 
-
 app.use((err, req, res, next) => {
   console.error("Unhandled error:", err);
   res.status(500).json({
@@ -74,7 +69,6 @@ app.use((err, req, res, next) => {
     error: process.env.NODE_ENV === "development" ? err.message : undefined,
   });
 });
-
 
 const PORT = process.env.PORT || 5000;
 
@@ -91,7 +85,6 @@ const startServer = async () => {
     process.exit(1);
   }
 
-  
   if (!process.env.JWT_SECRET) {
     console.error("⚠️  WARNING: JWT_SECRET is not set!");
     console.error("Run: cd server && npm run generate-secret");

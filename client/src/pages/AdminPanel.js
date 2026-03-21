@@ -290,28 +290,63 @@ const AdminPanel = () => {
   };
 
   const styles = {
-    bg: theme === "dark" ? "bg-[#0a0a0a]" : "bg-slate-50",
+    bg: theme === "dark" ? "bg-[#0a0514]" : "bg-slate-50",
     panel: theme === "dark" ? "bg-[#0f0f0f]" : "bg-white",
     border: theme === "dark" ? "border-white/5" : "border-slate-200",
     textMain: theme === "dark" ? "text-slate-400" : "text-slate-600",
     textHead: theme === "dark" ? "text-white" : "text-slate-900",
     input:
       theme === "dark"
-        ? "bg-black border-white/10 text-white placeholder:text-slate-700"
+        ? "bg-black border-white/10 text-white placeholder:text-slate-700 focus:border-[#8b5cf6]"
         : "bg-white border-slate-200 text-slate-900",
   };
 
+  const isMilestoneForm =
+    targetType === "category" ||
+    targetType === "level" ||
+    targetType === "challenge";
+
+  const milestoneLevelsForCategory = levels.filter((level) => {
+    const categoryId = level.categoryId?._id || level.categoryId;
+    return formData.categoryId ? categoryId === formData.categoryId : true;
+  });
+
+  const milestoneSectionStyle =
+    theme === "dark"
+      ? "bg-[#120a21]/70 border-[#2e1a47]"
+      : "bg-slate-50/90 border-slate-200";
+
+  const milestoneInputStyle =
+    theme === "dark"
+      ? "bg-black/40 border-[#2e1a47] text-white placeholder:text-slate-500 focus:border-[#8b5cf6]"
+      : "bg-white border-slate-200 text-slate-900 focus:border-[#8b5cf6]";
+
   return (
     <div
-      className={`min-h-screen transition-colors duration-300 font-sans ${styles.bg} ${styles.textMain}`}
+      className={`min-h-screen transition-colors duration-300 font-['Space_Grotesk'] ${styles.bg} ${styles.textMain}`}
     >
       <Navbar />
+
+      <div
+        className="bg-image-layer"
+        style={{
+          position: "fixed",
+          inset: 0,
+          zIndex: 0,
+          backgroundImage: 'url("/pur1.jpg")',
+          backgroundSize: "cover",
+          backgroundPosition: "center",
+          opacity: theme === "dark" ? 0.4 : 0.85,
+          pointerEvents: "none",
+        }}
+      />
+
       <div className="max-w-[1600px] mx-auto flex flex-col md:flex-row h-full md:h-[calc(100vh-64px)] overflow-hidden">
         <aside
-          className={`w-full md:w-72 border-b md:border-b-0 md:border-r ${styles.panel} ${styles.border} flex shrink-0 md:flex-col overflow-x-auto no-scrollbar`}
+          className={`relative z-10 w-full md:w-72 border-b md:border-b-0 md:border-r ${styles.panel} ${styles.border} flex shrink-0 md:flex-col overflow-x-auto no-scrollbar`}
         >
           <div className="p-8 hidden md:block">
-            <h2 className="text-[11px] font-bold uppercase tracking-[0.4em] text-blue-500 italic">
+            <h2 className="text-[11px] font-bold uppercase tracking-[0.4em] text-[#8b5cf6] italic">
               Command Center
             </h2>
           </div>
@@ -327,7 +362,7 @@ const AdminPanel = () => {
               <button
                 key={item.id}
                 onClick={() => handleTabChange(item.id)}
-                className={`flex items-center gap-4 px-8 py-5 text-[11px] font-bold transition-all whitespace-nowrap ${activeTab === item.id ? "text-blue-500 bg-blue-500/5 border-l-2 border-blue-500" : "opacity-40 hover:opacity-100 hover:bg-black/5"}`}
+                className={`flex items-center gap-4 px-8 py-5 text-[11px] font-bold transition-all whitespace-nowrap ${activeTab === item.id ? "text-[#8b5cf6] bg-[#8b5cf6]/10 border-l-2 border-[#8b5cf6]" : "opacity-40 hover:opacity-100 hover:bg-black/5"}`}
               >
                 <item.icon size={18} />
                 <span className="uppercase tracking-widest">{item.label}</span>
@@ -336,14 +371,14 @@ const AdminPanel = () => {
           </nav>
         </aside>
 
-        <main className="flex-1 overflow-y-auto p-6 md:p-12 relative">
+        <main className="relative z-10 flex-1 overflow-y-auto p-6 md:p-12">
           <header className="mb-12 flex flex-col lg:flex-row justify-between items-start lg:items-end gap-6">
             <div className="space-y-1">
-              <span className="text-blue-500 text-[10px] font-bold uppercase tracking-[0.5em] block">
+              <span className="text-[#8b5cf6] text-[10px] font-bold uppercase tracking-[0.5em] block">
                 System Data Stream
               </span>
               <h1
-                className={`text-5xl font-black tracking-tighter ${styles.textHead}`}
+                className={`text-5xl font-['Fraunces'] font-black tracking-tighter ${styles.textHead}`}
               >
                 {activeTab.replace("-", " ")}
               </h1>
@@ -353,7 +388,7 @@ const AdminPanel = () => {
               {activeTab.includes("subs") && (
                 <button
                   onClick={() => dispatch(exportAdminSubmissions())}
-                  className="flex items-center gap-2 px-5 py-2.5 border border-blue-500/20 text-blue-500 text-[11px] font-bold uppercase tracking-widest rounded hover:bg-blue-500/5 transition-all"
+                  className="flex items-center gap-2 px-5 py-2.5 border border-[#8b5cf6]/20 text-[#8b5cf6] text-[11px] font-bold uppercase tracking-widest rounded hover:bg-[#8b5cf6]/5 transition-all"
                 >
                   <Download size={14} /> Export CSV
                 </button>
@@ -390,7 +425,7 @@ const AdminPanel = () => {
                               : "category",
                     )
                   }
-                  className="flex items-center gap-2 px-6 py-2.5 bg-blue-600 text-white text-[11px] font-bold uppercase tracking-widest rounded shadow-xl shadow-blue-600/20 hover:bg-blue-700 transition-all"
+                  className="flex items-center gap-2 px-6 py-2.5 bg-[#8b5cf6] text-white text-[11px] font-bold uppercase tracking-widest rounded shadow-xl shadow-[#8b5cf6]/20 hover:bg-[#7c3aed] transition-all"
                 >
                   <Plus size={14} /> New Record
                 </button>
@@ -417,7 +452,7 @@ const AdminPanel = () => {
                       {
                         l: "Total Users",
                         v: stats.totalUsers,
-                        c: "text-blue-500",
+                        c: "text-[#8b5cf6]",
                       },
                       {
                         l: "Total Weeks",
@@ -437,7 +472,7 @@ const AdminPanel = () => {
                       {
                         l: "Approved",
                         v: stats.approvedSubmissions,
-                        c: "text-blue-400",
+                        c: "text-[#a78bfa]",
                       },
                     ].map((s, i) => (
                       <div
@@ -486,7 +521,7 @@ const AdminPanel = () => {
                           ).map((item) => (
                             <tr
                               key={item._id}
-                              className="hover:bg-blue-500/[0.03] transition-colors group"
+                              className="hover:bg-[#8b5cf6]/[0.03] transition-colors group"
                             >
                               <td className="px-8 py-5">
                                 <div
@@ -524,7 +559,7 @@ const AdminPanel = () => {
                                     href={item.github_repo_url || item.repoUrl}
                                     target="_blank"
                                     rel="noreferrer"
-                                    className="text-blue-500 text-[10px] font-bold hover:underline flex items-center gap-1.5 mt-2 tracking-widest"
+                                    className="text-[#8b5cf6] text-[10px] font-bold hover:underline flex items-center gap-1.5 mt-2 tracking-widest"
                                   >
                                     <LinkIcon size={12} /> OPEN SOURCE
                                   </a>
@@ -555,7 +590,7 @@ const AdminPanel = () => {
                                           }),
                                         );
                                       }}
-                                      className={`text-[10px] font-black p-2 rounded border focus:border-blue-500 outline-none transition-all ${styles.input}`}
+                                      className={`text-[10px] font-black p-2 rounded border focus:border-[#8b5cf6] outline-none transition-all ${styles.input}`}
                                     >
                                       <option value="pending">PENDING</option>
                                       <option value="approved">APPROVE</option>
@@ -578,7 +613,7 @@ const AdminPanel = () => {
                                           item,
                                         )
                                       }
-                                      className="p-2.5 text-blue-500 hover:bg-blue-500/10 rounded transition-all"
+                                      className="p-2.5 text-[#8b5cf6] hover:bg-[#8b5cf6]/10 rounded transition-all"
                                     >
                                       <Edit3 size={16} />
                                     </button>
@@ -652,11 +687,11 @@ const AdminPanel = () => {
               initial={{ scale: 0.9, opacity: 0, y: 20 }}
               animate={{ scale: 1, opacity: 1, y: 0 }}
               exit={{ scale: 0.9, opacity: 0, y: 20 }}
-              className={`relative w-full max-w-xl p-10 rounded-2xl border shadow-2xl ${styles.panel} ${styles.border}`}
+              className={`relative w-full ${isMilestoneForm ? "max-w-3xl" : "max-w-xl"} max-h-[92vh] p-6 md:p-8 rounded-2xl border shadow-2xl ${styles.panel} ${styles.border} flex flex-col overflow-hidden`}
             >
-              <div className="flex justify-between items-center mb-10">
+              <div className="flex justify-between items-center mb-6 md:mb-8">
                 <div className="flex items-center gap-3">
-                  <div className="w-1.5 h-6 bg-blue-600 rounded-full" />
+                  <div className="w-1.5 h-6 bg-[#8b5cf6] rounded-full" />
                   <h3 className="text-[14px] font-black uppercase tracking-[0.3em] text-white">
                     {modalMode} {targetType}
                   </h3>
@@ -669,7 +704,10 @@ const AdminPanel = () => {
                 </button>
               </div>
 
-              <form onSubmit={handleFormSubmit} className="space-y-6">
+              <form
+                onSubmit={handleFormSubmit}
+                className="space-y-6 flex-1 min-h-0 overflow-y-auto pr-1 md:pr-2"
+              >
                 {targetType === "week" && (
                   <div className="space-y-4">
                     <div className="grid grid-cols-4 gap-4">
@@ -879,50 +917,195 @@ const AdminPanel = () => {
                 )}
 
                 {targetType === "category" && (
-                  <div className="space-y-6">
-                    <input
-                      type="text"
-                      placeholder="Category Key (unique)"
-                      required
-                      className={`w-full p-4 rounded-xl border text-[15px] font-bold ${styles.input}`}
-                      value={formData.key || ""}
-                      onChange={(e) =>
-                        setFormData({ ...formData, key: e.target.value })
-                      }
-                    />
-                    <input
-                      type="text"
-                      placeholder="Atlas Category Name"
-                      required
-                      className={`w-full p-4 rounded-xl border text-[15px] font-bold ${styles.input}`}
-                      value={formData.name || ""}
-                      onChange={(e) =>
-                        setFormData({ ...formData, name: e.target.value })
-                      }
-                    />
-                    <textarea
-                      rows={4}
-                      placeholder="Description"
-                      className={`w-full p-4 rounded-xl border text-[14px] leading-relaxed ${styles.input}`}
-                      value={formData.description || ""}
-                      onChange={(e) =>
-                        setFormData({
-                          ...formData,
-                          description: e.target.value,
-                        })
-                      }
-                    />
-                    <div className="grid grid-cols-2 gap-4">
-                      <input
-                        type="number"
-                        placeholder="Order"
-                        className={`w-full p-4 rounded-xl border text-[14px] ${styles.input}`}
-                        value={formData.order || ""}
+                  <div className="space-y-5">
+                    <div
+                      className={`rounded-2xl border p-5 ${milestoneSectionStyle}`}
+                    >
+                      <p className="text-[10px] font-black uppercase tracking-[0.25em] text-[#8b5cf6] mb-4">
+                        Category Details
+                      </p>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                          <label className="text-[10px] font-black uppercase tracking-widest opacity-50 block mb-2">
+                            Category Key
+                          </label>
+                          <input
+                            type="text"
+                            placeholder="e.g. frontend"
+                            required
+                            className={`w-full p-4 rounded-xl border text-[14px] font-bold outline-none transition-all ${milestoneInputStyle}`}
+                            value={formData.key || ""}
+                            onChange={(e) =>
+                              setFormData({ ...formData, key: e.target.value })
+                            }
+                          />
+                        </div>
+                        <div>
+                          <label className="text-[10px] font-black uppercase tracking-widest opacity-50 block mb-2">
+                            Display Name
+                          </label>
+                          <input
+                            type="text"
+                            placeholder="Atlas Category Name"
+                            required
+                            className={`w-full p-4 rounded-xl border text-[14px] font-bold outline-none transition-all ${milestoneInputStyle}`}
+                            value={formData.name || ""}
+                            onChange={(e) =>
+                              setFormData({ ...formData, name: e.target.value })
+                            }
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    <div
+                      className={`rounded-2xl border p-5 ${milestoneSectionStyle}`}
+                    >
+                      <label className="text-[10px] font-black uppercase tracking-widest opacity-50 block mb-2">
+                        Description
+                      </label>
+                      <textarea
+                        rows={4}
+                        placeholder="Describe this track and what it covers"
+                        className={`w-full p-4 rounded-xl border text-[14px] leading-relaxed outline-none transition-all ${milestoneInputStyle}`}
+                        value={formData.description || ""}
                         onChange={(e) =>
-                          setFormData({ ...formData, order: e.target.value })
+                          setFormData({
+                            ...formData,
+                            description: e.target.value,
+                          })
                         }
                       />
-                      <label className="flex items-center gap-3 text-[11px] font-bold uppercase tracking-widest opacity-60">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                        <div>
+                          <label className="text-[10px] font-black uppercase tracking-widest opacity-50 block mb-2">
+                            Sort Order
+                          </label>
+                          <input
+                            type="number"
+                            placeholder="0"
+                            className={`w-full p-4 rounded-xl border text-[14px] outline-none transition-all ${milestoneInputStyle}`}
+                            value={formData.order || ""}
+                            onChange={(e) =>
+                              setFormData({
+                                ...formData,
+                                order: e.target.value,
+                              })
+                            }
+                          />
+                        </div>
+                        <label className="flex items-center gap-3 text-[11px] font-bold uppercase tracking-widest opacity-70 mt-7">
+                          <input
+                            type="checkbox"
+                            checked={
+                              formData.isActive !== undefined
+                                ? !!formData.isActive
+                                : true
+                            }
+                            onChange={(e) =>
+                              setFormData({
+                                ...formData,
+                                isActive: e.target.checked,
+                              })
+                            }
+                          />
+                          Active Category
+                        </label>
+                      </div>
+                    </div>
+
+                    <div className="p-4 rounded-xl bg-[#8b5cf6]/5 border border-[#8b5cf6]/10 text-[11px] leading-relaxed opacity-80">
+                      Create broad tracks here first, then add levels and
+                      challenges under each track.
+                    </div>
+                  </div>
+                )}
+
+                {targetType === "level" && (
+                  <div className="space-y-5">
+                    <div
+                      className={`rounded-2xl border p-5 ${milestoneSectionStyle}`}
+                    >
+                      <p className="text-[10px] font-black uppercase tracking-[0.25em] text-[#8b5cf6] mb-4">
+                        Placement
+                      </p>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                          <label className="text-[10px] font-black uppercase tracking-widest opacity-50 block mb-2">
+                            Category
+                          </label>
+                          <select
+                            required
+                            className={`w-full p-4 rounded-xl border text-[12px] font-black uppercase tracking-widest outline-none transition-all ${milestoneInputStyle}`}
+                            value={formData.categoryId || ""}
+                            onChange={(e) =>
+                              setFormData({
+                                ...formData,
+                                categoryId: e.target.value,
+                              })
+                            }
+                          >
+                            <option value="">Select Category</option>
+                            {categories.map((category) => (
+                              <option key={category._id} value={category._id}>
+                                {category.name}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+                        <div>
+                          <label className="text-[10px] font-black uppercase tracking-widest opacity-50 block mb-2">
+                            Level Number
+                          </label>
+                          <input
+                            type="number"
+                            placeholder="1"
+                            required
+                            className={`w-full p-4 rounded-xl border text-[14px] font-bold outline-none transition-all ${milestoneInputStyle}`}
+                            value={formData.levelNumber || ""}
+                            onChange={(e) =>
+                              setFormData({
+                                ...formData,
+                                levelNumber: e.target.value,
+                              })
+                            }
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    <div
+                      className={`rounded-2xl border p-5 ${milestoneSectionStyle}`}
+                    >
+                      <label className="text-[10px] font-black uppercase tracking-widest opacity-50 block mb-2">
+                        Level Title
+                      </label>
+                      <input
+                        type="text"
+                        placeholder="Level Title"
+                        required
+                        className={`w-full p-4 rounded-xl border text-[14px] outline-none transition-all ${milestoneInputStyle}`}
+                        value={formData.title || ""}
+                        onChange={(e) =>
+                          setFormData({ ...formData, title: e.target.value })
+                        }
+                      />
+                      <label className="text-[10px] font-black uppercase tracking-widest opacity-50 block mb-2 mt-4">
+                        Description
+                      </label>
+                      <textarea
+                        rows={4}
+                        placeholder="What this level should achieve"
+                        className={`w-full p-4 rounded-xl border text-[14px] leading-relaxed outline-none transition-all ${milestoneInputStyle}`}
+                        value={formData.description || ""}
+                        onChange={(e) =>
+                          setFormData({
+                            ...formData,
+                            description: e.target.value,
+                          })
+                        }
+                      />
+                      <label className="flex items-center gap-3 text-[11px] font-bold uppercase tracking-widest opacity-70 mt-4">
                         <input
                           type="checkbox"
                           checked={
@@ -937,242 +1120,228 @@ const AdminPanel = () => {
                             })
                           }
                         />
-                        Active
+                        Active Level
                       </label>
                     </div>
-                    <div className="p-4 rounded-xl bg-blue-500/5 border border-blue-500/10">
-                      <p className="text-[11px] opacity-60 leading-relaxed italic">
-                        Categories serve as the root for levels and individual
-                        milestone challenges.
-                      </p>
-                    </div>
-                  </div>
-                )}
-
-                {targetType === "level" && (
-                  <div className="space-y-4">
-                    <select>
-                      required className=
-                      {`w-full p-4 rounded-xl border text-[12px] font-black uppercase tracking-widest ${styles.input}`}
-                      value={formData.categoryId || ""}
-                      onChange=
-                      {(e) =>
-                        setFormData({
-                          ...formData,
-                          categoryId: e.target.value,
-                        })
-                      }
-                      <option value="">Select Category</option>
-                      {categories.map((category) => (
-                        <option key={category._id} value={category._id}>
-                          {category.name}
-                        </option>
-                      ))}
-                    </select>
-                    <input
-                      type="number"
-                      placeholder="Level Number"
-                      required
-                      className={`w-full p-4 rounded-xl border text-[15px] font-bold ${styles.input}`}
-                      value={formData.levelNumber || ""}
-                      onChange={(e) =>
-                        setFormData({
-                          ...formData,
-                          levelNumber: e.target.value,
-                        })
-                      }
-                    />
-                    <input
-                      type="text"
-                      placeholder="Level Title"
-                      required
-                      className={`w-full p-4 rounded-xl border text-[15px] ${styles.input}`}
-                      value={formData.title || ""}
-                      onChange={(e) =>
-                        setFormData({ ...formData, title: e.target.value })
-                      }
-                    />
-                    <textarea
-                      rows={4}
-                      placeholder="Description"
-                      className={`w-full p-4 rounded-xl border text-[14px] leading-relaxed ${styles.input}`}
-                      value={formData.description || ""}
-                      onChange={(e) =>
-                        setFormData({
-                          ...formData,
-                          description: e.target.value,
-                        })
-                      }
-                    />
-                    <label className="flex items-center gap-3 text-[11px] font-bold uppercase tracking-widest opacity-60">
-                      <input
-                        type="checkbox"
-                        checked={
-                          formData.isActive !== undefined
-                            ? !!formData.isActive
-                            : true
-                        }
-                        onChange={(e) =>
-                          setFormData({
-                            ...formData,
-                            isActive: e.target.checked,
-                          })
-                        }
-                      />
-                      Active Level
-                    </label>
                   </div>
                 )}
 
                 {targetType === "challenge" && (
-                  <div className="space-y-4">
-                    <select>
-                      required className=
-                      {`w-full p-4 rounded-xl border text-[12px] font-black uppercase tracking-widest ${styles.input}`}
-                      value={formData.categoryId || ""}
-                      onChange=
-                      {(e) =>
-                        setFormData({
-                          ...formData,
-                          categoryId: e.target.value,
-                          levelId: "",
-                        })
-                      }
-                      <option value="">Select Category</option>
-                      {categories.map((category) => (
-                        <option key={category._id} value={category._id}>
-                          {category.name}
-                        </option>
-                      ))}
-                    </select>
-                    <select>
-                      required className=
-                      {`w-full p-4 rounded-xl border text-[12px] font-black uppercase tracking-widest ${styles.input}`}
-                      value={formData.levelId || ""}
-                      onChange=
-                      {(e) =>
-                        setFormData({ ...formData, levelId: e.target.value })
-                      }
-                      <option value="">Select Level</option>
-                      {levels
-                        .filter((level) => {
-                          const categoryId =
-                            level.categoryId?._id || level.categoryId;
-                          return formData.categoryId
-                            ? categoryId === formData.categoryId
-                            : true;
-                        })
-                        .map((level) => (
-                          <option key={level._id} value={level._id}>
-                            Level {level.levelNumber}: {level.title}
-                          </option>
-                        ))}
-                    </select>
-                    <input
-                      type="text"
-                      placeholder="Challenge Title"
-                      required
-                      className={`w-full p-4 rounded-xl border text-[15px] ${styles.input}`}
-                      value={formData.title || ""}
-                      onChange={(e) =>
-                        setFormData({ ...formData, title: e.target.value })
-                      }
-                    />
-                    <textarea
-                      rows={4}
-                      placeholder="Description"
-                      className={`w-full p-4 rounded-xl border text-[14px] leading-relaxed ${styles.input}`}
-                      value={formData.description || ""}
-                      onChange={(e) =>
-                        setFormData({
-                          ...formData,
-                          description: e.target.value,
-                        })
-                      }
-                    />
-                    <input
-                      type="text"
-                      placeholder="Requirements (comma-separated)"
-                      className={`w-full p-4 rounded-xl border text-[14px] ${styles.input}`}
-                      value={formData.requirements || ""}
-                      onChange={(e) =>
-                        setFormData({
-                          ...formData,
-                          requirements: e.target.value,
-                        })
-                      }
-                    />
-                    <input
-                      type="text"
-                      placeholder="Resources (comma-separated)"
-                      className={`w-full p-4 rounded-xl border text-[14px] ${styles.input}`}
-                      value={formData.resources || ""}
-                      onChange={(e) =>
-                        setFormData({
-                          ...formData,
-                          resources: e.target.value,
-                        })
-                      }
-                    />
-                    <input
-                      type="text"
-                      placeholder="Tags (comma-separated)"
-                      className={`w-full p-4 rounded-xl border text-[14px] ${styles.input}`}
-                      value={formData.tags || ""}
-                      onChange={(e) =>
-                        setFormData({
-                          ...formData,
-                          tags: e.target.value,
-                        })
-                      }
-                    />
-                    <select
-                      className={`w-full p-4 rounded-xl border text-[12px] font-black uppercase tracking-widest ${styles.input}`}
-                      value={formData.difficulty || "beginner"}
-                      onChange={(e) =>
-                        setFormData({
-                          ...formData,
-                          difficulty: e.target.value,
-                        })
-                      }
+                  <div className="space-y-5">
+                    <div
+                      className={`rounded-2xl border p-5 ${milestoneSectionStyle}`}
                     >
-                      <option value="beginner">Beginner</option>
-                      <option value="intermediate">Intermediate</option>
-                      <option value="advanced">Advanced</option>
-                    </select>
-                    <label className="flex items-center gap-3 text-[11px] font-bold uppercase tracking-widest opacity-60">
+                      <p className="text-[10px] font-black uppercase tracking-[0.25em] text-[#8b5cf6] mb-4">
+                        Placement
+                      </p>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                          <label className="text-[10px] font-black uppercase tracking-widest opacity-50 block mb-2">
+                            Category
+                          </label>
+                          <select
+                            required
+                            className={`w-full p-4 rounded-xl border text-[12px] font-black uppercase tracking-widest outline-none transition-all ${milestoneInputStyle}`}
+                            value={formData.categoryId || ""}
+                            onChange={(e) => {
+                              const selectedCategoryId = e.target.value;
+                              setFormData({
+                                ...formData,
+                                categoryId: selectedCategoryId,
+                                levelId: "",
+                              });
+                              if (selectedCategoryId) {
+                                dispatch(
+                                  fetchAdminMilestoneLevels(selectedCategoryId),
+                                );
+                              }
+                            }}
+                          >
+                            <option value="">Select Category</option>
+                            {categories.map((category) => (
+                              <option key={category._id} value={category._id}>
+                                {category.name}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+                        <div>
+                          <label className="text-[10px] font-black uppercase tracking-widest opacity-50 block mb-2">
+                            Level
+                          </label>
+                          <select
+                            required
+                            className={`w-full p-4 rounded-xl border text-[12px] font-black uppercase tracking-widest outline-none transition-all ${milestoneInputStyle}`}
+                            value={formData.levelId || ""}
+                            onChange={(e) =>
+                              setFormData({
+                                ...formData,
+                                levelId: e.target.value,
+                              })
+                            }
+                          >
+                            <option value="">Select Level</option>
+                            {milestoneLevelsForCategory.map((level) => (
+                              <option key={level._id} value={level._id}>
+                                Level {level.levelNumber}: {level.title}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div
+                      className={`rounded-2xl border p-5 ${milestoneSectionStyle}`}
+                    >
+                      <label className="text-[10px] font-black uppercase tracking-widest opacity-50 block mb-2">
+                        Challenge Title
+                      </label>
                       <input
-                        type="checkbox"
-                        checked={
-                          formData.isActive !== undefined
-                            ? !!formData.isActive
-                            : true
+                        type="text"
+                        placeholder="Challenge Title"
+                        required
+                        className={`w-full p-4 rounded-xl border text-[14px] outline-none transition-all ${milestoneInputStyle}`}
+                        value={formData.title || ""}
+                        onChange={(e) =>
+                          setFormData({ ...formData, title: e.target.value })
                         }
+                      />
+
+                      <label className="text-[10px] font-black uppercase tracking-widest opacity-50 block mb-2 mt-4">
+                        Description
+                      </label>
+                      <textarea
+                        rows={4}
+                        placeholder="Explain the expected deliverable"
+                        className={`w-full p-4 rounded-xl border text-[14px] leading-relaxed outline-none transition-all ${milestoneInputStyle}`}
+                        value={formData.description || ""}
                         onChange={(e) =>
                           setFormData({
                             ...formData,
-                            isActive: e.target.checked,
+                            description: e.target.value,
                           })
                         }
                       />
-                      Active Challenge
-                    </label>
+                    </div>
+
+                    <div
+                      className={`rounded-2xl border p-5 ${milestoneSectionStyle}`}
+                    >
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                          <label className="text-[10px] font-black uppercase tracking-widest opacity-50 block mb-2">
+                            Requirements
+                          </label>
+                          <input
+                            type="text"
+                            placeholder="comma-separated"
+                            className={`w-full p-4 rounded-xl border text-[14px] outline-none transition-all ${milestoneInputStyle}`}
+                            value={formData.requirements || ""}
+                            onChange={(e) =>
+                              setFormData({
+                                ...formData,
+                                requirements: e.target.value,
+                              })
+                            }
+                          />
+                        </div>
+                        <div>
+                          <label className="text-[10px] font-black uppercase tracking-widest opacity-50 block mb-2">
+                            Resources
+                          </label>
+                          <input
+                            type="text"
+                            placeholder="comma-separated"
+                            className={`w-full p-4 rounded-xl border text-[14px] outline-none transition-all ${milestoneInputStyle}`}
+                            value={formData.resources || ""}
+                            onChange={(e) =>
+                              setFormData({
+                                ...formData,
+                                resources: e.target.value,
+                              })
+                            }
+                          />
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                        <div>
+                          <label className="text-[10px] font-black uppercase tracking-widest opacity-50 block mb-2">
+                            Tags
+                          </label>
+                          <input
+                            type="text"
+                            placeholder="comma-separated"
+                            className={`w-full p-4 rounded-xl border text-[14px] outline-none transition-all ${milestoneInputStyle}`}
+                            value={formData.tags || ""}
+                            onChange={(e) =>
+                              setFormData({
+                                ...formData,
+                                tags: e.target.value,
+                              })
+                            }
+                          />
+                        </div>
+                        <div>
+                          <label className="text-[10px] font-black uppercase tracking-widest opacity-50 block mb-2">
+                            Difficulty
+                          </label>
+                          <select
+                            className={`w-full p-4 rounded-xl border text-[12px] font-black uppercase tracking-widest outline-none transition-all ${milestoneInputStyle}`}
+                            value={formData.difficulty || "beginner"}
+                            onChange={(e) =>
+                              setFormData({
+                                ...formData,
+                                difficulty: e.target.value,
+                              })
+                            }
+                          >
+                            <option value="beginner">Beginner</option>
+                            <option value="intermediate">Intermediate</option>
+                            <option value="advanced">Advanced</option>
+                          </select>
+                        </div>
+                      </div>
+
+                      <label className="flex items-center gap-3 text-[11px] font-bold uppercase tracking-widest opacity-70 mt-4">
+                        <input
+                          type="checkbox"
+                          checked={
+                            formData.isActive !== undefined
+                              ? !!formData.isActive
+                              : true
+                          }
+                          onChange={(e) =>
+                            setFormData({
+                              ...formData,
+                              isActive: e.target.checked,
+                            })
+                          }
+                        />
+                        Active Challenge
+                      </label>
+                    </div>
                   </div>
                 )}
 
-                <button
-                  type="submit"
-                  disabled={actionLoading}
-                  className="w-full py-5 bg-blue-600 text-white font-black text-[12px] uppercase tracking-[0.3em] rounded-xl shadow-2xl shadow-blue-600/40 hover:bg-blue-500 transition-all flex items-center justify-center gap-2"
+                <div
+                  className={`sticky bottom-0 pt-4 ${theme === "dark" ? "bg-[#0f0f0f]" : "bg-white"}`}
                 >
-                  {actionLoading ? (
-                    "COMMITTING..."
-                  ) : (
-                    <>
-                      <Save size={18} /> COMMIT TO ATLAS
-                    </>
-                  )}
-                </button>
+                  <button
+                    type="submit"
+                    disabled={actionLoading}
+                    className="w-full py-5 bg-[#8b5cf6] text-white font-black text-[12px] uppercase tracking-[0.3em] rounded-xl shadow-2xl shadow-[#8b5cf6]/40 hover:bg-[#7c3aed] transition-all flex items-center justify-center gap-2"
+                  >
+                    {actionLoading ? (
+                      "COMMITTING..."
+                    ) : (
+                      <>
+                        <Save size={18} /> COMMIT TO ATLAS
+                      </>
+                    )}
+                  </button>
+                </div>
               </form>
             </motion.div>
           </div>

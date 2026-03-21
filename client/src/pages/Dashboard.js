@@ -1,12 +1,16 @@
-import React, { useEffect } from 'react';
-import { Link } from 'react-router-dom';
-import { useDispatch, useSelector } from 'react-redux';
-import Navbar from '../components/Navbar';
-import { fetchActiveWeek } from '../redux/thunks/weeksThunks';
-import { fetchMySubmissions } from '../redux/thunks/submissionsThunks';
-import { selectActiveWeek } from '../redux/selectors/weeksSelectors';
-import { selectMySubmissions, selectSubmissionsLoading } from '../redux/selectors/submissionsSelectors';
-import { selectUser } from '../redux/selectors/authSelectors';
+import React, { useEffect } from "react";
+import { Link } from "react-router-dom";
+import { useDispatch, useSelector } from "react-redux";
+import Navbar from "../components/Navbar";
+import { fetchActiveWeek } from "../redux/thunks/weeksThunks";
+import { fetchMySubmissions } from "../redux/thunks/submissionsThunks";
+import { selectActiveWeek } from "../redux/selectors/weeksSelectors";
+import {
+  selectMySubmissions,
+  selectSubmissionsLoading,
+} from "../redux/selectors/submissionsSelectors";
+import { selectUser } from "../redux/selectors/authSelectors";
+import { selectTheme } from "../redux/selectors/themeSelectors";
 
 const Dashboard = () => {
   const dispatch = useDispatch();
@@ -14,6 +18,7 @@ const Dashboard = () => {
   const activeWeek = useSelector(selectActiveWeek);
   const submissions = useSelector(selectMySubmissions);
   const submissionsLoading = useSelector(selectSubmissionsLoading);
+  const theme = useSelector(selectTheme);
 
   useEffect(() => {
     dispatch(fetchMySubmissions());
@@ -22,12 +27,21 @@ const Dashboard = () => {
 
   const getStatusBadge = (status) => {
     const badges = {
-      pending: { class: 'badge-warning', text: 'Pending' },
-      approved: { class: 'badge-success', text: 'Approved' },
-      rejected: { class: 'badge-danger', text: 'Rejected' }
+      pending: { class: "bg-amber-500/15 text-amber-500", text: "Pending" },
+      approved: {
+        class: "bg-emerald-500/15 text-emerald-500",
+        text: "Approved",
+      },
+      rejected: { class: "bg-red-500/15 text-red-500", text: "Rejected" },
     };
     const badge = badges[status] || badges.pending;
-    return <span className={`badge ${badge.class}`}>{badge.text}</span>;
+    return (
+      <span
+        className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider ${badge.class}`}
+      >
+        {badge.text}
+      </span>
+    );
   };
 
   const formatDate = (date) => {
@@ -36,75 +50,145 @@ const Dashboard = () => {
 
   if (submissionsLoading) {
     return (
-      <>
+      <div
+        data-theme={theme}
+        className={`min-h-screen font-['Space_Grotesk'] ${theme === "dark" ? "bg-[#0a0514] text-slate-300" : "bg-slate-50 text-slate-700"}`}
+      >
         <Navbar />
-        <div className="loading">Loading...</div>
-      </>
+        <div
+          className="bg-image-layer"
+          style={{
+            position: "fixed",
+            inset: 0,
+            zIndex: 0,
+            backgroundImage: 'url("/pur1.jpg")',
+            backgroundSize: "cover",
+            backgroundPosition: "center",
+            opacity: theme === "dark" ? 0.4 : 0.85,
+            pointerEvents: "none",
+          }}
+        />
+        <div className="relative z-10 h-[70vh] flex items-center justify-center text-[11px] font-black uppercase tracking-[0.35em] opacity-40">
+          Loading...
+        </div>
+      </div>
     );
   }
 
   return (
-    <>
+    <div
+      data-theme={theme}
+      className={`min-h-screen font-['Space_Grotesk'] ${theme === "dark" ? "bg-[#0a0514] text-slate-300" : "bg-slate-50 text-slate-700"}`}
+    >
       <Navbar />
-      <div className="container" style={{ marginTop: '32px' }}>
-        <div className="card">
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+
+      <div
+        className="bg-image-layer"
+        style={{
+          position: "fixed",
+          inset: 0,
+          zIndex: 0,
+          backgroundImage: 'url("/pur1.jpg")',
+          backgroundSize: "cover",
+          backgroundPosition: "center",
+          opacity: theme === "dark" ? 0.4 : 0.85,
+          pointerEvents: "none",
+        }}
+      />
+
+      <div className="relative z-10 max-w-6xl mx-auto px-4 pt-10 md:pt-12 pb-20 space-y-6">
+        <div
+          className={`rounded-3xl border p-6 md:p-8 shadow-2xl ${theme === "dark" ? "bg-[#120a21]/85 border-[#2e1a47]" : "bg-white/90 border-slate-200"}`}
+        >
+          <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-5">
             <div>
-              <h1 style={{ marginBottom: '8px' }}>
+              <p className="text-[10px] font-black uppercase tracking-[0.35em] text-[#8b5cf6] mb-2">
+                Team Console
+              </p>
+              <h1
+                className={`text-4xl md:text-5xl font-['Fraunces'] font-black tracking-tight mb-2 ${theme === "dark" ? "text-white" : "text-slate-900"}`}
+              >
                 Welcome, {user?.displayName || user?.username}!
               </h1>
-              <p style={{ color: 'var(--text-secondary)' }}>Manage your weekly submissions</p>
+              <p className="opacity-70">Manage your weekly submissions</p>
             </div>
-            <Link to="/settings" className="btn btn-outline">
+            <Link
+              to="/settings"
+              className="inline-flex items-center justify-center px-5 py-3 rounded-xl border border-[#8b5cf6] text-[#8b5cf6] font-black uppercase tracking-wider text-xs bg-[#8b5cf6]/10 hover:bg-[#8b5cf6]/20 transition-all"
+            >
               Team Settings
             </Link>
           </div>
         </div>
 
         {activeWeek && (
-          <div className="card">
-            <div className="card-header">
-              <h2 className="card-title">Current Challenge</h2>
+          <div
+            className={`rounded-3xl border p-6 md:p-8 shadow-2xl ${theme === "dark" ? "bg-[#120a21]/85 border-[#2e1a47]" : "bg-white/90 border-slate-200"}`}
+          >
+            <div
+              className={`mb-5 pb-5 border-b ${theme === "dark" ? "border-white/10" : "border-slate-200"}`}
+            >
+              <h2
+                className={`text-3xl font-['Fraunces'] font-black tracking-tight ${theme === "dark" ? "text-white" : "text-slate-900"}`}
+              >
+                Current Challenge
+              </h2>
             </div>
-            <h3 style={{ marginBottom: '12px' }}>Week {activeWeek.week_number}: {activeWeek.title}</h3>
+            <h3
+              className={`text-xl font-black mb-3 ${theme === "dark" ? "text-white" : "text-slate-900"}`}
+            >
+              Week {activeWeek.week_number}: {activeWeek.title}
+            </h3>
             {activeWeek.description && (
-              <p style={{ marginBottom: '16px', color: 'var(--text-secondary)' }}>{activeWeek.description}</p>
+              <p className="mb-4 opacity-70">{activeWeek.description}</p>
             )}
             {activeWeek.deadlineDate && (
-              <p style={{ marginBottom: '16px' }}>
+              <p className="mb-5">
                 <strong>Deadline:</strong> {formatDate(activeWeek.deadlineDate)}
               </p>
             )}
-            <Link to="/submit" className="btn btn-primary">
+            <Link
+              to="/submit"
+              className="inline-flex items-center justify-center px-6 py-3 rounded-xl bg-[#8b5cf6] hover:bg-[#7c3aed] text-white font-black uppercase tracking-wider text-xs shadow-xl shadow-[#8b5cf6]/30 transition-all"
+            >
               Submit Project
             </Link>
           </div>
         )}
 
-        <div className="card">
-          <div className="card-header">
-            <h2 className="card-title">Your Submissions</h2>
+        <div
+          className={`rounded-3xl border p-6 md:p-8 shadow-2xl ${theme === "dark" ? "bg-[#120a21]/85 border-[#2e1a47]" : "bg-white/90 border-slate-200"}`}
+        >
+          <div
+            className={`mb-5 pb-5 border-b ${theme === "dark" ? "border-white/10" : "border-slate-200"}`}
+          >
+            <h2
+              className={`text-3xl font-['Fraunces'] font-black tracking-tight ${theme === "dark" ? "text-white" : "text-slate-900"}`}
+            >
+              Your Submissions
+            </h2>
           </div>
 
           {submissions.length === 0 ? (
-            <p style={{ color: 'var(--text-secondary)' }}>No submissions yet. Start by submitting your first project!</p>
+            <p className="opacity-70">
+              No submissions yet. Start by submitting your first project!
+            </p>
           ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            <div className="flex flex-col gap-4">
               {submissions.map((submission) => (
                 <div
                   key={submission._id}
-                  style={{
-                      padding: '16px',
-                      border: '1px solid var(--border-color)',
-                      borderRadius: '6px',
-                      backgroundColor: 'var(--bg-tertiary)'
-                    }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: '12px' }}>
+                  className={`p-5 rounded-2xl border ${theme === "dark" ? "border-[#2e1a47] bg-[#0a0514]/65" : "border-slate-200 bg-slate-50/90"}`}
+                >
+                  <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-3 mb-3">
                     <div>
-                      <h3 style={{ marginBottom: '4px' }}>
-                        Week {submission.week_id?.week_number || 'N/A'}: {submission.week_id?.title || 'Untitled'}
+                      <h3
+                        className={`font-black mb-1 ${theme === "dark" ? "text-white" : "text-slate-900"}`}
+                      >
+                        Week {submission.week_id?.week_number || "N/A"}:{" "}
+                        {submission.week_id?.title || "Untitled"}
                       </h3>
-                      <p style={{ color: 'var(--text-secondary)', fontSize: '14px' }}>
+                      <p className="opacity-60 text-sm">
                         Submitted: {formatDate(submission.created_at)}
                       </p>
                     </div>
@@ -112,16 +196,15 @@ const Dashboard = () => {
                   </div>
 
                   {submission.description && (
-                    <p style={{ marginBottom: '12px', color: 'var(--text-tertiary)' }}>{submission.description}</p>
+                    <p className="mb-3 opacity-75">{submission.description}</p>
                   )}
 
-                  <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
+                  <div className="flex gap-3 flex-wrap">
                     <a
                       href={submission.github_repo_url}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="btn btn-outline"
-                      style={{ padding: '8px 16px', fontSize: '14px' }}
+                      className="inline-flex items-center justify-center px-4 py-2 rounded-lg border border-[#8b5cf6] text-[#8b5cf6] text-xs font-black uppercase tracking-wider bg-[#8b5cf6]/10 hover:bg-[#8b5cf6]/20 transition-all"
                     >
                       GitHub Repo
                     </a>
@@ -130,8 +213,7 @@ const Dashboard = () => {
                         href={submission.github_live_demo_url}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="btn btn-outline"
-                        style={{ padding: '8px 16px', fontSize: '14px' }}
+                        className="inline-flex items-center justify-center px-4 py-2 rounded-lg bg-[#8b5cf6] hover:bg-[#7c3aed] text-white text-xs font-black uppercase tracking-wider shadow-lg shadow-[#8b5cf6]/20 transition-all"
                       >
                         Live Demo
                       </a>
@@ -139,8 +221,9 @@ const Dashboard = () => {
                   </div>
 
                   {submission.reviewerNotes && (
-                    <div style={{ marginTop: '12px', padding: '12px', backgroundColor: 'var(--badge-warning-bg)', color: 'var(--badge-warning-text)', borderRadius: '6px' }}>
-                      <strong>Reviewer Notes:</strong> {submission.reviewerNotes}
+                    <div className="mt-3 p-3 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-500">
+                      <strong>Reviewer Notes:</strong>{" "}
+                      {submission.reviewerNotes}
                     </div>
                   )}
                 </div>
@@ -149,10 +232,8 @@ const Dashboard = () => {
           )}
         </div>
       </div>
-    </>
+    </div>
   );
 };
 
 export default Dashboard;
-
-

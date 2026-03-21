@@ -1,0 +1,168 @@
+/* Challenges.css */
+
+.challenges-page {
+  min-height: 100vh;
+  position: relative;
+  overflow: hidden;
+}
+
+.bg-image-layer {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  background-image: url("../../public/pub4.jpg");
+  background-size: cover;
+  background-position: center;
+  opacity: 0.85;
+  filter: saturate(1.4) contrast(1.1);
+  pointer-events: none;
+}
+
+[data-theme="dark"] .bg-image-layer {
+  opacity: 0.4;
+  filter: saturate(1.2) brightness(0.6) contrast(1.3);
+}
+
+.challenges-layout {
+  position: relative;
+  z-index: 10;
+  max-width: 1400px;
+  margin: 0 auto;
+  height: calc(100vh - 64px);
+  display: flex;
+  flex-direction: column;
+}
+
+/* Header Styling */
+.challenges-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 1.5rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+}
+
+.header-title {
+  font-family: "Fraunces", serif;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: #ffffff;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+/* Sidebar / Week List */
+.weeks-sidebar {
+  width: 320px;
+  border-right: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(12px);
+  overflow-y: auto;
+}
+
+.week-item {
+  width: 100%;
+  padding: 1.5rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  transition: all 0.3s ease;
+  text-align: left;
+}
+
+.week-item.active {
+  background: rgba(255, 255, 255, 0.2);
+  border-left: 4px solid #ffffff;
+}
+
+.week-item:hover:not(.active) {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.week-label {
+  font-weight: 800;
+  color: #ffffff;
+  font-size: 0.9rem;
+}
+
+/* Main Content Area */
+.challenge-detail {
+  flex: 1;
+  overflow-y: auto;
+  padding: 4rem 3rem;
+  background: rgba(0, 0, 0, 0.1);
+}
+
+.challenge-title {
+  font-family: "Fraunces", serif;
+  font-size: clamp(2.5rem, 5vw, 4rem);
+  font-weight: 900;
+  line-height: 1;
+  margin: 1rem 0;
+  background: linear-gradient(180deg, #ffffff 0%, #d1d5db 70%, #9ca3af 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.3));
+}
+
+.section-label {
+  font-size: 10px;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.3em;
+  color: rgba(255, 255, 255, 0.5);
+  margin-bottom: 1rem;
+  display: block;
+}
+
+/* Cards and CTA */
+.cta-box {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 24px;
+  padding: 3rem;
+  backdrop-filter: blur(20px);
+  text-align: center;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.2);
+}
+
+.btn-silver {
+  background: linear-gradient(135deg, #ffffff, #9ca3af);
+  color: #000;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  padding: 1rem 2.5rem;
+  border-radius: 999px;
+  display: inline-block;
+  transition: transform 0.3s ease;
+}
+
+.btn-silver:hover {
+  transform: translateY(-3px);
+  filter: brightness(1.1);
+}
+
+.btn-outline {
+  border: 2px solid #ffffff;
+  color: #ffffff;
+  font-weight: 800;
+  padding: 1rem 2.5rem;
+  border-radius: 999px;
+  transition: all 0.3s ease;
+}
+
+.btn-outline:hover {
+  background: #ffffff;
+  color: #000;
+}
+
+@media (max-width: 768px) {
+  .weeks-sidebar {
+    width: 100%;
+  }
+  .challenge-detail {
+    padding: 2rem 1rem;
+  }
+}
