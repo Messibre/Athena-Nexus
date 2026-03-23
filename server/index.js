@@ -149,7 +149,13 @@ const apiRouter = express.Router();
 
 apiRouter.use(apiLimiter);
 
-apiRouter.get("/health", (req, res) => {
+apiRouter.get("/health", async (req, res) => {
+  try {
+    await connectToDatabase();
+  } catch (error) {
+    console.error("Health check MongoDB connection failed:", error.message);
+  }
+
   const dbConnected = isDatabaseConnected();
 
   res.status(dbConnected ? 200 : 503).json({
