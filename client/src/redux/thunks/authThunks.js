@@ -62,7 +62,7 @@ export const changePassword = createAsyncThunk(
 
 export const logoutSession = createAsyncThunk(
   "auth/logoutSession",
-  async (_, thunkApi) => {
+  async () => {
     try {
       await authApi.logout();
       return true;

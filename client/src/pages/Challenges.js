@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { AnimatePresence, motion } from "framer-motion";
 import {
@@ -8,8 +8,6 @@ import {
   Clock,
   Inbox,
   ChevronLeft,
-  Sun,
-  Moon,
   ExternalLink,
   Github,
 } from "lucide-react";
@@ -22,10 +20,7 @@ import {
   selectMySubmissions,
   selectSubmissionsLoading,
 } from "../redux/selectors/submissionsSelectors";
-import {
-  selectAdminSubmissions,
-  selectAdminLoading,
-} from "../redux/selectors/adminSelectors";
+import { selectAdminLoading } from "../redux/selectors/adminSelectors";
 import {
   selectIsAdmin,
   selectIsAuthenticated,

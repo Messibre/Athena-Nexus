@@ -14,15 +14,9 @@ import {
   Plus,
   Save,
   X,
-  ChevronRight,
-  Database,
   ListTree,
   Key,
-  Shield,
-  Info,
   Link as LinkIcon,
-  ChevronDown,
-  Search,
 } from "lucide-react";
 import Navbar from "../components/Navbar";
 

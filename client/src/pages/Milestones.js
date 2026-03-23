@@ -1,20 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Link } from "react-router-dom";
-import { AnimatePresence, motion } from "framer-motion";
-import {
-  CheckCircle2,
-  Clock,
-  Layers,
-  Sparkles,
-  ChevronRight,
-  ChevronLeft,
-  Lock,
-  Github,
-  Globe,
-  Sun,
-  Moon,
-} from "lucide-react";
+import { CheckCircle2, ChevronRight, ChevronLeft, Lock } from "lucide-react";
 import Navbar from "../components/Navbar";
 import {
   fetchMilestoneCategories,
@@ -30,8 +17,6 @@ import {
   selectMilestoneLevels,
   selectMilestoneChallenges,
   selectMyMilestoneSubmissions,
-  selectMilestonesLoading,
-  selectMilestonesActionLoading,
 } from "../redux/selectors/milestonesSelectors";
 import MiniModal from "../components/MiniModal";
 
@@ -41,8 +26,6 @@ const Milestones = () => {
   const dispatch = useDispatch();
   const theme = useSelector(selectTheme) || "dark";
   const categories = useSelector(selectMilestoneCategories);
-  const loading = useSelector(selectMilestonesLoading);
-  const actionLoading = useSelector(selectMilestonesActionLoading);
 
   const [activeCategoryId, setActiveCategoryId] = useState("");
   const [activeLevelId, setActiveLevelId] = useState("");
@@ -169,7 +152,9 @@ const Milestones = () => {
       setSubmitSuccess("Synced!");
       dispatch(fetchMyMilestoneSubmissions());
     } catch (err) {
-      setSubmitError(typeof err === "string" ? err : "Failed to sync submission");
+      setSubmitError(
+        typeof err === "string" ? err : "Failed to sync submission",
+      );
     }
   };
 

@@ -10,10 +10,7 @@ import {
 } from "../redux/thunks/weeksThunks";
 import { fetchPublicSubmissions } from "../redux/thunks/submissionsThunks";
 import { fetchPublicMilestoneSubmissions } from "../redux/thunks/milestonesThunks";
-import {
-  selectWeekById,
-  selectWeekSubmissions,
-} from "../redux/selectors/weeksSelectors";
+import { selectWeekSubmissions } from "../redux/selectors/weeksSelectors";
 import {
   selectPublicSubmissions,
   selectSubmissionsLoading,
@@ -31,9 +28,6 @@ const Gallery = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [error, setError] = useState("");
 
-  const week = useSelector((state) =>
-    weekId ? selectWeekById(state, weekId) : null,
-  );
   const weekSubmissions = useSelector((state) =>
     weekId ? selectWeekSubmissions(state, weekId) : [],
   );
