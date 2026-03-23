@@ -261,6 +261,21 @@ const Signup = () => {
                 Login here
               </Link>
             </p>
+            <div className="mt-4 flex items-center justify-center gap-3 text-[11px] opacity-70">
+              <Link
+                to="/privacy"
+                className="hover:text-[#8b5cf6] transition-colors"
+              >
+                Privacy Policy
+              </Link>
+              <span aria-hidden="true">•</span>
+              <Link
+                to="/terms"
+                className="hover:text-[#8b5cf6] transition-colors"
+              >
+                Terms of Service
+              </Link>
+            </div>
           </div>
         </div>
       </div>

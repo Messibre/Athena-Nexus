@@ -48,7 +48,11 @@ const defaultOrigins = [
 ].map(normalizeOrigin);
 
 const includeLocalOrigins =
-  process.env.VERCEL !== "1" || process.env.ALLOW_LOCAL_ORIGINS === "true";
+  process.env.NODE_ENV !== "production" ||
+  process.env.ALLOW_LOCAL_ORIGINS === "true";
+
+const isLocalDevOrigin = (origin = "") =>
+  /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/i.test(origin);
 
 const allowedOrigins = new Set([
   ...configuredOrigins,
@@ -60,7 +64,11 @@ app.use(
     origin: (origin, callback) => {
       const normalizedOrigin = normalizeOrigin(origin);
 
-      if (!origin || allowedOrigins.has(normalizedOrigin)) {
+      if (
+        !origin ||
+        allowedOrigins.has(normalizedOrigin) ||
+        (includeLocalOrigins && isLocalDevOrigin(normalizedOrigin))
+      ) {
         return callback(null, true);
       }
 
