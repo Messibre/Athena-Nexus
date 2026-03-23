@@ -24,29 +24,61 @@ app.set("trust proxy", process.env.NODE_ENV === "production" ? 1 : false);
 
 app.use(helmet());
 
+const normalizeOrigin = (value) => value?.trim().replace(/\/+$/, "");
+
 const configuredOrigins = [
   process.env.FRONTEND_URL,
   process.env.CLIENT_URL,
+  process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : null,
+  process.env.VERCEL_PROJECT_PRODUCTION_URL
+    ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`
+    : null,
   ...(process.env.ALLOWED_ORIGINS
     ? process.env.ALLOWED_ORIGINS.split(",").map((value) => value.trim())
     : []),
-].filter(Boolean);
+]
+  .map(normalizeOrigin)
+  .filter(Boolean);
 
-const allowedOrigins = configuredOrigins.length
-  ? configuredOrigins
-  : ["http://localhost:3000"];
+const defaultOrigins = [
+  "http://localhost:3000",
+  "http://127.0.0.1:3000",
+  "http://localhost:5173",
+  "http://127.0.0.1:5173",
+].map(normalizeOrigin);
+
+const includeLocalOrigins =
+  process.env.VERCEL !== "1" || process.env.ALLOW_LOCAL_ORIGINS === "true";
+
+const allowedOrigins = new Set([
+  ...configuredOrigins,
+  ...(includeLocalOrigins ? defaultOrigins : []),
+]);
 
 app.use(
   cors({
     origin: (origin, callback) => {
-      if (!origin || allowedOrigins.includes(origin)) {
+      const normalizedOrigin = normalizeOrigin(origin);
+
+      if (!origin || allowedOrigins.has(normalizedOrigin)) {
         return callback(null, true);
       }
-      return callback(new Error("Not allowed by CORS"));
+
+      return callback(new Error("CORS_NOT_ALLOWED"));
     },
     credentials: true,
+    optionsSuccessStatus: 204,
   }),
 );
+
+app.use((err, req, res, next) => {
+  if (err?.message === "CORS_NOT_ALLOWED") {
+    return res.status(403).json({ message: "Origin not allowed by CORS" });
+  }
+
+  return next(err);
+});
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use("/api", apiLimiter);
