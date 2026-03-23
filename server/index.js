@@ -1,9 +1,9 @@
 import express from "express";
-import mongoose from "mongoose";
 import cors from "cors";
 import dotenv from "dotenv";
 import helmet from "helmet";
 import { apiLimiter } from "./middleware/rateLimiter.js";
+import { connectToDatabase, isDatabaseConnected } from "./utils/db.js";
 import authRoutes from "./routes/auth.js";
 import submissionRoutes from "./routes/submissions.js";
 import weekRoutes from "./routes/weeks.js";
@@ -13,12 +13,12 @@ import milestonesRoutes from "./routes/milestones.js";
 import adminMilestonesRoutes from "./routes/adminMilestones.js";
 import usersRoutes from "./routes/users.js";
 
-dotenv.config();
+if (process.env.NODE_ENV !== "production") {
+  dotenv.config();
+}
 
 const app = express();
 const isServerless = process.env.VERCEL === "1";
-let isDbConnected = false;
-let dbConnectPromise = null;
 
 app.set("trust proxy", process.env.NODE_ENV === "production" ? 1 : false);
 
@@ -89,10 +89,68 @@ app.use((err, req, res, next) => {
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.use("/api", apiLimiter);
+app.use((req, res, next) => {
+  if (!isServerless) {
+    return next();
+  }
 
-app.get("/api/health", (req, res) => {
-  const dbConnected = mongoose.connection.readyState === 1;
+  const rewrittenPath =
+    req.path === "/server/index.js" && typeof req.query?.path === "string"
+      ? req.query.path
+      : null;
+
+  if (!rewrittenPath) {
+    return next();
+  }
+
+  const normalizedPath = rewrittenPath.startsWith("/")
+    ? rewrittenPath
+    : `/${rewrittenPath}`;
+
+  const forwardedQuery = new URLSearchParams();
+  Object.entries(req.query).forEach(([key, value]) => {
+    if (key === "path") {
+      return;
+    }
+
+    if (Array.isArray(value)) {
+      value.forEach((entry) => {
+        if (entry !== undefined && entry !== null) {
+          forwardedQuery.append(key, String(entry));
+        }
+      });
+      return;
+    }
+
+    if (value !== undefined && value !== null) {
+      forwardedQuery.append(key, String(value));
+    }
+  });
+
+  const queryString = forwardedQuery.toString();
+  req.url = `/api${normalizedPath}${queryString ? `?${queryString}` : ""}`;
+
+  return next();
+});
+
+const ensureDatabaseConnection = async (req, res, next) => {
+  try {
+    await connectToDatabase();
+    return next();
+  } catch (error) {
+    console.error("❌ MongoDB connection error:", error.message);
+    return res.status(503).json({
+      message: "Database unavailable. Please try again later.",
+    });
+  }
+};
+
+const apiRouter = express.Router();
+
+apiRouter.use(apiLimiter);
+
+apiRouter.get("/health", (req, res) => {
+  const dbConnected = isDatabaseConnected();
 
   res.status(dbConnected ? 200 : 503).json({
     status: dbConnected ? "OK" : "DEGRADED",
@@ -107,61 +165,17 @@ app.get("/api/health", (req, res) => {
   });
 });
 
-const connectDB = async () => {
-  if (isDbConnected && mongoose.connection.readyState === 1) {
-    return true;
-  }
+apiRouter.use(ensureDatabaseConnection);
+apiRouter.use("/auth", authRoutes);
+apiRouter.use("/submissions", submissionRoutes);
+apiRouter.use("/weeks", weekRoutes);
+apiRouter.use("/admin", adminRoutes);
+apiRouter.use("/activity", activityRoutes);
+apiRouter.use("/milestones", milestonesRoutes);
+apiRouter.use("/admin/milestones", adminMilestonesRoutes);
+apiRouter.use("/users", usersRoutes);
 
-  if (dbConnectPromise) {
-    return dbConnectPromise;
-  }
-
-  dbConnectPromise = (async () => {
-    try {
-      const mongoURI =
-        process.env.MONGODB_URI || "mongodb://localhost:27017/athena-nexus";
-      console.log("Connecting to MongoDB...");
-      await mongoose.connect(mongoURI);
-      isDbConnected = true;
-      console.log("✅ MongoDB Connected");
-      return true;
-    } catch (error) {
-      isDbConnected = false;
-      console.error("❌ MongoDB connection error:", error.message);
-      console.error("Full error:", error);
-      return false;
-    } finally {
-      dbConnectPromise = null;
-    }
-  })();
-
-  return dbConnectPromise;
-};
-
-app.use(async (req, res, next) => {
-  if (req.path === "/api/health") {
-    return next();
-  }
-
-  const dbConnected = await connectDB();
-
-  if (!dbConnected) {
-    return res.status(503).json({
-      message: "Database unavailable. Please try again later.",
-    });
-  }
-
-  return next();
-});
-
-app.use("/api/auth", authRoutes);
-app.use("/api/submissions", submissionRoutes);
-app.use("/api/weeks", weekRoutes);
-app.use("/api/admin", adminRoutes);
-app.use("/api/activity", activityRoutes);
-app.use("/api/milestones", milestonesRoutes);
-app.use("/api/admin/milestones", adminMilestonesRoutes);
-app.use("/api/users", usersRoutes);
+app.use("/api", apiRouter);
 
 app.use("/api/*", (req, res) => {
   res.status(404).json({
@@ -181,15 +195,15 @@ app.use((err, req, res, next) => {
 const PORT = process.env.PORT || 5000;
 
 const startServer = async () => {
-  const dbConnected = await connectDB();
-
-  if (!dbConnected) {
+  try {
+    await connectToDatabase();
+  } catch (error) {
     console.error("Failed to connect to MongoDB. Server will not start.");
     console.error("Please check:");
     console.error(
       "1. MongoDB is running (local) or connection string is correct (Atlas)",
     );
-    console.error("2. MONGODB_URI in .env file is correct");
+    console.error("2. MONGODB_URI is set correctly");
     return;
   }
 
