@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { Menu, X, ArrowLeft } from "lucide-react";
-import { logout } from "../redux/slices/authSlice";
+import { logoutSession } from "../redux/thunks/authThunks";
 import { toggleTheme } from "../redux/slices/themeSlice";
 import {
   selectUser,
@@ -31,7 +31,7 @@ const Navbar = () => {
   }, [isMobileMenuOpen]);
 
   const handleLogout = () => {
-    dispatch(logout());
+    dispatch(logoutSession());
     setIsMobileMenuOpen(false);
   };
 

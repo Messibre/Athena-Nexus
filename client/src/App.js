@@ -10,7 +10,7 @@ import PrivateRoute from "./components/PrivateRoute";
 import AdminRoute from "./components/AdminRoute";
 import { fetchMe } from "./redux/thunks/authThunks";
 import { selectTheme } from "./redux/selectors/themeSelectors";
-import { selectAuthToken, selectUser } from "./redux/selectors/authSelectors";
+import { selectUser } from "./redux/selectors/authSelectors";
 
 import Home from "./pages/Home";
 import Login from "./pages/Login";
@@ -30,7 +30,6 @@ import "./App.css";
 function App() {
   const dispatch = useDispatch();
   const theme = useSelector(selectTheme);
-  const token = useSelector(selectAuthToken);
   const user = useSelector(selectUser);
   const [modalState, setModalState] = useState({
     open: false,
@@ -52,10 +51,10 @@ function App() {
   }, [theme]);
 
   useEffect(() => {
-    if (token && !user) {
+    if (!user) {
       dispatch(fetchMe());
     }
-  }, [token, user, dispatch]);
+  }, [user, dispatch]);
 
   useEffect(() => {
     const onAppError = (event) => {

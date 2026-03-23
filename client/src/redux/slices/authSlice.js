@@ -1,12 +1,16 @@
 import { createSlice } from "@reduxjs/toolkit";
-import { fetchMe, login, signup, changePassword } from "../thunks/authThunks";
-
-const tokenFromStorage = localStorage.getItem("token");
+import {
+  fetchMe,
+  login,
+  signup,
+  changePassword,
+  logoutSession,
+} from "../thunks/authThunks";
 
 const initialState = {
   user: null,
-  token: tokenFromStorage,
-  loading: !!tokenFromStorage,
+  token: null,
+  loading: true,
   actionLoading: false,
   error: null,
 };
@@ -16,7 +20,6 @@ const authSlice = createSlice({
   initialState,
   reducers: {
     logout(state) {
-      localStorage.removeItem("token");
       state.user = null;
       state.token = null;
       state.loading = false;
@@ -32,15 +35,15 @@ const authSlice = createSlice({
       })
       .addCase(fetchMe.fulfilled, (state, action) => {
         state.loading = false;
+        state.token = "cookie";
         state.user = action.payload;
         state.error = null;
       })
       .addCase(fetchMe.rejected, (state, action) => {
-        localStorage.removeItem("token");
         state.loading = false;
         state.user = null;
         state.token = null;
-        state.error = action.payload || "Failed to fetch user";
+        state.error = null;
       })
       .addCase(login.pending, (state) => {
         state.actionLoading = true;
@@ -48,10 +51,9 @@ const authSlice = createSlice({
       })
       .addCase(login.fulfilled, (state, action) => {
         state.actionLoading = false;
-        state.token = action.payload.token;
+        state.token = "cookie";
         state.user = action.payload.user;
         state.error = null;
-        localStorage.setItem("token", action.payload.token);
       })
       .addCase(login.rejected, (state, action) => {
         state.actionLoading = false;
@@ -63,10 +65,9 @@ const authSlice = createSlice({
       })
       .addCase(signup.fulfilled, (state, action) => {
         state.actionLoading = false;
-        state.token = action.payload.token;
+        state.token = "cookie";
         state.user = action.payload.user;
         state.error = null;
-        localStorage.setItem("token", action.payload.token);
       })
       .addCase(signup.rejected, (state, action) => {
         state.actionLoading = false;
@@ -83,6 +84,13 @@ const authSlice = createSlice({
       .addCase(changePassword.rejected, (state, action) => {
         state.actionLoading = false;
         state.error = action.payload || "Failed to change password";
+      })
+      .addCase(logoutSession.fulfilled, (state) => {
+        state.user = null;
+        state.token = null;
+        state.loading = false;
+        state.actionLoading = false;
+        state.error = null;
       });
   },
 });

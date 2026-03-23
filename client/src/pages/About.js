@@ -23,7 +23,6 @@ const About = () => {
           </div>
 
           <div className="about-section">
-            <div className="section-icon">🎯</div>
             <h2 className="section-title">What We Do</h2>
             <p className="section-text">
               Athena Nexus is a platform designed for teams of 3 students to
@@ -35,7 +34,6 @@ const About = () => {
           </div>
 
           <div className="about-section">
-            <div className="section-icon">⚙️</div>
             <h2 className="section-title">How It Works</h2>
             <ol className="how-it-works-list">
               <li>
@@ -92,7 +90,6 @@ const About = () => {
           </div>
 
           <div className="about-section highlight-section">
-            <div className="section-icon">🚀</div>
             <h2 className="section-title">Join Us</h2>
             <p className="section-text">
               Ready to start your journey? Create your team account today and
@@ -111,7 +108,6 @@ const About = () => {
           </div>
 
           <div className="about-section">
-            <div className="section-icon">💡</div>
             <h2 className="section-title">Our Philosophy</h2>
             <p className="section-text">
               At Athena Nexus, we believe that discipline is the foundation of
@@ -124,7 +120,6 @@ const About = () => {
           </div>
 
           <div className="about-section">
-            <div className="section-icon">📧</div>
             <h2 className="section-title">Contact & Support</h2>
             <p className="section-text">
               For questions, technical support, or feedback, please reach out to

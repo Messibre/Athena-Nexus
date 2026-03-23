@@ -3,6 +3,7 @@ import mongoose from "mongoose";
 import cors from "cors";
 import dotenv from "dotenv";
 import helmet from "helmet";
+import { apiLimiter } from "./middleware/rateLimiter.js";
 import authRoutes from "./routes/auth.js";
 import submissionRoutes from "./routes/submissions.js";
 import weekRoutes from "./routes/weeks.js";
@@ -19,17 +20,36 @@ const isServerless = process.env.VERCEL === "1";
 let isDbConnected = false;
 let dbConnectPromise = null;
 
-app.set("trust proxy", false);
+app.set("trust proxy", process.env.NODE_ENV === "production" ? 1 : false);
 
 app.use(helmet());
+
+const configuredOrigins = [
+  process.env.FRONTEND_URL,
+  process.env.CLIENT_URL,
+  ...(process.env.ALLOWED_ORIGINS
+    ? process.env.ALLOWED_ORIGINS.split(",").map((value) => value.trim())
+    : []),
+].filter(Boolean);
+
+const allowedOrigins = configuredOrigins.length
+  ? configuredOrigins
+  : ["http://localhost:3000"];
+
 app.use(
   cors({
-    origin: process.env.FRONTEND_URL || process.env.CLIENT_URL || "*",
+    origin: (origin, callback) => {
+      if (!origin || allowedOrigins.includes(origin)) {
+        return callback(null, true);
+      }
+      return callback(new Error("Not allowed by CORS"));
+    },
     credentials: true,
   }),
 );
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+app.use("/api", apiLimiter);
 
 const connectDB = async () => {
   if (isDbConnected && mongoose.connection.readyState === 1) {

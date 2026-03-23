@@ -1,12 +1,10 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import api from "../config/api";
 
-const tokenFromStorage = localStorage.getItem("token");
-
 const initialState = {
   user: null,
-  token: tokenFromStorage,
-  loading: !!tokenFromStorage,
+  token: null,
+  loading: true,
   actionLoading: false,
   error: null,
 };
@@ -26,7 +24,10 @@ export const login = createAsyncThunk(
   "auth/login",
   async ({ username, password }, thunkApi) => {
     try {
-      const response = await api.post("/api/auth/login", { username, password });
+      const response = await api.post("/api/auth/login", {
+        username,
+        password,
+      });
       return response.data;
     } catch (error) {
       return thunkApi.rejectWithValue(
@@ -78,7 +79,6 @@ const authSlice = createSlice({
   initialState,
   reducers: {
     logout(state) {
-      localStorage.removeItem("token");
       state.user = null;
       state.token = null;
       state.loading = false;
@@ -94,15 +94,15 @@ const authSlice = createSlice({
       })
       .addCase(fetchMe.fulfilled, (state, action) => {
         state.loading = false;
+        state.token = "cookie";
         state.user = action.payload;
         state.error = null;
       })
       .addCase(fetchMe.rejected, (state, action) => {
-        localStorage.removeItem("token");
         state.loading = false;
         state.user = null;
         state.token = null;
-        state.error = action.payload || "Failed to fetch user";
+        state.error = null;
       })
       .addCase(login.pending, (state) => {
         state.actionLoading = true;
@@ -110,10 +110,9 @@ const authSlice = createSlice({
       })
       .addCase(login.fulfilled, (state, action) => {
         state.actionLoading = false;
-        state.token = action.payload.token;
+        state.token = "cookie";
         state.user = action.payload.user;
         state.error = null;
-        localStorage.setItem("token", action.payload.token);
       })
       .addCase(login.rejected, (state, action) => {
         state.actionLoading = false;
@@ -125,10 +124,9 @@ const authSlice = createSlice({
       })
       .addCase(signup.fulfilled, (state, action) => {
         state.actionLoading = false;
-        state.token = action.payload.token;
+        state.token = "cookie";
         state.user = action.payload.user;
         state.error = null;
-        localStorage.setItem("token", action.payload.token);
       })
       .addCase(signup.rejected, (state, action) => {
         state.actionLoading = false;
