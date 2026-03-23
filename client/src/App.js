@@ -3,7 +3,7 @@ import {
   BrowserRouter as Router,
   Routes,
   Route,
-  Navigate,
+  useLocation,
 } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import PrivateRoute from "./components/PrivateRoute";
@@ -23,14 +23,22 @@ import Gallery from "./pages/Gallery";
 import AdminPanel from "./pages/AdminPanel";
 import About from "./pages/About";
 import Milestones from "./pages/Milestones";
+import PrivacyPolicy from "./pages/PrivacyPolicy";
+import TermsOfService from "./pages/TermsOfService";
+import NotFound from "./pages/NotFound";
 import MiniModal from "./components/MiniModal";
+import CookieConsent from "./components/CookieConsent";
+import SeoManager from "./components/SeoManager";
 
 import "./App.css";
 
-function App() {
+const LAST_ROUTE_KEY = "lastRoute.v1";
+
+function AppContent() {
   const dispatch = useDispatch();
   const theme = useSelector(selectTheme);
   const user = useSelector(selectUser);
+  const location = useLocation();
   const [modalState, setModalState] = useState({
     open: false,
     title: "Error",
@@ -57,6 +65,16 @@ function App() {
   }, [user, dispatch]);
 
   useEffect(() => {
+    const excludedPaths = ["/login", "/signup", "/privacy", "/terms"];
+    if (!excludedPaths.includes(location.pathname)) {
+      localStorage.setItem(
+        LAST_ROUTE_KEY,
+        `${location.pathname}${location.search || ""}`,
+      );
+    }
+  }, [location.pathname, location.search]);
+
+  useEffect(() => {
     const onAppError = (event) => {
       setModalState({
         open: true,
@@ -71,61 +89,72 @@ function App() {
   }, []);
 
   return (
-    <Router>
-      <div className="App">
-        <Routes>
-          <Route path="/" element={<Home />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/signup" element={<Signup />} />
-          <Route path="/challenges" element={<Challenges />} />
-          <Route path="/milestones" element={<Milestones />} />
-          <Route path="/gallery" element={<Gallery />} />
-          <Route path="/gallery/:weekId" element={<Gallery />} />
-          <Route path="/about" element={<About />} />
+    <div className="App">
+      <SeoManager />
 
-          <Route
-            path="/dashboard"
-            element={
-              <PrivateRoute>
-                <Dashboard />
-              </PrivateRoute>
-            }
-          />
-          <Route
-            path="/submit"
-            element={
-              <PrivateRoute>
-                <Submit />
-              </PrivateRoute>
-            }
-          />
-          <Route
-            path="/settings"
-            element={
-              <PrivateRoute>
-                <Settings />
-              </PrivateRoute>
-            }
-          />
-          <Route
-            path="/admin"
-            element={
-              <AdminRoute>
-                <AdminPanel />
-              </AdminRoute>
-            }
-          />
+      <Routes>
+        <Route path="/" element={<Home />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/signup" element={<Signup />} />
+        <Route path="/challenges" element={<Challenges />} />
+        <Route path="/milestones" element={<Milestones />} />
+        <Route path="/gallery" element={<Gallery />} />
+        <Route path="/gallery/:weekId" element={<Gallery />} />
+        <Route path="/about" element={<About />} />
+        <Route path="/privacy" element={<PrivacyPolicy />} />
+        <Route path="/terms" element={<TermsOfService />} />
 
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
-
-        <MiniModal
-          open={modalState.open}
-          title={modalState.title}
-          message={modalState.message}
-          onClose={() => setModalState((prev) => ({ ...prev, open: false }))}
+        <Route
+          path="/dashboard"
+          element={
+            <PrivateRoute>
+              <Dashboard />
+            </PrivateRoute>
+          }
         />
-      </div>
+        <Route
+          path="/submit"
+          element={
+            <PrivateRoute>
+              <Submit />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/settings"
+          element={
+            <PrivateRoute>
+              <Settings />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/admin"
+          element={
+            <AdminRoute>
+              <AdminPanel />
+            </AdminRoute>
+          }
+        />
+
+        <Route path="*" element={<NotFound />} />
+      </Routes>
+
+      <MiniModal
+        open={modalState.open}
+        title={modalState.title}
+        message={modalState.message}
+        onClose={() => setModalState((prev) => ({ ...prev, open: false }))}
+      />
+      <CookieConsent />
+    </div>
+  );
+}
+
+function App() {
+  return (
+    <Router>
+      <AppContent />
     </Router>
   );
 }

@@ -7,6 +7,8 @@ import MiniModal from "../components/MiniModal";
 import { selectAuthActionLoading } from "../redux/selectors/authSelectors";
 import { selectTheme } from "../redux/selectors/themeSelectors";
 
+const LAST_ROUTE_KEY = "lastRoute.v1";
+
 const Signup = () => {
   const [formData, setFormData] = useState({
     username: "",
@@ -75,7 +77,8 @@ const Signup = () => {
           members: formData.members,
         }),
       ).unwrap();
-      navigate("/dashboard");
+      const lastRoute = localStorage.getItem(LAST_ROUTE_KEY);
+      navigate(lastRoute || "/dashboard");
     } catch (err) {
       setError(err || "Failed to create account");
     }

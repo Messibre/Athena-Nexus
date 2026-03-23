@@ -105,6 +105,12 @@ const Navbar = () => {
               <Link to="/about" className={linkClass}>
                 About
               </Link>
+              <Link to="/privacy" className={linkClass}>
+                Privacy
+              </Link>
+              <Link to="/terms" className={linkClass}>
+                Terms
+              </Link>
             </div>
 
             <div className="h-6 w-[1px] bg-white/20 hidden md:block" />
@@ -224,6 +230,20 @@ const Navbar = () => {
                 onClick={closeMobileMenu}
               >
                 About
+              </Link>
+              <Link
+                to="/privacy"
+                className={mobileDrawerLinkClass}
+                onClick={closeMobileMenu}
+              >
+                Privacy
+              </Link>
+              <Link
+                to="/terms"
+                className={mobileDrawerLinkClass}
+                onClick={closeMobileMenu}
+              >
+                Terms
               </Link>
 
               {isAuthenticated && (

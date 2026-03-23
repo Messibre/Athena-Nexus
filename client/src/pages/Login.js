@@ -7,6 +7,8 @@ import MiniModal from "../components/MiniModal";
 import { selectAuthActionLoading } from "../redux/selectors/authSelectors";
 import { selectTheme } from "../redux/selectors/themeSelectors";
 
+const LAST_ROUTE_KEY = "lastRoute.v1";
+
 const Login = () => {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
@@ -37,7 +39,8 @@ const Login = () => {
 
     try {
       await dispatch(login({ username, password })).unwrap();
-      navigate("/dashboard");
+      const lastRoute = localStorage.getItem(LAST_ROUTE_KEY);
+      navigate(lastRoute || "/dashboard");
     } catch (err) {
       setError(err || "Login failed");
     }
