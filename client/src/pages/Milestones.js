@@ -33,6 +33,7 @@ import {
   selectMilestonesLoading,
   selectMilestonesActionLoading,
 } from "../redux/selectors/milestonesSelectors";
+import MiniModal from "../components/MiniModal";
 
 export const selectTheme = (state) => state.theme.theme;
 
@@ -52,6 +53,21 @@ const Milestones = () => {
   const [demoUrl, setDemoUrl] = useState("");
   const [notes, setNotes] = useState("");
   const [submitSuccess, setSubmitSuccess] = useState("");
+  const [submitError, setSubmitError] = useState("");
+
+  const handleMobileStepBack = () => {
+    if (mobileStep === "detail") {
+      setMobileStep("challenges");
+      return true;
+    }
+
+    if (mobileStep === "challenges") {
+      setMobileStep("categories");
+      return true;
+    }
+
+    return false;
+  };
 
   useEffect(() => {
     dispatch(fetchMilestoneCategories());
@@ -111,8 +127,26 @@ const Milestones = () => {
     setNotes(existing?.notes || "");
   }, [activeChallengeId, mySubmissions]);
 
+  useEffect(() => {
+    const onMobileBack = (event) => {
+      if (window.innerWidth >= 768) {
+        return;
+      }
+
+      if (handleMobileStepBack()) {
+        event.preventDefault();
+      }
+    };
+
+    window.addEventListener("app:mobile-back", onMobileBack);
+    return () => window.removeEventListener("app:mobile-back", onMobileBack);
+  }, [mobileStep]);
+
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setSubmitSuccess("");
+    setSubmitError("");
+
     try {
       const existing = getSubmissionForChallenge(activeChallengeId);
       if (existing) {
@@ -135,7 +169,7 @@ const Milestones = () => {
       setSubmitSuccess("Synced!");
       dispatch(fetchMyMilestoneSubmissions());
     } catch (err) {
-      console.error(err);
+      setSubmitError(typeof err === "string" ? err : "Failed to sync submission");
     }
   };
 
@@ -176,19 +210,12 @@ const Milestones = () => {
         }}
       />
 
-      <div className="relative z-10 max-w-[100vw] h-[calc(100vh-64px)] flex flex-col">
+      <div className="relative z-10 max-w-[100vw] pt-16 md:pt-24 h-[calc(100vh-4rem)] md:h-[calc(100vh-6rem)] flex flex-col">
         <div
           className={`flex items-center justify-between px-4 py-2 border-b ${styles.bgMid} ${styles.border}`}
         >
           <div className="flex items-center gap-2 text-[10px] font-bold uppercase">
-            <button
-              onClick={() =>
-                setMobileStep(
-                  mobileStep === "detail" ? "challenges" : "categories",
-                )
-              }
-              className="md:hidden p-1"
-            >
+            <button onClick={handleMobileStepBack} className="md:hidden p-1">
               <ChevronLeft size={16} />
             </button>
             <span className={styles.textHead}>
@@ -342,6 +369,16 @@ const Milestones = () => {
           </div>
         </div>
       </div>
+
+      <MiniModal
+        open={!!submitError || !!submitSuccess}
+        title={submitError ? "Submission Error" : "Submission Updated"}
+        message={submitError || submitSuccess}
+        onClose={() => {
+          setSubmitError("");
+          setSubmitSuccess("");
+        }}
+      />
     </div>
   );
 };

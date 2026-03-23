@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import {
   BrowserRouter as Router,
   Routes,
@@ -23,6 +23,7 @@ import Gallery from "./pages/Gallery";
 import AdminPanel from "./pages/AdminPanel";
 import About from "./pages/About";
 import Milestones from "./pages/Milestones";
+import MiniModal from "./components/MiniModal";
 
 import "./App.css";
 
@@ -31,6 +32,11 @@ function App() {
   const theme = useSelector(selectTheme);
   const token = useSelector(selectAuthToken);
   const user = useSelector(selectUser);
+  const [modalState, setModalState] = useState({
+    open: false,
+    title: "Error",
+    message: "",
+  });
 
   useEffect(() => {
     const root = document.documentElement;
@@ -50,6 +56,20 @@ function App() {
       dispatch(fetchMe());
     }
   }, [token, user, dispatch]);
+
+  useEffect(() => {
+    const onAppError = (event) => {
+      setModalState({
+        open: true,
+        title: event.detail?.title || "Error",
+        message:
+          event.detail?.message || "Something went wrong. Please try again.",
+      });
+    };
+
+    window.addEventListener("app:error", onAppError);
+    return () => window.removeEventListener("app:error", onAppError);
+  }, []);
 
   return (
     <Router>
@@ -99,6 +119,13 @@ function App() {
 
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
+
+        <MiniModal
+          open={modalState.open}
+          title={modalState.title}
+          message={modalState.message}
+          onClose={() => setModalState((prev) => ({ ...prev, open: false }))}
+        />
       </div>
     </Router>
   );

@@ -3,7 +3,11 @@ import MilestoneLevel from "../../models/MilestoneLevel.js";
 import MilestoneChallenge from "../../models/MilestoneChallenge.js";
 import MilestoneSubmission from "../../models/MilestoneSubmission.js";
 import MilestoneProgress from "../../models/MilestoneProgress.js";
-import { isValidGitHubUrl, isValidUrl } from "../../utils/validators.js";
+import {
+  isValidGitHubUrl,
+  isValidUrl,
+  normalizeGitHubUrl,
+} from "../../utils/validators.js";
 
 const handleError = (res, error, message = "Server error", status = 500) => {
   console.error(message, error);
@@ -23,9 +27,7 @@ const ensureProgressForCategory = async (userId, categoryId) => {
   const existing = await MilestoneProgress.find({ userId, categoryId }).select(
     "levelId",
   );
-  const existingLevelIds = new Set(
-    existing.map((p) => p.levelId.toString()),
-  );
+  const existingLevelIds = new Set(existing.map((p) => p.levelId.toString()));
 
   const ops = levels
     .filter((lvl) => !existingLevelIds.has(lvl._id.toString()))
@@ -147,16 +149,16 @@ export const listPublicSubmissions = async (req, res) => {
 export const createSubmission = async (req, res) => {
   try {
     const { challengeId, repoUrl, demoUrl, notes } = req.body;
-    if (!challengeId || !repoUrl) {
+    const normalizedRepoUrl = normalizeGitHubUrl(repoUrl);
+
+    if (!challengeId || !normalizedRepoUrl) {
       return res
         .status(400)
         .json({ message: "Challenge and repo URL are required" });
     }
 
-    if (!isValidGitHubUrl(repoUrl)) {
-      return res
-        .status(400)
-        .json({ message: "Invalid GitHub repo URL" });
+    if (!isValidGitHubUrl(normalizedRepoUrl)) {
+      return res.status(400).json({ message: "Invalid GitHub repo URL" });
     }
 
     if (demoUrl && !isValidUrl(demoUrl)) {
@@ -189,9 +191,9 @@ export const createSubmission = async (req, res) => {
         status: "approved",
       });
       if (approvedCount !== priorIds.length) {
-        return res
-          .status(403)
-          .json({ message: "Complete previous challenges in this level first" });
+        return res.status(403).json({
+          message: "Complete previous challenges in this level first",
+        });
       }
     }
 
@@ -212,7 +214,7 @@ export const createSubmission = async (req, res) => {
       categoryId: challenge.categoryId,
       levelId: challenge.levelId,
       challengeId: challenge._id,
-      repoUrl,
+      repoUrl: normalizedRepoUrl,
       demoUrl: demoUrl || "",
       notes: notes || "",
       status: "pending",
@@ -227,6 +229,8 @@ export const createSubmission = async (req, res) => {
 export const updateSubmission = async (req, res) => {
   try {
     const { repoUrl, demoUrl, notes } = req.body;
+    const normalizedRepoUrl =
+      repoUrl !== undefined ? normalizeGitHubUrl(repoUrl) : undefined;
     const submission = await MilestoneSubmission.findById(req.params.id);
     if (!submission) {
       return res.status(404).json({ message: "Submission not found" });
@@ -242,17 +246,15 @@ export const updateSubmission = async (req, res) => {
         .json({ message: "Approved submissions cannot be updated" });
     }
 
-    if (repoUrl && !isValidGitHubUrl(repoUrl)) {
-      return res
-        .status(400)
-        .json({ message: "Invalid GitHub repo URL" });
+    if (normalizedRepoUrl && !isValidGitHubUrl(normalizedRepoUrl)) {
+      return res.status(400).json({ message: "Invalid GitHub repo URL" });
     }
 
     if (demoUrl && !isValidUrl(demoUrl)) {
       return res.status(400).json({ message: "Invalid demo URL" });
     }
 
-    if (repoUrl !== undefined) submission.repoUrl = repoUrl;
+    if (normalizedRepoUrl !== undefined) submission.repoUrl = normalizedRepoUrl;
     if (demoUrl !== undefined) submission.demoUrl = demoUrl;
     if (notes !== undefined) submission.notes = notes;
 
@@ -296,7 +298,3 @@ export const getProgress = async (req, res) => {
     handleError(res, error, "Failed to fetch progress");
   }
 };
-
-
-
-

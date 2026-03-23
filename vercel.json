@@ -19,8 +19,11 @@
       "dest": "server/index.js"
     },
     {
+      "handle": "filesystem"
+    },
+    {
       "src": "/(.*)",
-      "dest": "client/$1"
+      "dest": "/client/index.html"
     }
   ],
   "env": {
@@ -33,4 +36,3 @@
     }
   }
 }
-

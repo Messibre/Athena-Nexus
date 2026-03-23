@@ -89,12 +89,30 @@ const Challenges = () => {
     setShowMobileDetails(true);
   };
 
+  useEffect(() => {
+    const onMobileBack = (event) => {
+      if (window.innerWidth >= 768 || !showMobileDetails) {
+        return;
+      }
+
+      setShowMobileDetails(false);
+      event.preventDefault();
+    };
+
+    window.addEventListener("app:mobile-back", onMobileBack);
+    return () => window.removeEventListener("app:mobile-back", onMobileBack);
+  }, [showMobileDetails]);
+
   const isDeadlinePassed = (date) => date && new Date() > new Date(date);
 
   if (loading || submissionsLoading || adminLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[#0a0514]">
-        <div className="text-[11px] text-white uppercase tracking-[0.4em] animate-pulse font-black">
+      <div
+        className={`min-h-screen flex items-center justify-center ${theme === "dark" ? "bg-[#0a0514]" : "bg-slate-100"}`}
+      >
+        <div
+          className={`text-[11px] uppercase tracking-[0.4em] animate-pulse font-black ${theme === "dark" ? "text-white" : "text-slate-700"}`}
+        >
           Synchronizing Systems...
         </div>
       </div>
@@ -112,7 +130,7 @@ const Challenges = () => {
             {showMobileDetails && (
               <button
                 onClick={() => setShowMobileDetails(false)}
-                className="md:hidden text-white"
+                className={`md:hidden ${theme === "dark" ? "text-white" : "text-slate-800"}`}
               >
                 <ChevronLeft size={20} />
               </button>
@@ -125,7 +143,11 @@ const Challenges = () => {
           </div>
           <Link
             to="/milestones"
-            className="text-[10px] font-black text-white/60 hover:text-white tracking-widest transition-all"
+            className={`text-[10px] font-black tracking-widest transition-all ${
+              theme === "dark"
+                ? "text-white/60 hover:text-white"
+                : "text-slate-600 hover:text-slate-900"
+            }`}
           >
             MILESTONES →
           </Link>
@@ -155,7 +177,9 @@ const Challenges = () => {
                     <CheckCircle2 size={14} className="text-emerald-400" />
                   )}
                 </div>
-                <div className="text-[11px] font-bold text-white/40 truncate uppercase">
+                <div
+                  className={`text-[11px] font-bold truncate uppercase ${theme === "dark" ? "text-white/40" : "text-slate-500"}`}
+                >
                   {week.title || "Untitled"}
                 </div>
               </button>
@@ -176,13 +200,17 @@ const Challenges = () => {
                   className="max-w-4xl mx-auto w-full"
                 >
                   <header className="mb-12 text-center">
-                    <span className="text-white/60 text-[10px] font-black uppercase tracking-[0.4em]">
+                    <span
+                      className={`text-[10px] font-black uppercase tracking-[0.4em] ${theme === "dark" ? "text-white/60" : "text-slate-600"}`}
+                    >
                       Assignment Phase {activeWeek.week_number}
                     </span>
                     <h2 className="challenge-title">
                       {activeWeek.title?.toLowerCase() || "unnamed"}
                     </h2>
-                    <div className="mt-6 flex justify-center gap-8 text-[10px] text-white/40 font-black uppercase tracking-widest">
+                    <div
+                      className={`mt-6 flex justify-center gap-8 text-[10px] font-black uppercase tracking-widest ${theme === "dark" ? "text-white/40" : "text-slate-500"}`}
+                    >
                       <span className="flex items-center gap-2">
                         <Clock size={12} />{" "}
                         {isDeadlinePassed(activeWeek.deadlineDate)
@@ -201,7 +229,9 @@ const Challenges = () => {
                       <span className="section-label">
                         Operational Briefing
                       </span>
-                      <p className="text-lg font-bold leading-relaxed text-white/80 italic">
+                      <p
+                        className={`text-lg font-bold leading-relaxed italic ${theme === "dark" ? "text-white/80" : "text-slate-700"}`}
+                      >
                         {activeWeek.description}
                       </p>
                     </section>
@@ -218,14 +248,28 @@ const Challenges = () => {
                               href={res}
                               target="_blank"
                               rel="noreferrer"
-                              className="p-4 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 transition-all flex items-center justify-between group"
+                              className={`p-4 rounded-xl border transition-all flex items-center justify-between group ${
+                                theme === "dark"
+                                  ? "border-white/10 bg-white/5 hover:bg-white/10"
+                                  : "border-slate-300 bg-white/85 hover:bg-slate-100"
+                              }`}
                             >
-                              <span className="text-[11px] font-black text-white/70 group-hover:text-white truncate">
+                              <span
+                                className={`text-[11px] font-black truncate ${
+                                  theme === "dark"
+                                    ? "text-white/70 group-hover:text-white"
+                                    : "text-slate-700 group-hover:text-slate-900"
+                                }`}
+                              >
                                 {res.replace(/^https?:\/\//, "")}
                               </span>
                               <ExternalLink
                                 size={14}
-                                className="text-white/30"
+                                className={
+                                  theme === "dark"
+                                    ? "text-white/30"
+                                    : "text-slate-400"
+                                }
                               />
                             </a>
                           ))}
@@ -240,7 +284,9 @@ const Challenges = () => {
                             <CheckCircle2 size={12} /> Transmission{" "}
                             {userSubmission.status}
                           </div>
-                          <h3 className="text-2xl font-black text-white mb-8">
+                          <h3
+                            className={`text-2xl font-black mb-8 ${theme === "dark" ? "text-white" : "text-slate-900"}`}
+                          >
                             Asset Received
                           </h3>
                           <div className="flex flex-col sm:flex-row justify-center gap-4">
@@ -264,10 +310,14 @@ const Challenges = () => {
                         </>
                       ) : (
                         <>
-                          <h3 className="text-2xl font-black text-white mb-3 uppercase tracking-tighter">
+                          <h3
+                            className={`text-2xl font-black mb-3 uppercase tracking-tighter ${theme === "dark" ? "text-white" : "text-slate-900"}`}
+                          >
                             Initialize Deployment
                           </h3>
-                          <p className="text-xs font-bold text-white/40 mb-10 tracking-wide uppercase">
+                          <p
+                            className={`text-xs font-bold mb-10 tracking-wide uppercase ${theme === "dark" ? "text-white/40" : "text-slate-500"}`}
+                          >
                             Verify requirements before transmission.
                           </p>
                           <Link
@@ -288,7 +338,9 @@ const Challenges = () => {
                   </div>
                 </motion.div>
               ) : (
-                <div className="h-full w-full flex flex-col items-center justify-center text-white/10">
+                <div
+                  className={`h-full w-full flex flex-col items-center justify-center ${theme === "dark" ? "text-white/10" : "text-slate-300"}`}
+                >
                   <Inbox size={80} strokeWidth={1} />
                   <span className="text-xs uppercase tracking-[1em] mt-8 font-black">
                     System Idle

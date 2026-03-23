@@ -5,6 +5,7 @@ import { changePassword, fetchMe } from "../redux/thunks/authThunks";
 import { updateUserProfile } from "../redux/thunks/usersThunks";
 import { selectUser } from "../redux/selectors/authSelectors";
 import { selectTheme } from "../redux/selectors/themeSelectors";
+import MiniModal from "../components/MiniModal";
 
 const Settings = () => {
   const dispatch = useDispatch();
@@ -14,6 +15,11 @@ const Settings = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const [modalState, setModalState] = useState({
+    open: false,
+    title: "Notice",
+    message: "",
+  });
 
   const [profileForm, setProfileForm] = useState({
     displayName: "",
@@ -32,6 +38,40 @@ const Settings = () => {
       });
     }
   }, [user]);
+
+  useEffect(() => {
+    if (error) {
+      setModalState({
+        open: true,
+        title: "Settings Error",
+        message: error,
+      });
+    }
+  }, [error]);
+
+  useEffect(() => {
+    if (success) {
+      setModalState({
+        open: true,
+        title: "Settings Updated",
+        message: success,
+      });
+    }
+  }, [success]);
+
+  useEffect(() => {
+    const onMobileBack = (event) => {
+      if (window.innerWidth >= 768 || activeTab !== "password") {
+        return;
+      }
+
+      setActiveTab("profile");
+      event.preventDefault();
+    };
+
+    window.addEventListener("app:mobile-back", onMobileBack);
+    return () => window.removeEventListener("app:mobile-back", onMobileBack);
+  }, [activeTab]);
 
   const [passwordForm, setPasswordForm] = useState({
     currentPassword: "",
@@ -190,9 +230,6 @@ const Settings = () => {
             Change Password
           </button>
         </div>
-
-        {error && <div className="alert alert-error">{error}</div>}
-        {success && <div className="alert alert-success">{success}</div>}
 
         {activeTab === "profile" && (
           <div className={panelClass}>
@@ -399,6 +436,13 @@ const Settings = () => {
           </div>
         )}
       </div>
+
+      <MiniModal
+        open={modalState.open}
+        title={modalState.title}
+        message={modalState.message}
+        onClose={() => setModalState((prev) => ({ ...prev, open: false }))}
+      />
     </div>
   );
 };

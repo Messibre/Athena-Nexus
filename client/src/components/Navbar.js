@@ -44,6 +44,23 @@ const Navbar = () => {
 
   const closeMobileMenu = () => setIsMobileMenuOpen(false);
 
+  const handleBack = () => {
+    const mobileBackEvent = new Event("app:mobile-back", {
+      cancelable: true,
+    });
+    const wasHandledByPage = !window.dispatchEvent(mobileBackEvent);
+
+    if (wasHandledByPage) {
+      return;
+    }
+
+    if (window.history.length > 1) {
+      navigate(-1);
+      return;
+    }
+    navigate("/");
+  };
+
   return (
     <>
       <nav className="fixed top-0 left-0 right-0 z-50 border-b border-white/10 bg-black/10 backdrop-blur-md">
@@ -51,8 +68,8 @@ const Navbar = () => {
           <div className="flex items-center gap-2 md:gap-3">
             {!isHomePage && (
               <button
-                onClick={() => navigate(-1)}
-                className="md:hidden flex h-9 w-9 items-center justify-center rounded-full border border-white/40 bg-white/10 text-white transition-all hover:bg-white hover:text-black"
+                onClick={handleBack}
+                className="flex h-9 w-9 items-center justify-center rounded-full border border-white/40 bg-white/10 text-white transition-all hover:bg-white hover:text-black"
                 aria-label="Go back"
               >
                 <ArrowLeft size={16} />
@@ -173,19 +190,39 @@ const Navbar = () => {
             </div>
 
             <nav className="space-y-2 rounded-2xl border border-white/10 bg-black/25 p-3">
-              <Link to="/" className={mobileDrawerLinkClass} onClick={closeMobileMenu}>
+              <Link
+                to="/"
+                className={mobileDrawerLinkClass}
+                onClick={closeMobileMenu}
+              >
                 Home
               </Link>
-              <Link to="/challenges" className={mobileDrawerLinkClass} onClick={closeMobileMenu}>
+              <Link
+                to="/challenges"
+                className={mobileDrawerLinkClass}
+                onClick={closeMobileMenu}
+              >
                 Challenges
               </Link>
-              <Link to="/milestones" className={mobileDrawerLinkClass} onClick={closeMobileMenu}>
+              <Link
+                to="/milestones"
+                className={mobileDrawerLinkClass}
+                onClick={closeMobileMenu}
+              >
                 Milestones
               </Link>
-              <Link to="/gallery" className={mobileDrawerLinkClass} onClick={closeMobileMenu}>
+              <Link
+                to="/gallery"
+                className={mobileDrawerLinkClass}
+                onClick={closeMobileMenu}
+              >
                 Gallery
               </Link>
-              <Link to="/about" className={mobileDrawerLinkClass} onClick={closeMobileMenu}>
+              <Link
+                to="/about"
+                className={mobileDrawerLinkClass}
+                onClick={closeMobileMenu}
+              >
                 About
               </Link>
 

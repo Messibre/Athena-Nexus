@@ -18,6 +18,11 @@
   pointer-events: none;
 }
 
+[data-theme="light"] .challenges-bg-image-layer {
+  opacity: 0.35;
+  filter: saturate(1) brightness(1.02) contrast(0.95);
+}
+
 [data-theme="dark"] .challenges-bg-image-layer {
   opacity: 0.4;
   filter: saturate(1.2) brightness(0.6) contrast(1.3);
@@ -33,6 +38,10 @@
   flex-direction: column;
 }
 
+[data-theme="light"] .challenges-layout {
+  color: #334155;
+}
+
 /* Header Styling */
 .challenges-header {
   display: flex;
@@ -44,6 +53,11 @@
   backdrop-filter: blur(10px);
 }
 
+[data-theme="light"] .challenges-header {
+  border-bottom: 1px solid rgba(148, 163, 184, 0.35);
+  background: rgba(255, 255, 255, 0.72);
+}
+
 .header-title {
   font-family: "Fraunces", serif;
   font-weight: 900;
@@ -51,6 +65,11 @@
   letter-spacing: 0.1em;
   color: #ffffff;
   text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+[data-theme="light"] .header-title {
+  color: #0f172a;
+  text-shadow: none;
 }
 
 /* Sidebar / Week List */
@@ -62,6 +81,11 @@
   overflow-y: auto;
 }
 
+[data-theme="light"] .weeks-sidebar {
+  border-right: 1px solid rgba(148, 163, 184, 0.3);
+  background: rgba(255, 255, 255, 0.64);
+}
+
 .week-item {
   width: 100%;
   padding: 1.5rem;
@@ -70,13 +94,26 @@
   text-align: left;
 }
 
+[data-theme="light"] .week-item {
+  border-bottom: 1px solid rgba(148, 163, 184, 0.22);
+}
+
 .week-item.active {
   background: rgba(255, 255, 255, 0.2);
   border-left: 4px solid #ffffff;
 }
 
+[data-theme="light"] .week-item.active {
+  background: rgba(139, 92, 246, 0.16);
+  border-left: 4px solid #7c3aed;
+}
+
 .week-item:hover:not(.active) {
   background: rgba(255, 255, 255, 0.1);
+}
+
+[data-theme="light"] .week-item:hover:not(.active) {
+  background: rgba(255, 255, 255, 0.92);
 }
 
 .week-label {
@@ -85,12 +122,20 @@
   font-size: 0.9rem;
 }
 
+[data-theme="light"] .week-label {
+  color: #1e293b;
+}
+
 /* Main Content Area */
 .challenge-detail {
   flex: 1;
   overflow-y: auto;
   padding: 4rem 3rem;
   background: rgba(0, 0, 0, 0.1);
+}
+
+[data-theme="light"] .challenge-detail {
+  background: rgba(255, 255, 255, 0.38);
 }
 
 .challenge-title {
@@ -106,6 +151,14 @@
   filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.3));
 }
 
+[data-theme="light"] .challenge-title {
+  background: linear-gradient(180deg, #1e293b 0%, #334155 70%, #64748b 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  filter: none;
+}
+
 .section-label {
   font-size: 10px;
   font-weight: 900;
@@ -114,6 +167,10 @@
   color: rgba(255, 255, 255, 0.5);
   margin-bottom: 1rem;
   display: block;
+}
+
+[data-theme="light"] .section-label {
+  color: rgba(51, 65, 85, 0.72);
 }
 
 /* Cards and CTA */
@@ -125,6 +182,12 @@
   backdrop-filter: blur(20px);
   text-align: center;
   box-shadow: 0 20px 50px rgba(0, 0, 0, 0.2);
+}
+
+[data-theme="light"] .cta-box {
+  background: rgba(255, 255, 255, 0.8);
+  border: 1px solid rgba(148, 163, 184, 0.35);
+  box-shadow: 0 20px 50px rgba(15, 23, 42, 0.12);
 }
 
 .btn-silver {
@@ -151,6 +214,16 @@
   padding: 1rem 2.5rem;
   border-radius: 999px;
   transition: all 0.3s ease;
+}
+
+[data-theme="light"] .btn-outline {
+  border: 2px solid #64748b;
+  color: #1e293b;
+}
+
+[data-theme="light"] .btn-outline:hover {
+  background: #1e293b;
+  color: #ffffff;
 }
 
 .btn-outline:hover {

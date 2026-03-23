@@ -1,8 +1,9 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { signup } from "../redux/thunks/authThunks";
 import Navbar from "../components/Navbar";
+import MiniModal from "../components/MiniModal";
 import { selectAuthActionLoading } from "../redux/selectors/authSelectors";
 import { selectTheme } from "../redux/selectors/themeSelectors";
 
@@ -16,10 +17,25 @@ const Signup = () => {
     members: "",
   });
   const [error, setError] = useState("");
+  const [modalState, setModalState] = useState({
+    open: false,
+    title: "Error",
+    message: "",
+  });
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const actionLoading = useSelector(selectAuthActionLoading);
   const theme = useSelector(selectTheme);
+
+  useEffect(() => {
+    if (error) {
+      setModalState({
+        open: true,
+        title: "Signup Error",
+        message: error,
+      });
+    }
+  }, [error]);
 
   const handleChange = (e) => {
     setFormData({
@@ -102,8 +118,6 @@ const Signup = () => {
           <p className="text-center opacity-70 mb-6">
             Create an account for your team of 3 members
           </p>
-
-          {error && <div className="alert alert-error">{error}</div>}
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="form-group">
@@ -247,6 +261,13 @@ const Signup = () => {
           </div>
         </div>
       </div>
+
+      <MiniModal
+        open={modalState.open}
+        title={modalState.title}
+        message={modalState.message}
+        onClose={() => setModalState((prev) => ({ ...prev, open: false }))}
+      />
     </div>
   );
 };

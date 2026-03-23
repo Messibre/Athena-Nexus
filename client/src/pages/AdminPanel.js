@@ -291,7 +291,10 @@ const AdminPanel = () => {
 
   const styles = {
     bg: theme === "dark" ? "bg-[#0a0514]" : "bg-slate-50",
-    panel: theme === "dark" ? "bg-[#0f0f0f]" : "bg-white",
+    panel:
+      theme === "dark"
+        ? "bg-[#0f0f0f]/95 backdrop-blur-md"
+        : "bg-white/95 backdrop-blur-md",
     border: theme === "dark" ? "border-white/5" : "border-slate-200",
     textMain: theme === "dark" ? "text-slate-400" : "text-slate-600",
     textHead: theme === "dark" ? "text-white" : "text-slate-900",
@@ -341,7 +344,7 @@ const AdminPanel = () => {
         }}
       />
 
-      <div className="max-w-[1600px] mx-auto flex flex-col md:flex-row h-full md:h-[calc(100vh-64px)] overflow-hidden">
+      <div className="max-w-[1600px] mx-auto pt-20 md:pt-24 flex flex-col md:flex-row h-[calc(100vh-5rem)] md:h-[calc(100vh-6rem)] overflow-hidden">
         <aside
           className={`relative z-10 w-full md:w-72 border-b md:border-b-0 md:border-r ${styles.panel} ${styles.border} flex shrink-0 md:flex-col overflow-x-auto no-scrollbar`}
         >
@@ -350,7 +353,7 @@ const AdminPanel = () => {
               Command Center
             </h2>
           </div>
-          <nav className="flex md:flex-col px-2 md:px-0">
+          <nav className="flex md:flex-col px-2 md:px-0 gap-1 md:gap-0">
             {[
               { id: "stats", label: "Overview", icon: BarChart3 },
               { id: "submissions", label: "Week Queue", icon: CheckSquare },
@@ -362,10 +365,20 @@ const AdminPanel = () => {
               <button
                 key={item.id}
                 onClick={() => handleTabChange(item.id)}
-                className={`flex items-center gap-4 px-8 py-5 text-[11px] font-bold transition-all whitespace-nowrap ${activeTab === item.id ? "text-[#8b5cf6] bg-[#8b5cf6]/10 border-l-2 border-[#8b5cf6]" : "opacity-40 hover:opacity-100 hover:bg-black/5"}`}
+                className={`flex items-center gap-3 md:gap-4 px-4 md:px-8 py-3.5 md:py-5 text-xs md:text-[11px] font-bold transition-all whitespace-nowrap rounded-md md:rounded-none ${
+                  activeTab === item.id
+                    ? theme === "dark"
+                      ? "bg-[#8b5cf6]/30 text-white border-b-2 md:border-b-0 md:border-l-2 border-[#8b5cf6] md:bg-[#8b5cf6]/10 md:text-[#8b5cf6]"
+                      : "bg-[#ede9fe] text-[#5b21b6] border-b-2 md:border-b-0 md:border-l-2 border-[#8b5cf6]"
+                    : theme === "dark"
+                      ? "text-white bg-black/45 hover:bg-black/55 md:bg-transparent md:text-white/70 md:opacity-40 md:hover:opacity-100 md:hover:bg-black/5"
+                      : "text-slate-800 bg-white border border-slate-200 hover:bg-slate-50 md:bg-transparent md:border-transparent md:text-slate-700 md:opacity-50 md:hover:opacity-100 md:hover:bg-black/5"
+                }`}
               >
                 <item.icon size={18} />
-                <span className="uppercase tracking-widest">{item.label}</span>
+                <span className="uppercase tracking-[0.14em] md:tracking-widest">
+                  {item.label}
+                </span>
               </button>
             ))}
           </nav>

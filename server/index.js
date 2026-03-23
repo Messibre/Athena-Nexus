@@ -15,6 +15,9 @@ import usersRoutes from "./routes/users.js";
 dotenv.config();
 
 const app = express();
+const isServerless = process.env.VERCEL === "1";
+let isDbConnected = false;
+let dbConnectPromise = null;
 
 app.set("trust proxy", false);
 
@@ -29,19 +32,47 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 const connectDB = async () => {
-  try {
-    const mongoURI =
-      process.env.MONGODB_URI || "mongodb://localhost:27017/athena-nexus";
-    console.log("Connecting to MongoDB...");
-    await mongoose.connect(mongoURI);
-    console.log("✅ MongoDB Connected");
+  if (isDbConnected && mongoose.connection.readyState === 1) {
     return true;
-  } catch (error) {
-    console.error("❌ MongoDB connection error:", error.message);
-    console.error("Full error:", error);
-    return false;
   }
+
+  if (dbConnectPromise) {
+    return dbConnectPromise;
+  }
+
+  dbConnectPromise = (async () => {
+    try {
+      const mongoURI =
+        process.env.MONGODB_URI || "mongodb://localhost:27017/athena-nexus";
+      console.log("Connecting to MongoDB...");
+      await mongoose.connect(mongoURI);
+      isDbConnected = true;
+      console.log("✅ MongoDB Connected");
+      return true;
+    } catch (error) {
+      isDbConnected = false;
+      console.error("❌ MongoDB connection error:", error.message);
+      console.error("Full error:", error);
+      return false;
+    } finally {
+      dbConnectPromise = null;
+    }
+  })();
+
+  return dbConnectPromise;
 };
+
+app.use(async (req, res, next) => {
+  const dbConnected = await connectDB();
+
+  if (!dbConnected) {
+    return res.status(503).json({
+      message: "Database unavailable. Please try again later.",
+    });
+  }
+
+  return next();
+});
 
 app.use("/api/auth", authRoutes);
 app.use("/api/submissions", submissionRoutes);
@@ -59,6 +90,13 @@ app.get("/api/health", (req, res) => {
     status: "OK",
     message: "Server is running",
     database: dbStatus,
+  });
+});
+
+app.use("/api/*", (req, res) => {
+  res.status(404).json({
+    message: "API route not found",
+    path: req.originalUrl,
   });
 });
 
@@ -82,7 +120,7 @@ const startServer = async () => {
       "1. MongoDB is running (local) or connection string is correct (Atlas)",
     );
     console.error("2. MONGODB_URI in .env file is correct");
-    process.exit(1);
+    return;
   }
 
   if (!process.env.JWT_SECRET) {
@@ -97,4 +135,8 @@ const startServer = async () => {
   });
 };
 
-startServer();
+if (!isServerless) {
+  startServer();
+}
+
+export default app;

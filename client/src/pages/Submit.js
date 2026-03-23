@@ -14,6 +14,7 @@ import {
   selectSubmissionsActionLoading,
 } from "../redux/selectors/submissionsSelectors";
 import { selectTheme } from "../redux/selectors/themeSelectors";
+import MiniModal from "../components/MiniModal";
 
 const Submit = () => {
   const dispatch = useDispatch();
@@ -31,6 +32,11 @@ const Submit = () => {
   const [tags, setTags] = useState([]);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const [modalState, setModalState] = useState({
+    open: false,
+    title: "Notice",
+    message: "",
+  });
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
@@ -81,6 +87,26 @@ const Submit = () => {
       setSelectedWeek(activeWeekId);
     }
   }, [activeWeekId, selectedWeek, searchParams]);
+
+  useEffect(() => {
+    if (error) {
+      setModalState({
+        open: true,
+        title: "Submission Error",
+        message: error,
+      });
+    }
+  }, [error]);
+
+  useEffect(() => {
+    if (success) {
+      setModalState({
+        open: true,
+        title: "Submission Success",
+        message: success,
+      });
+    }
+  }, [success]);
 
   const handleTagChange = (tag) => {
     setTags((prev) =>
@@ -196,9 +222,6 @@ const Submit = () => {
             {submissionId ? "Update Your Submission" : "Submit Your Project"}
           </h2>
 
-          {error && <div className="alert alert-error">{error}</div>}
-          {success && <div className="alert alert-success">{success}</div>}
-
           <form onSubmit={handleSubmit}>
             <div className="form-group">
               <label className={labelClass}>Week *</label>
@@ -308,6 +331,13 @@ const Submit = () => {
           </form>
         </div>
       </div>
+
+      <MiniModal
+        open={modalState.open}
+        title={modalState.title}
+        message={modalState.message}
+        onClose={() => setModalState((prev) => ({ ...prev, open: false }))}
+      />
     </div>
   );
 };
