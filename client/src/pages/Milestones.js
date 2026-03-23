@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Link } from "react-router-dom";
+import { motion } from "framer-motion";
 import { CheckCircle2, ChevronRight, ChevronLeft, Lock } from "lucide-react";
 import Navbar from "../components/Navbar";
 import {
