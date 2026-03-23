@@ -91,6 +91,22 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use("/api", apiLimiter);
 
+app.get("/api/health", (req, res) => {
+  const dbConnected = mongoose.connection.readyState === 1;
+
+  res.status(dbConnected ? 200 : 503).json({
+    status: dbConnected ? "OK" : "DEGRADED",
+    message: dbConnected
+      ? "Server is running"
+      : "Server is running but database is not connected",
+    database: dbConnected ? "connected" : "disconnected",
+    environment: process.env.NODE_ENV || "development",
+    isServerless,
+    hasMongoUri: Boolean(process.env.MONGODB_URI),
+    timestamp: new Date().toISOString(),
+  });
+});
+
 const connectDB = async () => {
   if (isDbConnected && mongoose.connection.readyState === 1) {
     return true;
@@ -123,6 +139,10 @@ const connectDB = async () => {
 };
 
 app.use(async (req, res, next) => {
+  if (req.path === "/api/health") {
+    return next();
+  }
+
   const dbConnected = await connectDB();
 
   if (!dbConnected) {
@@ -142,16 +162,6 @@ app.use("/api/activity", activityRoutes);
 app.use("/api/milestones", milestonesRoutes);
 app.use("/api/admin/milestones", adminMilestonesRoutes);
 app.use("/api/users", usersRoutes);
-
-app.get("/api/health", (req, res) => {
-  const dbStatus =
-    mongoose.connection.readyState === 1 ? "connected" : "disconnected";
-  res.json({
-    status: "OK",
-    message: "Server is running",
-    database: dbStatus,
-  });
-});
 
 app.use("/api/*", (req, res) => {
   res.status(404).json({
