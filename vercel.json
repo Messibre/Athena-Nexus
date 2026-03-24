@@ -19,6 +19,18 @@
       "destination": "/server/index.js?path=$1"
     },
     {
+      "source": "/static/(.*)",
+      "destination": "/client/static/$1"
+    },
+    {
+      "source": "/asset-manifest.json",
+      "destination": "/client/asset-manifest.json"
+    },
+    {
+      "source": "/athena.jpg",
+      "destination": "/client/athena.jpg"
+    },
+    {
       "source": "/(.*)",
       "destination": "/client/index.html"
     }
