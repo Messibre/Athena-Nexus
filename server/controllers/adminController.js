@@ -1,8 +1,7 @@
 import Week from "../models/Week.js";
 import User from "../models/User.js";
 import Submission from "../models/Submission.js";
-import { isValidPassword } from "../utils/validators.js";
-
+import { isValidPassword, isValidUrl } from "../utils/validators.js";
 
 export const createWeek = async (req, res) => {
   try {
@@ -19,7 +18,6 @@ export const createWeek = async (req, res) => {
       return res.status(400).json({ message: "Week number is required" });
     }
 
-    
     const existingWeek = await Week.findOne({ week_number });
     if (existingWeek) {
       return res.status(400).json({ message: "Week number already exists" });
@@ -42,7 +40,6 @@ export const createWeek = async (req, res) => {
     res.status(500).json({ message: "Server error" });
   }
 };
-
 
 export const updateWeek = async (req, res) => {
   try {
@@ -71,7 +68,6 @@ export const updateWeek = async (req, res) => {
   }
 };
 
-
 export const deleteWeek = async (req, res) => {
   try {
     const week = await Week.findById(req.params.id);
@@ -79,7 +75,6 @@ export const deleteWeek = async (req, res) => {
       return res.status(404).json({ message: "Week not found" });
     }
 
-    
     const submissions = await Submission.find({ week_id: week._id });
     if (submissions.length > 0) {
       return res.status(400).json({
@@ -94,7 +89,6 @@ export const deleteWeek = async (req, res) => {
     res.status(500).json({ message: "Server error" });
   }
 };
-
 
 export const createUser = async (req, res) => {
   try {
@@ -114,7 +108,6 @@ export const createUser = async (req, res) => {
       });
     }
 
-    
     const existingUser = await User.findOne({ username });
     if (existingUser) {
       return res.status(400).json({ message: "Username already exists" });
@@ -122,7 +115,7 @@ export const createUser = async (req, res) => {
 
     const user = new User({
       username,
-      password_hash: password, 
+      password_hash: password,
       email: email || "",
       role: "member",
       displayName: displayName || username,
@@ -143,7 +136,6 @@ export const createUser = async (req, res) => {
   }
 };
 
-
 export const getUsers = async (req, res) => {
   try {
     const users = await User.find({ role: "member" })
@@ -156,7 +148,6 @@ export const getUsers = async (req, res) => {
   }
 };
 
-
 export const updateUser = async (req, res) => {
   try {
     const user = await User.findById(req.params.id);
@@ -164,7 +155,6 @@ export const updateUser = async (req, res) => {
       return res.status(404).json({ message: "User not found" });
     }
 
-    
     const isAdmin = req.user.role === "admin";
     const isSelf = req.user._id.toString() === req.params.id;
 
@@ -174,12 +164,62 @@ export const updateUser = async (req, res) => {
         .json({ message: "Not authorized to update this user" });
     }
 
-    const { displayName, email, members, contactEmail } = req.body;
+    const {
+      displayName,
+      email,
+      members,
+      contactEmail,
+      profileImageUrl,
+      coverImageUrl,
+      headline,
+      bio,
+      location,
+      socialLinks,
+    } = req.body;
+
+    const optionalUrls = [
+      ["profileImageUrl", profileImageUrl],
+      ["coverImageUrl", coverImageUrl],
+    ];
+
+    for (const [fieldName, value] of optionalUrls) {
+      if (value && !isValidUrl(value)) {
+        return res.status(400).json({ message: `Invalid ${fieldName}` });
+      }
+    }
+
+    if (socialLinks !== undefined && typeof socialLinks !== "object") {
+      return res.status(400).json({ message: "Invalid social links" });
+    }
+
+    if (socialLinks && typeof socialLinks === "object") {
+      for (const [key, value] of Object.entries(socialLinks)) {
+        if (value && !isValidUrl(value)) {
+          return res.status(400).json({
+            message: `Invalid social link: ${key}`,
+          });
+        }
+      }
+    }
 
     if (displayName !== undefined) user.displayName = displayName;
     if (email !== undefined) user.email = email;
     if (members !== undefined) user.members = members;
     if (contactEmail !== undefined) user.contactEmail = contactEmail;
+    if (profileImageUrl !== undefined) user.profileImageUrl = profileImageUrl;
+    if (coverImageUrl !== undefined) user.coverImageUrl = coverImageUrl;
+    if (headline !== undefined) user.headline = headline;
+    if (bio !== undefined) user.bio = bio;
+    if (location !== undefined) user.location = location;
+    if (socialLinks !== undefined) {
+      user.socialLinks = {
+        website: socialLinks.website || "",
+        github: socialLinks.github || "",
+        linkedin: socialLinks.linkedin || "",
+        x: socialLinks.x || "",
+        instagram: socialLinks.instagram || "",
+      };
+    }
 
     await user.save();
     res.json({
@@ -189,13 +229,18 @@ export const updateUser = async (req, res) => {
       members: user.members,
       email: user.email,
       contactEmail: user.contactEmail,
+      profileImageUrl: user.profileImageUrl || "",
+      coverImageUrl: user.coverImageUrl || "",
+      headline: user.headline || "",
+      bio: user.bio || "",
+      location: user.location || "",
+      socialLinks: user.socialLinks || {},
     });
   } catch (error) {
     console.error("Update user error:", error);
     res.status(500).json({ message: "Server error" });
   }
 };
-
 
 export const resetUserPassword = async (req, res) => {
   try {
@@ -212,7 +257,7 @@ export const resetUserPassword = async (req, res) => {
       });
     }
 
-    user.password_hash = newPassword; 
+    user.password_hash = newPassword;
     await user.save();
 
     res.json({ message: "Password reset successfully" });
@@ -222,7 +267,6 @@ export const resetUserPassword = async (req, res) => {
   }
 };
 
-
 export const deleteUser = async (req, res) => {
   try {
     const user = await User.findById(req.params.id);
@@ -230,10 +274,8 @@ export const deleteUser = async (req, res) => {
       return res.status(404).json({ message: "User not found" });
     }
 
-    
     const submissions = await Submission.find({ user_id: user._id });
     if (submissions.length > 0) {
-      
       return res.status(400).json({
         message: "Cannot delete user with existing submissions",
       });
@@ -246,7 +288,6 @@ export const deleteUser = async (req, res) => {
     res.status(500).json({ message: "Server error" });
   }
 };
-
 
 export const getSubmissions = async (req, res) => {
   try {
@@ -266,7 +307,6 @@ export const getSubmissions = async (req, res) => {
     res.status(500).json({ message: "Server error" });
   }
 };
-
 
 export const updateSubmissionStatus = async (req, res) => {
   try {
@@ -294,7 +334,6 @@ export const updateSubmissionStatus = async (req, res) => {
   }
 };
 
-
 export const exportSubmissions = async (req, res) => {
   try {
     const { weekId } = req.query;
@@ -305,7 +344,6 @@ export const exportSubmissions = async (req, res) => {
       .populate("week_id", "week_number title")
       .sort({ created_at: -1 });
 
-    
     const csvHeader =
       "Week,Group Name,GitHub Repo,Live Demo,Status,Description,Submitted At\n";
     const csvRows = submissions
@@ -316,7 +354,7 @@ export const exportSubmissions = async (req, res) => {
         const repo = sub.github_repo_url || "";
         const demo = sub.github_live_demo_url || "";
         const status = sub.status || "";
-        const desc = (sub.description || "").replace(/,/g, ";"); 
+        const desc = (sub.description || "").replace(/,/g, ";");
         const date = new Date(sub.created_at).toISOString();
         return `${week},"${groupName}","${repo}","${demo}",${status},"${desc}",${date}`;
       })
@@ -333,7 +371,6 @@ export const exportSubmissions = async (req, res) => {
     res.status(500).json({ message: "Server error" });
   }
 };
-
 
 export const getStats = async (req, res) => {
   try {

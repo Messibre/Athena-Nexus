@@ -26,12 +26,65 @@ const userSchema = new mongoose.Schema({
     type: String,
     trim: true,
   },
+  profileImageUrl: {
+    type: String,
+    trim: true,
+    default: "",
+  },
+  coverImageUrl: {
+    type: String,
+    trim: true,
+    default: "",
+  },
+  headline: {
+    type: String,
+    trim: true,
+    default: "",
+  },
+  bio: {
+    type: String,
+    trim: true,
+    default: "",
+  },
+  location: {
+    type: String,
+    trim: true,
+    default: "",
+  },
+  socialLinks: {
+    website: {
+      type: String,
+      trim: true,
+      default: "",
+    },
+    github: {
+      type: String,
+      trim: true,
+      default: "",
+    },
+    linkedin: {
+      type: String,
+      trim: true,
+      default: "",
+    },
+    x: {
+      type: String,
+      trim: true,
+      default: "",
+    },
+    instagram: {
+      type: String,
+      trim: true,
+      default: "",
+    },
+  },
   members: [
     {
       name: String,
       role: String,
       githubUsername: String,
       email: String,
+      bio: String,
     },
   ],
   contactEmail: {

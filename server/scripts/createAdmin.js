@@ -4,32 +4,43 @@ import User from "../models/User.js";
 
 dotenv.config();
 
+const ADMIN_USERNAME = process.env.ADMIN_USERNAME;
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD;
+const ADMIN_DISPLAY_NAME = process.env.ADMIN_DISPLAY_NAME || "Administrator";
+const ADMIN_EMAIL = process.env.ADMIN_EMAIL || "admin@example.com";
+
 const createAdmin = async () => {
   try {
-    await mongoose.connect(
-      process.env.MONGODB_URI ||
-        "mongodb://localhost:27017/sisterhood-challenges",
-    );
+    if (!process.env.MONGODB_URI) {
+      console.error("MONGODB_URI is required in the environment");
+      process.exit(1);
+    }
+
+    if (!ADMIN_USERNAME || !ADMIN_PASSWORD) {
+      console.error("ADMIN_USERNAME and ADMIN_PASSWORD are required in .env");
+      process.exit(1);
+    }
+
+    await mongoose.connect(process.env.MONGODB_URI);
     console.log("Connected to MongoDB");
 
-    const existingAdmin = await User.findOne({ username: "admin" });
+    const existingAdmin = await User.findOne({ username: ADMIN_USERNAME });
     if (existingAdmin) {
       console.log("Admin user already exists");
       process.exit(0);
     }
 
     const admin = new User({
-      username: "admin",
-      password_hash: "Admin123!",
+      username: ADMIN_USERNAME,
+      password_hash: ADMIN_PASSWORD,
       role: "admin",
-      displayName: "Administrator",
-      email: "admin@example.com",
+      displayName: ADMIN_DISPLAY_NAME,
+      email: ADMIN_EMAIL,
     });
 
     await admin.save();
     console.log("Admin user created successfully!");
-    console.log("Username: admin");
-    console.log("Password: Admin123!");
+    console.log(`Username: ${ADMIN_USERNAME}`);
     console.log("Please change the password after first login.");
 
     process.exit(0);

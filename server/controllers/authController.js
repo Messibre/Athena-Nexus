@@ -11,7 +11,7 @@ const REFRESH_TOKEN_EXPIRE = process.env.JWT_REFRESH_EXPIRE || "7d";
 const REFRESH_COOKIE_MAX_AGE =
   parseInt(process.env.REFRESH_COOKIE_MAX_AGE_MS || "604800000", 10) ||
   1000 * 60 * 60 * 24 * 7;
-const MAX_REFRESH_TOKENS_PER_USER = 8;
+const MAX_REFRESH_TOKENS_PER_USER = 15;
 
 const getRefreshSecret = () =>
   process.env.JWT_REFRESH_SECRET || process.env.JWT_SECRET;
@@ -91,6 +91,22 @@ const createRefreshToken = (user) => {
   );
   return { token, jti };
 };
+
+const buildUserResponse = (user) => ({
+  id: user._id,
+  username: user.username,
+  role: user.role,
+  displayName: user.displayName,
+  email: user.email,
+  members: user.members,
+  contactEmail: user.contactEmail,
+  profileImageUrl: user.profileImageUrl || "",
+  coverImageUrl: user.coverImageUrl || "",
+  headline: user.headline || "",
+  bio: user.bio || "",
+  location: user.location || "",
+  socialLinks: user.socialLinks || {},
+});
 
 const persistRefreshToken = async (user, refreshToken, req) => {
   const decoded = jwt.decode(refreshToken);
@@ -178,12 +194,7 @@ export const signup = async (req, res) => {
     await issueAuthCookies(res, user, req);
 
     res.status(201).json({
-      user: {
-        id: user._id,
-        username: user.username,
-        role: user.role,
-        displayName: user.displayName,
-      },
+      user: buildUserResponse(user),
       message: "Account created successfully!",
     });
   } catch (error) {
@@ -250,12 +261,7 @@ export const login = async (req, res) => {
     await issueAuthCookies(res, user, req);
 
     res.json({
-      user: {
-        id: user._id,
-        username: user.username,
-        role: user.role,
-        displayName: user.displayName,
-      },
+      user: buildUserResponse(user),
     });
   } catch (error) {
     console.error("Login failed");
@@ -275,14 +281,7 @@ export const getMe = async (req, res) => {
     }
 
     res.json({
-      user: {
-        id: user._id,
-        username: user.username,
-        role: user.role,
-        displayName: user.displayName,
-        members: user.members,
-        contactEmail: user.contactEmail,
-      },
+      user: buildUserResponse(user),
     });
   } catch (error) {
     res.status(401).json({ message: "Unauthorized" });

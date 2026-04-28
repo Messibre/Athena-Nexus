@@ -7,6 +7,57 @@ import { selectUser } from "../redux/selectors/authSelectors";
 import { selectTheme } from "../redux/selectors/themeSelectors";
 import MiniModal from "../components/MiniModal";
 
+const emptySocialLinks = {
+  website: "",
+  github: "",
+  linkedin: "",
+  x: "",
+  instagram: "",
+};
+
+const uploadToCloudinary = async (file) => {
+  const cloudName = process.env.REACT_APP_CLOUDINARY_CLOUD_NAME;
+  const uploadPreset = process.env.REACT_APP_CLOUDINARY_UPLOAD_PRESET;
+  const isConfigured = Boolean(cloudName && uploadPreset);
+
+  if (!isConfigured) {
+    throw new Error(
+      "Cloudinary is not configured in client/.env. Add REACT_APP_CLOUDINARY_CLOUD_NAME and REACT_APP_CLOUDINARY_UPLOAD_PRESET there, then restart the client.",
+    );
+  }
+
+  const formData = new FormData();
+  formData.append("file", file);
+  formData.append("upload_preset", uploadPreset);
+
+  const response = await fetch(
+    `https://api.cloudinary.com/v1_1/${cloudName}/image/upload`,
+    {
+      method: "POST",
+      body: formData,
+    },
+  );
+
+  const data = await response.json();
+  if (!response.ok) {
+    throw new Error(data?.error?.message || "Failed to upload image");
+  }
+
+  return data.secure_url;
+};
+
+const getErrorMessage = (error, fallback) => {
+  if (typeof error === "string") {
+    return error;
+  }
+
+  if (error instanceof Error) {
+    return error.message || fallback;
+  }
+
+  return fallback;
+};
+
 const Settings = () => {
   const dispatch = useDispatch();
   const user = useSelector(selectUser);
@@ -25,8 +76,18 @@ const Settings = () => {
     displayName: "",
     email: "",
     contactEmail: "",
+    profileImageUrl: "",
+    coverImageUrl: "",
+    headline: "",
+    bio: "",
+    location: "",
+    socialLinks: emptySocialLinks,
     members: [],
   });
+  const [profileImageFile, setProfileImageFile] = useState(null);
+  const [coverImageFile, setCoverImageFile] = useState(null);
+  const [profileImagePreview, setProfileImagePreview] = useState("");
+  const [coverImagePreview, setCoverImagePreview] = useState("");
 
   useEffect(() => {
     if (user) {
@@ -34,8 +95,27 @@ const Settings = () => {
         displayName: user.displayName || "",
         email: user.email || "",
         contactEmail: user.contactEmail || "",
-        members: user.members || [],
+        profileImageUrl: user.profileImageUrl || "",
+        coverImageUrl: user.coverImageUrl || "",
+        headline: user.headline || "",
+        bio: user.bio || "",
+        location: user.location || "",
+        socialLinks: {
+          ...emptySocialLinks,
+          ...(user.socialLinks || {}),
+        },
+        members: (user.members || []).map((member) => ({
+          name: member.name || "",
+          role: member.role || "",
+          githubUsername: member.githubUsername || "",
+          email: member.email || "",
+          bio: member.bio || "",
+        })),
       });
+      setProfileImageFile(null);
+      setCoverImageFile(null);
+      setProfileImagePreview(user.profileImageUrl || "");
+      setCoverImagePreview(user.coverImageUrl || "");
     }
   }, [user]);
 
@@ -79,6 +159,30 @@ const Settings = () => {
     confirmPassword: "",
   });
 
+  const handleProfileImageChange = (event) => {
+    const file = event.target.files?.[0];
+    if (!file) {
+      setProfileImageFile(null);
+      setProfileImagePreview(profileForm.profileImageUrl || "");
+      return;
+    }
+
+    setProfileImageFile(file);
+    setProfileImagePreview(URL.createObjectURL(file));
+  };
+
+  const handleCoverImageChange = (event) => {
+    const file = event.target.files?.[0];
+    if (!file) {
+      setCoverImageFile(null);
+      setCoverImagePreview(profileForm.coverImageUrl || "");
+      return;
+    }
+
+    setCoverImageFile(file);
+    setCoverImagePreview(URL.createObjectURL(file));
+  };
+
   const handleProfileUpdate = async (e) => {
     e.preventDefault();
     setError("");
@@ -86,6 +190,27 @@ const Settings = () => {
     setLoading(true);
 
     try {
+      let nextProfileImageUrl = profileForm.profileImageUrl || "";
+      let nextCoverImageUrl = profileForm.coverImageUrl || "";
+
+      if (
+        !process.env.REACT_APP_CLOUDINARY_CLOUD_NAME ||
+        !process.env.REACT_APP_CLOUDINARY_UPLOAD_PRESET
+      ) {
+        setError(
+          "Cloudinary is not configured in client/.env. Add REACT_APP_CLOUDINARY_CLOUD_NAME and REACT_APP_CLOUDINARY_UPLOAD_PRESET there, then restart the client.",
+        );
+        return;
+      }
+
+      if (profileImageFile) {
+        nextProfileImageUrl = await uploadToCloudinary(profileImageFile);
+      }
+
+      if (coverImageFile) {
+        nextCoverImageUrl = await uploadToCloudinary(coverImageFile);
+      }
+
       await dispatch(
         updateUserProfile({
           id: user._id || user.id,
@@ -93,6 +218,12 @@ const Settings = () => {
             displayName: profileForm.displayName,
             email: profileForm.email,
             contactEmail: profileForm.contactEmail,
+            profileImageUrl: nextProfileImageUrl,
+            coverImageUrl: nextCoverImageUrl,
+            headline: profileForm.headline,
+            bio: profileForm.bio,
+            location: profileForm.location,
+            socialLinks: profileForm.socialLinks,
             members: profileForm.members,
           },
         }),
@@ -100,7 +231,7 @@ const Settings = () => {
       await dispatch(fetchMe()).unwrap();
       setSuccess("Profile updated successfully!");
     } catch (error) {
-      setError(error || "Failed to update profile");
+      setError(getErrorMessage(error, "Failed to update profile"));
     } finally {
       setLoading(false);
     }
@@ -144,7 +275,7 @@ const Settings = () => {
         confirmPassword: "",
       });
     } catch (err) {
-      setError(err || "Failed to change password");
+      setError(getErrorMessage(err, "Failed to change password"));
     }
 
     setLoading(false);
@@ -153,7 +284,13 @@ const Settings = () => {
   const handleMemberChange = (index, field, value) => {
     const newMembers = [...profileForm.members];
     if (!newMembers[index]) {
-      newMembers[index] = { name: "", role: "", githubUsername: "", email: "" };
+      newMembers[index] = {
+        name: "",
+        role: "",
+        githubUsername: "",
+        email: "",
+        bio: "",
+      };
     }
     newMembers[index][field] = value;
     setProfileForm({ ...profileForm, members: newMembers });
@@ -164,7 +301,13 @@ const Settings = () => {
       ...profileForm,
       members: [
         ...profileForm.members,
-        { name: "", role: "", githubUsername: "", email: "" },
+        {
+          name: "",
+          role: "",
+          githubUsername: "",
+          email: "",
+          bio: "",
+        },
       ],
     });
   };
@@ -182,6 +325,27 @@ const Settings = () => {
   }`;
   const labelClass =
     "text-[11px] font-black uppercase tracking-widest opacity-60 block mb-2";
+  const textareaClass = `${inputClass} min-h-[120px] resize-y`;
+
+  const renderImagePreview = (preview, label) => {
+    if (!preview) {
+      return (
+        <div
+          className={`flex h-44 items-center justify-center rounded-2xl border border-dashed ${theme === "dark" ? "border-[#2e1a47] bg-black/20 text-slate-500" : "border-slate-300 bg-slate-50 text-slate-400"}`}
+        >
+          {label}
+        </div>
+      );
+    }
+
+    return (
+      <img
+        src={preview}
+        alt={label}
+        className="h-44 w-full rounded-2xl object-cover border border-white/10"
+      />
+    );
+  };
 
   return (
     <div
@@ -239,6 +403,38 @@ const Settings = () => {
               Update Team Profile
             </h2>
             <form onSubmit={handleProfileUpdate}>
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+                <div className="space-y-3">
+                  <label className={labelClass}>Profile Image</label>
+                  {renderImagePreview(
+                    profileImagePreview,
+                    "Profile image preview",
+                  )}
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className={inputClass}
+                    onChange={handleProfileImageChange}
+                  />
+                </div>
+
+                <div className="space-y-3">
+                  <label className={labelClass}>Cover Image</label>
+                  {renderImagePreview(coverImagePreview, "Cover image preview")}
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className={inputClass}
+                    onChange={handleCoverImageChange}
+                  />
+                </div>
+              </div>
+
+              <p className="mb-6 text-xs opacity-60">
+                Profile and cover images are uploaded to Cloudinary when you
+                save the form.
+              </p>
+
               <div className="form-group">
                 <label className={labelClass}>Display Name</label>
                 <input
@@ -252,6 +448,50 @@ const Settings = () => {
                     })
                   }
                   placeholder="Your team's display name"
+                />
+              </div>
+
+              <div className="form-group">
+                <label className={labelClass}>Headline</label>
+                <input
+                  type="text"
+                  className={inputClass}
+                  value={profileForm.headline}
+                  onChange={(e) =>
+                    setProfileForm({
+                      ...profileForm,
+                      headline: e.target.value,
+                    })
+                  }
+                  placeholder="Short profile headline"
+                />
+              </div>
+
+              <div className="form-group">
+                <label className={labelClass}>Bio</label>
+                <textarea
+                  className={textareaClass}
+                  value={profileForm.bio}
+                  onChange={(e) =>
+                    setProfileForm({ ...profileForm, bio: e.target.value })
+                  }
+                  placeholder="Tell people about the team"
+                />
+              </div>
+
+              <div className="form-group">
+                <label className={labelClass}>Location</label>
+                <input
+                  type="text"
+                  className={inputClass}
+                  value={profileForm.location}
+                  onChange={(e) =>
+                    setProfileForm({
+                      ...profileForm,
+                      location: e.target.value,
+                    })
+                  }
+                  placeholder="City, country, or timezone"
                 />
               </div>
 
@@ -282,6 +522,99 @@ const Settings = () => {
                   }
                   placeholder="contact@example.com"
                 />
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                <div className="form-group">
+                  <label className={labelClass}>Website</label>
+                  <input
+                    type="url"
+                    className={inputClass}
+                    value={profileForm.socialLinks.website}
+                    onChange={(e) =>
+                      setProfileForm({
+                        ...profileForm,
+                        socialLinks: {
+                          ...profileForm.socialLinks,
+                          website: e.target.value,
+                        },
+                      })
+                    }
+                    placeholder="https://your-site.com"
+                  />
+                </div>
+                <div className="form-group">
+                  <label className={labelClass}>GitHub</label>
+                  <input
+                    type="url"
+                    className={inputClass}
+                    value={profileForm.socialLinks.github}
+                    onChange={(e) =>
+                      setProfileForm({
+                        ...profileForm,
+                        socialLinks: {
+                          ...profileForm.socialLinks,
+                          github: e.target.value,
+                        },
+                      })
+                    }
+                    placeholder="https://github.com/your-profile"
+                  />
+                </div>
+                <div className="form-group">
+                  <label className={labelClass}>LinkedIn</label>
+                  <input
+                    type="url"
+                    className={inputClass}
+                    value={profileForm.socialLinks.linkedin}
+                    onChange={(e) =>
+                      setProfileForm({
+                        ...profileForm,
+                        socialLinks: {
+                          ...profileForm.socialLinks,
+                          linkedin: e.target.value,
+                        },
+                      })
+                    }
+                    placeholder="https://linkedin.com/in/your-profile"
+                  />
+                </div>
+                <div className="form-group">
+                  <label className={labelClass}>X / Twitter</label>
+                  <input
+                    type="url"
+                    className={inputClass}
+                    value={profileForm.socialLinks.x}
+                    onChange={(e) =>
+                      setProfileForm({
+                        ...profileForm,
+                        socialLinks: {
+                          ...profileForm.socialLinks,
+                          x: e.target.value,
+                        },
+                      })
+                    }
+                    placeholder="https://x.com/your-profile"
+                  />
+                </div>
+                <div className="form-group md:col-span-2">
+                  <label className={labelClass}>Instagram</label>
+                  <input
+                    type="url"
+                    className={inputClass}
+                    value={profileForm.socialLinks.instagram}
+                    onChange={(e) =>
+                      setProfileForm({
+                        ...profileForm,
+                        socialLinks: {
+                          ...profileForm.socialLinks,
+                          instagram: e.target.value,
+                        },
+                      })
+                    }
+                    placeholder="https://instagram.com/your-profile"
+                  />
+                </div>
               </div>
 
               <div className="form-group">
@@ -340,6 +673,14 @@ const Settings = () => {
                         value={member.email || ""}
                         onChange={(e) =>
                           handleMemberChange(index, "email", e.target.value)
+                        }
+                      />
+                      <textarea
+                        className={`${textareaClass} md:col-span-2`}
+                        placeholder="Member bio"
+                        value={member.bio || ""}
+                        onChange={(e) =>
+                          handleMemberChange(index, "bio", e.target.value)
                         }
                       />
                     </div>
