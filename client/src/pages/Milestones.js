@@ -4,6 +4,7 @@ import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { CheckCircle2, ChevronRight, ChevronLeft, Lock } from "lucide-react";
 import Navbar from "../components/Navbar";
+import { selectUser } from "../redux/selectors/authSelectors";
 import {
   fetchMilestoneCategories,
   fetchMilestoneLevels,
@@ -26,6 +27,7 @@ export const selectTheme = (state) => state.theme.theme;
 const Milestones = () => {
   const dispatch = useDispatch();
   const theme = useSelector(selectTheme) || "dark";
+  const user = useSelector(selectUser);
   const categories = useSelector(selectMilestoneCategories);
 
   const [activeCategoryId, setActiveCategoryId] = useState("");
@@ -59,16 +61,24 @@ const Milestones = () => {
   }, [dispatch]);
 
   useEffect(() => {
-    if (categories.length && !activeCategoryId)
-      setActiveCategoryId(categories[0]._id);
+    if (!categories.length || activeCategoryId) return;
+
+    const savedState = readResumeState();
+    if (
+      savedState?.categoryId &&
+      categories.some((category) => category._id === savedState.categoryId)
+    ) {
+      setActiveCategoryId(savedState.categoryId);
+      return;
+    }
+
+    setActiveCategoryId(categories[0]._id);
   }, [categories, activeCategoryId]);
 
   useEffect(() => {
     if (!activeCategoryId) return;
     dispatch(fetchMilestoneLevels(activeCategoryId));
     dispatch(fetchMilestoneProgress({ categoryId: activeCategoryId }));
-    setActiveLevelId("");
-    setActiveChallengeId("");
   }, [dispatch, activeCategoryId]);
 
   const levels = useSelector((state) =>
@@ -82,27 +92,106 @@ const Milestones = () => {
   const activeCategory = categories.find((c) => c._id === activeCategoryId);
   const activeLevel = levels.find((l) => l._id === activeLevelId);
   const activeChallenge = challenges.find((ch) => ch._id === activeChallengeId);
+  const resumeStorageKey =
+    user?._id || user?.id
+      ? `athena-milestones-resume:${user._id || user.id}`
+      : "athena-milestones-resume:guest";
+
+  const readResumeState = () => {
+    try {
+      const rawValue = localStorage.getItem(resumeStorageKey);
+      return rawValue ? JSON.parse(rawValue) : null;
+    } catch (error) {
+      return null;
+    }
+  };
 
   const getSubmissionForChallenge = (id) =>
     mySubmissions.find((s) => (s.challengeId?._id || s.challengeId) === id);
 
   const firstIncompleteIndex = useMemo(() => {
     for (let i = 0; i < challenges.length; i++) {
-      if (getSubmissionForChallenge(challenges[i]._id)?.status !== "approved")
-        return i;
+      if (!getSubmissionForChallenge(challenges[i]._id)) return i;
     }
     return challenges.length;
   }, [challenges, mySubmissions]);
 
+  const completedChallengeCount = useMemo(
+    () =>
+      challenges.filter((challenge) =>
+        Boolean(getSubmissionForChallenge(challenge._id)),
+      ).length,
+    [challenges, mySubmissions],
+  );
+
+  const completionPercent = challenges.length
+    ? Math.round((completedChallengeCount / challenges.length) * 100)
+    : 0;
+
+  const nextChallenge = useMemo(() => {
+    if (!challenges.length) return null;
+
+    const incompleteIndex =
+      firstIncompleteIndex === challenges.length
+        ? challenges.length - 1
+        : firstIncompleteIndex;
+    return challenges[incompleteIndex] || challenges[0] || null;
+  }, [challenges, firstIncompleteIndex]);
+
   useEffect(() => {
-    if (levels.length && !activeLevelId) setActiveLevelId(levels[0]._id);
-  }, [levels, activeLevelId]);
+    if (!levels.length) return;
+
+    const savedState = readResumeState();
+    if (savedState?.categoryId === activeCategoryId && savedState?.levelId) {
+      const savedLevelExists = levels.some(
+        (level) => level._id === savedState.levelId,
+      );
+      if (savedLevelExists) {
+        setActiveLevelId(savedState.levelId);
+        if (savedState.challengeId) {
+          setActiveChallengeId(savedState.challengeId);
+          setMobileStep("detail");
+        }
+        return;
+      }
+    }
+
+    if (!activeLevelId) setActiveLevelId(levels[0]._id);
+  }, [levels, activeLevelId, activeCategoryId]);
 
   useEffect(() => {
     if (!activeLevelId) return;
     dispatch(fetchMilestoneChallenges(activeLevelId));
-    setActiveChallengeId("");
   }, [dispatch, activeLevelId]);
+
+  useEffect(() => {
+    if (!challenges.length) return;
+
+    const savedState = readResumeState();
+    const savedChallengeExists =
+      savedState?.challengeId &&
+      savedState?.levelId === activeLevelId &&
+      challenges.some((challenge) => challenge._id === savedState.challengeId);
+
+    if (savedChallengeExists && !activeChallengeId) {
+      setActiveChallengeId(savedState.challengeId);
+      setMobileStep("detail");
+      return;
+    }
+
+    if (activeChallengeId) {
+      const activeStillExists = challenges.some(
+        (challenge) => challenge._id === activeChallengeId,
+      );
+      if (activeStillExists) return;
+    }
+
+    const targetChallenge = nextChallenge || challenges[0];
+    if (targetChallenge) {
+      setActiveChallengeId(targetChallenge._id);
+      setMobileStep("detail");
+    }
+  }, [challenges, activeLevelId, activeChallengeId, nextChallenge]);
 
   useEffect(() => {
     const existing = getSubmissionForChallenge(activeChallengeId);
@@ -110,6 +199,26 @@ const Milestones = () => {
     setDemoUrl(existing?.demoUrl || "");
     setNotes(existing?.notes || "");
   }, [activeChallengeId, mySubmissions]);
+
+  useEffect(() => {
+    if (!user || !activeCategoryId || !activeLevelId || !activeChallengeId)
+      return;
+
+    localStorage.setItem(
+      resumeStorageKey,
+      JSON.stringify({
+        categoryId: activeCategoryId,
+        levelId: activeLevelId,
+        challengeId: activeChallengeId,
+      }),
+    );
+  }, [
+    user,
+    activeCategoryId,
+    activeLevelId,
+    activeChallengeId,
+    resumeStorageKey,
+  ]);
 
   useEffect(() => {
     const onMobileBack = (event) => {
@@ -288,8 +397,9 @@ const Milestones = () => {
                 >
                   <div className="flex justify-between items-start font-bold text-[13px]">
                     {ch.title}{" "}
-                    {getSubmissionForChallenge(ch._id)?.status ===
-                      "approved" && <CheckCircle2 size={12} />}
+                    {getSubmissionForChallenge(ch._id) && (
+                      <CheckCircle2 size={12} />
+                    )}
                     {idx > firstIncompleteIndex && (
                       <Lock size={12} className="opacity-70" />
                     )}
@@ -323,6 +433,27 @@ const Milestones = () => {
                 >
                   {activeChallenge.title.toLowerCase()}
                 </h2>
+                <div
+                  className={`mt-6 rounded-2xl border p-4 ${theme === "dark" ? "border-white/10 bg-white/5" : "border-slate-200 bg-white/80"}`}
+                >
+                  <div className="flex items-center justify-between gap-3 text-[10px] font-black uppercase tracking-widest opacity-70">
+                    <span>Progress</span>
+                    <span>
+                      {completedChallengeCount}/{challenges.length || 0}{" "}
+                      complete
+                    </span>
+                  </div>
+                  <div className="mt-3 h-2 rounded-full overflow-hidden bg-black/10">
+                    <div
+                      className="h-full rounded-full bg-gradient-to-r from-[#8b5cf6] to-[#c4b5fd]"
+                      style={{ width: `${completionPercent}%` }}
+                    />
+                  </div>
+                  <p className="mt-3 text-[11px] uppercase tracking-widest opacity-60">
+                    The next unlocked challenge is automatically restored when
+                    you return.
+                  </p>
+                </div>
                 <p className="mt-6 text-[14px] leading-relaxed opacity-60">
                   {activeChallenge.description}
                 </p>

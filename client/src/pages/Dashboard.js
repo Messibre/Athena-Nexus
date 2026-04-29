@@ -2,9 +2,12 @@ import React, { useEffect } from "react";
 import { Link } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import Navbar from "../components/Navbar";
-import { fetchActiveWeek } from "../redux/thunks/weeksThunks";
+import { fetchActiveWeek, fetchLeaderboard } from "../redux/thunks/weeksThunks";
 import { fetchMySubmissions } from "../redux/thunks/submissionsThunks";
-import { selectActiveWeek } from "../redux/selectors/weeksSelectors";
+import {
+  selectActiveWeek,
+  selectLeaderboard,
+} from "../redux/selectors/weeksSelectors";
 import {
   selectMySubmissions,
   selectSubmissionsLoading,
@@ -16,6 +19,7 @@ const Dashboard = () => {
   const dispatch = useDispatch();
   const user = useSelector(selectUser);
   const activeWeek = useSelector(selectActiveWeek);
+  const leaderboard = useSelector(selectLeaderboard);
   const submissions = useSelector(selectMySubmissions);
   const submissionsLoading = useSelector(selectSubmissionsLoading);
   const theme = useSelector(selectTheme);
@@ -23,6 +27,7 @@ const Dashboard = () => {
   useEffect(() => {
     dispatch(fetchMySubmissions());
     dispatch(fetchActiveWeek());
+    dispatch(fetchLeaderboard());
   }, [dispatch]);
 
   const getStatusBadge = (status) => {
@@ -46,6 +51,18 @@ const Dashboard = () => {
 
   const formatDate = (date) => {
     return new Date(date).toLocaleDateString();
+  };
+
+  const topScore = leaderboard[0]?.points || 0;
+  const currentTeam = leaderboard.find(
+    (entry) => entry.userId === (user?._id || user?.id),
+  );
+
+  const badgeLabel = (badge) => {
+    if (badge === "gold") return "Gold";
+    if (badge === "silver") return "Silver";
+    if (badge === "bronze") return "Bronze";
+    return "Top 10";
   };
 
   if (submissionsLoading) {
@@ -155,6 +172,77 @@ const Dashboard = () => {
             </Link>
           </div>
         )}
+
+        <div
+          className={`rounded-3xl border p-6 md:p-8 shadow-2xl ${theme === "dark" ? "bg-[#120a21]/85 border-[#2e1a47]" : "bg-white/90 border-slate-200"}`}
+        >
+          <div
+            className={`mb-5 pb-5 border-b ${theme === "dark" ? "border-white/10" : "border-slate-200"}`}
+          >
+            <h2
+              className={`text-2xl md:text-3xl font-['Fraunces'] font-black tracking-tight ${theme === "dark" ? "text-white" : "text-slate-900"}`}
+            >
+              Leaderboard
+            </h2>
+            <p className="mt-2 text-sm opacity-70">
+              10 points per approved project, weekly or milestone.
+            </p>
+          </div>
+
+          {leaderboard.length === 0 ? (
+            <p className="opacity-70">No leaderboard entries yet.</p>
+          ) : (
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              {leaderboard.slice(0, 6).map((entry) => {
+                const progressWidth = topScore
+                  ? Math.max(8, Math.round((entry.points / topScore) * 100))
+                  : 8;
+
+                return (
+                  <div
+                    key={entry.userId}
+                    className={`rounded-2xl border p-4 ${theme === "dark" ? "border-[#2e1a47] bg-[#0a0514]/65" : "border-slate-200 bg-slate-50/90"}`}
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <div>
+                        <div
+                          className={`text-base font-black ${theme === "dark" ? "text-white" : "text-slate-900"}`}
+                        >
+                          {entry.displayName}
+                        </div>
+                        <div className="text-xs opacity-60 mt-1">
+                          {entry.projectCount} projects • {entry.points} points
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <div className="text-[10px] font-black uppercase tracking-widest text-[#8b5cf6]">
+                          {badgeLabel(entry.badge)}
+                        </div>
+                        <div className="text-xs opacity-60 mt-1">
+                          #{entry.rank}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="mt-4 h-2 rounded-full overflow-hidden bg-black/10">
+                      <div
+                        className="h-full rounded-full bg-gradient-to-r from-[#8b5cf6] to-[#c4b5fd]"
+                        style={{ width: `${progressWidth}%` }}
+                      />
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+
+          {currentTeam && (
+            <p className="mt-4 text-xs uppercase tracking-widest opacity-60">
+              Your team is ranked #{currentTeam.rank} with {currentTeam.points}{" "}
+              points.
+            </p>
+          )}
+        </div>
 
         <div
           className={`rounded-3xl border p-6 md:p-8 shadow-2xl ${theme === "dark" ? "bg-[#120a21]/85 border-[#2e1a47]" : "bg-white/90 border-slate-200"}`}

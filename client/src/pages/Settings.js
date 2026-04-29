@@ -21,8 +21,12 @@ const uploadToCloudinary = async (file) => {
   const isConfigured = Boolean(cloudName && uploadPreset);
 
   if (!isConfigured) {
+    console.error("Cloudinary upload is not configured", {
+      hasCloudName: Boolean(cloudName),
+      hasUploadPreset: Boolean(uploadPreset),
+    });
     throw new Error(
-      "Cloudinary is not configured in client/.env. Add REACT_APP_CLOUDINARY_CLOUD_NAME and REACT_APP_CLOUDINARY_UPLOAD_PRESET there, then restart the client.",
+      "We could not upload your image right now. Please check your image settings and try again.",
     );
   }
 
@@ -40,7 +44,16 @@ const uploadToCloudinary = async (file) => {
 
   const data = await response.json();
   if (!response.ok) {
-    throw new Error(data?.error?.message || "Failed to upload image");
+    console.error("Cloudinary upload failed", {
+      status: response.status,
+      response: data,
+      cloudName,
+      uploadPreset,
+    });
+
+    throw new Error(
+      "We could not upload your image right now. Please try again in a moment.",
+    );
   }
 
   return data.secure_url;
@@ -197,8 +210,11 @@ const Settings = () => {
         !process.env.REACT_APP_CLOUDINARY_CLOUD_NAME ||
         !process.env.REACT_APP_CLOUDINARY_UPLOAD_PRESET
       ) {
+        console.error(
+          "Cloudinary environment variables are missing in the client app",
+        );
         setError(
-          "Cloudinary is not configured in client/.env. Add REACT_APP_CLOUDINARY_CLOUD_NAME and REACT_APP_CLOUDINARY_UPLOAD_PRESET there, then restart the client.",
+          "We could not upload your image right now. Please try again later.",
         );
         return;
       }
@@ -317,21 +333,21 @@ const Settings = () => {
     setProfileForm({ ...profileForm, members: newMembers });
   };
 
-  const panelClass = `rounded-3xl border p-6 md:p-8 shadow-2xl ${theme === "dark" ? "bg-[#120a21]/85 border-[#2e1a47]" : "bg-white/90 border-slate-200"}`;
-  const inputClass = `w-full p-4 rounded-xl border outline-none transition-all ${
+  const panelClass = `rounded-3xl border p-5 md:p-6 shadow-2xl ${theme === "dark" ? "bg-[#120a21]/85 border-[#2e1a47]" : "bg-white/90 border-slate-200"}`;
+  const inputClass = `w-full p-3 rounded-xl border outline-none transition-all ${
     theme === "dark"
       ? "bg-black/30 border-[#2e1a47] text-white focus:border-[#8b5cf6]"
       : "bg-white border-slate-200 text-slate-900 focus:border-[#8b5cf6]"
   }`;
   const labelClass =
-    "text-[11px] font-black uppercase tracking-widest opacity-60 block mb-2";
-  const textareaClass = `${inputClass} min-h-[120px] resize-y`;
+    "text-[10px] font-semibold uppercase tracking-wide opacity-70 block mb-1";
+  const textareaClass = `${inputClass} min-h-[100px] resize-y`;
 
   const renderImagePreview = (preview, label) => {
     if (!preview) {
       return (
         <div
-          className={`flex h-44 items-center justify-center rounded-2xl border border-dashed ${theme === "dark" ? "border-[#2e1a47] bg-black/20 text-slate-500" : "border-slate-300 bg-slate-50 text-slate-400"}`}
+          className={`flex h-36 items-center justify-center rounded-2xl border border-dashed ${theme === "dark" ? "border-[#2e1a47] bg-black/20 text-slate-500" : "border-slate-300 bg-slate-50 text-slate-400"}`}
         >
           {label}
         </div>
@@ -342,7 +358,7 @@ const Settings = () => {
       <img
         src={preview}
         alt={label}
-        className="h-44 w-full rounded-2xl object-cover border border-white/10"
+        className="h-36 w-full rounded-2xl object-cover border border-white/10"
       />
     );
   };
@@ -374,7 +390,7 @@ const Settings = () => {
             Account Control
           </p>
           <h1
-            className={`text-4xl md:text-5xl font-['Fraunces'] font-black tracking-tight ${theme === "dark" ? "text-white" : "text-slate-900"}`}
+            className={`text-3xl md:text-4xl font-['Fraunces'] font-black tracking-tight ${theme === "dark" ? "text-white" : "text-slate-900"}`}
           >
             Team Settings
           </h1>
@@ -382,13 +398,13 @@ const Settings = () => {
 
         <div className="flex gap-2 mb-6 flex-wrap">
           <button
-            className={`px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === "profile" ? "bg-[#8b5cf6] text-white shadow-lg shadow-[#8b5cf6]/25" : theme === "dark" ? "bg-white/10 text-slate-300 hover:bg-white/15" : "bg-white text-slate-600 border border-slate-200 hover:bg-slate-100"}`}
+            className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === "profile" ? "bg-[#8b5cf6] text-white shadow-lg shadow-[#8b5cf6]/25" : theme === "dark" ? "bg-white/10 text-slate-300 hover:bg-white/15" : "bg-white text-slate-600 border border-slate-200 hover:bg-slate-100"}`}
             onClick={() => setActiveTab("profile")}
           >
             Profile
           </button>
           <button
-            className={`px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === "password" ? "bg-[#8b5cf6] text-white shadow-lg shadow-[#8b5cf6]/25" : theme === "dark" ? "bg-white/10 text-slate-300 hover:bg-white/15" : "bg-white text-slate-600 border border-slate-200 hover:bg-slate-100"}`}
+            className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === "password" ? "bg-[#8b5cf6] text-white shadow-lg shadow-[#8b5cf6]/25" : theme === "dark" ? "bg-white/10 text-slate-300 hover:bg-white/15" : "bg-white text-slate-600 border border-slate-200 hover:bg-slate-100"}`}
             onClick={() => setActiveTab("password")}
           >
             Change Password
@@ -398,7 +414,7 @@ const Settings = () => {
         {activeTab === "profile" && (
           <div className={panelClass}>
             <h2
-              className={`text-3xl font-['Fraunces'] font-black tracking-tight mb-6 ${theme === "dark" ? "text-white" : "text-slate-900"}`}
+              className={`text-2xl md:text-3xl font-['Fraunces'] font-black tracking-tight mb-6 ${theme === "dark" ? "text-white" : "text-slate-900"}`}
             >
               Update Team Profile
             </h2>
@@ -622,7 +638,7 @@ const Settings = () => {
                 {profileForm.members.map((member, index) => (
                   <div
                     key={index}
-                    className={`mb-4 p-4 rounded-2xl border ${theme === "dark" ? "border-[#2e1a47] bg-[#0a0514]/60" : "border-slate-200 bg-slate-50/80"}`}
+                    className={`mb-4 p-3 rounded-2xl border ${theme === "dark" ? "border-[#2e1a47] bg-[#0a0514]/60" : "border-slate-200 bg-slate-50/80"}`}
                   >
                     <div className="flex justify-between items-center mb-3">
                       <strong>Member {index + 1}</strong>
@@ -697,7 +713,7 @@ const Settings = () => {
 
               <button
                 type="submit"
-                className="w-full md:w-auto px-6 py-3 rounded-xl bg-[#8b5cf6] hover:bg-[#7c3aed] text-white text-xs font-black uppercase tracking-wider shadow-lg shadow-[#8b5cf6]/25 transition-all"
+                className="w-full md:w-auto px-4 py-2 rounded-xl bg-[#8b5cf6] hover:bg-[#7c3aed] text-white text-sm font-black uppercase tracking-wider shadow-lg shadow-[#8b5cf6]/25 transition-all"
                 disabled={loading}
               >
                 {loading ? "Updating..." : "Update Profile"}
@@ -709,7 +725,7 @@ const Settings = () => {
         {activeTab === "password" && (
           <div className={panelClass}>
             <h2
-              className={`text-3xl font-['Fraunces'] font-black tracking-tight mb-6 ${theme === "dark" ? "text-white" : "text-slate-900"}`}
+              className={`text-2xl md:text-3xl font-['Fraunces'] font-black tracking-tight mb-6 ${theme === "dark" ? "text-white" : "text-slate-900"}`}
             >
               Change Password
             </h2>
@@ -768,7 +784,7 @@ const Settings = () => {
 
               <button
                 type="submit"
-                className="w-full md:w-auto px-6 py-3 rounded-xl bg-[#8b5cf6] hover:bg-[#7c3aed] text-white text-xs font-black uppercase tracking-wider shadow-lg shadow-[#8b5cf6]/25 transition-all"
+                className="w-full md:w-auto px-4 py-2 rounded-xl bg-[#8b5cf6] hover:bg-[#7c3aed] text-white text-sm font-black uppercase tracking-wider shadow-lg shadow-[#8b5cf6]/25 transition-all"
                 disabled={loading}
               >
                 {loading ? "Changing..." : "Change Password"}

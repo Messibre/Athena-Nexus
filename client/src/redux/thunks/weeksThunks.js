@@ -1,16 +1,19 @@
 import { createAsyncThunk } from "@reduxjs/toolkit";
 import { weeksApi } from "../../config/api";
 
-export const fetchWeeks = createAsyncThunk("weeks/fetchWeeks", async (_, thunkApi) => {
-  try {
-    const response = await weeksApi.getWeeks();
-    return response.data;
-  } catch (error) {
-    return thunkApi.rejectWithValue(
-      error.response?.data?.message || "Failed to fetch weeks",
-    );
-  }
-});
+export const fetchWeeks = createAsyncThunk(
+  "weeks/fetchWeeks",
+  async (_, thunkApi) => {
+    try {
+      const response = await weeksApi.getWeeks();
+      return response.data;
+    } catch (error) {
+      return thunkApi.rejectWithValue(
+        error.response?.data?.message || "Failed to fetch weeks",
+      );
+    }
+  },
+);
 
 export const fetchActiveWeek = createAsyncThunk(
   "weeks/fetchActiveWeek",
@@ -63,6 +66,20 @@ export const fetchPublicStats = createAsyncThunk(
     } catch (error) {
       return thunkApi.rejectWithValue(
         error.response?.data?.message || "Failed to fetch stats",
+      );
+    }
+  },
+);
+
+export const fetchLeaderboard = createAsyncThunk(
+  "weeks/fetchLeaderboard",
+  async (_, thunkApi) => {
+    try {
+      const response = await weeksApi.getLeaderboard();
+      return response.data;
+    } catch (error) {
+      return thunkApi.rejectWithValue(
+        error.response?.data?.message || "Failed to fetch leaderboard",
       );
     }
   },

@@ -22,9 +22,7 @@ const ensureProgressForCategory = async (userId, categoryId) => {
   const existing = await MilestoneProgress.find({ userId, categoryId }).select(
     "levelId",
   );
-  const existingLevelIds = new Set(
-    existing.map((p) => p.levelId.toString()),
-  );
+  const existingLevelIds = new Set(existing.map((p) => p.levelId.toString()));
 
   const ops = levels
     .filter((lvl) => !existingLevelIds.has(lvl._id.toString()))
@@ -99,9 +97,7 @@ export const createCategory = async (req, res) => {
   try {
     const { key, name, description, order, isActive } = req.body;
     if (!key || !name) {
-      return res
-        .status(400)
-        .json({ message: "Key and name are required" });
+      return res.status(400).json({ message: "Key and name are required" });
     }
 
     const existing = await MilestoneCategory.findOne({ key });
@@ -265,9 +261,7 @@ export const updateLevel = async (req, res) => {
         levelNumber,
       });
       if (existing) {
-        return res
-          .status(400)
-          .json({ message: "Level number already exists" });
+        return res.status(400).json({ message: "Level number already exists" });
       }
       level.levelNumber = levelNumber;
     }
@@ -498,13 +492,8 @@ export const updateSubmissionStatus = async (req, res) => {
     if (reviewerNotes !== undefined) submission.reviewerNotes = reviewerNotes;
     await submission.save();
 
-    if (status === "approved") {
-      await updateProgressOnApproval(submission);
-    }
-
     res.json(submission);
   } catch (error) {
     handleError(res, error, "Failed to update submission status");
   }
 };
-

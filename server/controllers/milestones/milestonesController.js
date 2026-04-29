@@ -63,6 +63,56 @@ const getLevelProgressStatus = async (userId, categoryId, levelId) => {
   return progress?.status || "locked";
 };
 
+const updateProgressOnSubmission = async (submission) => {
+  const level = await MilestoneLevel.findById(submission.levelId).select(
+    "levelNumber categoryId",
+  );
+  if (!level) return;
+
+  await ensureProgressForCategory(submission.userId, level.categoryId);
+
+  await MilestoneProgress.findOneAndUpdate(
+    {
+      userId: submission.userId,
+      categoryId: level.categoryId,
+      levelId: submission.levelId,
+    },
+    {
+      $set: { status: "completed", completedAt: new Date() },
+    },
+    { upsert: true },
+  );
+
+  const nextChallenge = await MilestoneChallenge.findOne({
+    categoryId: level.categoryId,
+    levelId: submission.levelId,
+    isActive: true,
+    _id: { $ne: submission.challengeId },
+  })
+    .sort({ createdAt: 1 })
+    .select("_id levelId levelNumber");
+
+  if (nextChallenge) {
+    await MilestoneProgress.findOneAndUpdate(
+      {
+        userId: submission.userId,
+        categoryId: level.categoryId,
+        levelId: nextChallenge.levelId,
+      },
+      {
+        $setOnInsert: {
+          userId: submission.userId,
+          categoryId: level.categoryId,
+          levelId: nextChallenge.levelId,
+          levelNumber: nextChallenge.levelNumber,
+          status: "unlocked",
+        },
+      },
+      { upsert: true },
+    );
+  }
+};
+
 export const listCategories = async (req, res) => {
   try {
     const categories = await MilestoneCategory.find({ isActive: true }).sort({
@@ -185,12 +235,11 @@ export const createSubmission = async (req, res) => {
 
     const priorIds = challengeIds.slice(0, targetIndex);
     if (priorIds.length > 0) {
-      const approvedCount = await MilestoneSubmission.countDocuments({
+      const submittedCount = await MilestoneSubmission.countDocuments({
         userId: req.user._id,
         challengeId: { $in: priorIds },
-        status: "approved",
       });
-      if (approvedCount !== priorIds.length) {
+      if (submittedCount !== priorIds.length) {
         return res.status(403).json({
           message: "Complete previous challenges in this level first",
         });
@@ -219,6 +268,8 @@ export const createSubmission = async (req, res) => {
       notes: notes || "",
       status: "pending",
     });
+
+    await updateProgressOnSubmission(submission);
 
     res.status(201).json(submission);
   } catch (error) {

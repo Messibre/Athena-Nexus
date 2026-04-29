@@ -5,6 +5,7 @@ import {
   fetchWeekById,
   fetchWeekSubmissions,
   fetchPublicStats,
+  fetchLeaderboard,
 } from "../thunks/weeksThunks";
 
 const initialState = {
@@ -13,6 +14,7 @@ const initialState = {
   activeWeek: null,
   submissionsByWeek: {},
   publicStats: null,
+  leaderboard: [],
   loading: false,
   error: null,
 };
@@ -62,6 +64,9 @@ const weeksSlice = createSlice({
       })
       .addCase(fetchPublicStats.fulfilled, (state, action) => {
         state.publicStats = action.payload || null;
+      })
+      .addCase(fetchLeaderboard.fulfilled, (state, action) => {
+        state.leaderboard = Array.isArray(action.payload) ? action.payload : [];
       });
   },
 });
