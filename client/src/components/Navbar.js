@@ -113,6 +113,7 @@ const Navbar = () => {
               <button
                 onClick={() => dispatch(toggleTheme())}
                 className="flex h-10 w-10 items-center justify-center rounded-full border-2 border-white/50 bg-white/10 text-[10px] font-black uppercase text-white transition-all hover:bg-white hover:text-black"
+                aria-label={theme === "light" ? "Switch to dark mode" : "Switch to light mode"}
               >
                 {theme === "light" ? "Dark" : "Light"}
               </button>

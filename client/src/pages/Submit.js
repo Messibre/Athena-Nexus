@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
+import { Link } from "react-router-dom";
 import Navbar from "../components/Navbar";
 import { fetchWeeks } from "../redux/thunks/weeksThunks";
 import {
@@ -14,6 +15,7 @@ import {
   selectSubmissionsActionLoading,
 } from "../redux/selectors/submissionsSelectors";
 import { selectTheme } from "../redux/selectors/themeSelectors";
+import { selectIsAuthenticated } from "../redux/selectors/authSelectors";
 import MiniModal from "../components/MiniModal";
 
 const Submit = () => {
@@ -23,6 +25,7 @@ const Submit = () => {
   const currentSubmission = useSelector(selectCurrentSubmission);
   const actionLoading = useSelector(selectSubmissionsActionLoading);
   const theme = useSelector(selectTheme);
+  const isAuthenticated = useSelector(selectIsAuthenticated);
 
   const [selectedWeek, setSelectedWeek] = useState("");
   const [submissionId, setSubmissionId] = useState(null);
@@ -222,7 +225,31 @@ const Submit = () => {
             {submissionId ? "Update Your Submission" : "Submit Your Project"}
           </h2>
 
-          <form onSubmit={handleSubmit}>
+          {!isAuthenticated ? (
+            <div className="rounded-2xl border p-5 md:p-6 bg-black/5 dark:bg-white/5">
+              <p className={`text-lg font-black ${theme === "dark" ? "text-white" : "text-slate-900"}`}>
+                Log in to submit
+              </p>
+              <p className="mt-2 opacity-70 max-w-2xl">
+                You can browse the current challenge freely, but submissions are reserved for signed-in teams.
+              </p>
+              <div className="mt-5 flex flex-wrap gap-3">
+                <Link
+                  to="/login"
+                  className="inline-flex items-center justify-center rounded-xl bg-[#8b5cf6] px-5 py-3 text-xs font-black uppercase tracking-wider text-white transition-all hover:bg-[#7c3aed]"
+                >
+                  Log in to submit
+                </Link>
+                <Link
+                  to="/gallery"
+                  className={`inline-flex items-center justify-center rounded-xl border px-5 py-3 text-xs font-black uppercase tracking-wider transition-all ${theme === "dark" ? "border-white/10 text-slate-200 hover:bg-white/5" : "border-slate-200 text-slate-700 hover:bg-slate-100"}`}
+                >
+                  Browse Gallery
+                </Link>
+              </div>
+            </div>
+          ) : (
+            <form onSubmit={handleSubmit}>
             <div className="form-group">
               <label className={labelClass}>Week *</label>
               <select
@@ -328,7 +355,8 @@ const Submit = () => {
                   ? "Update Submission"
                   : "Submit Project"}
             </button>
-          </form>
+              </form>
+            )}
         </div>
       </div>
 

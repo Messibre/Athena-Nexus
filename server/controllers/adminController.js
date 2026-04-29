@@ -1,6 +1,7 @@
 import Week from "../models/Week.js";
 import User from "../models/User.js";
 import Submission from "../models/Submission.js";
+import Feedback from "../models/Feedback.js";
 import { isValidPassword, isValidUrl } from "../utils/validators.js";
 
 export const createWeek = async (req, res) => {
@@ -383,6 +384,7 @@ export const getStats = async (req, res) => {
     const pendingSubmissions = await Submission.countDocuments({
       status: "pending",
     });
+    const totalFeedback = await Feedback.countDocuments();
 
     res.json({
       totalUsers,
@@ -390,6 +392,7 @@ export const getStats = async (req, res) => {
       totalSubmissions,
       approvedSubmissions,
       pendingSubmissions,
+      totalFeedback,
     });
   } catch (error) {
     console.error("Get stats error:", error);

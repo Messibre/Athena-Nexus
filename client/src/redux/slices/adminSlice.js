@@ -28,6 +28,8 @@ import {
   deleteAdminMilestoneChallenge,
   fetchAdminMilestoneSubmissions,
   updateAdminMilestoneSubmissionStatus,
+  fetchAdminFeedback,
+  updateAdminFeedback,
 } from "../thunks/adminThunks";
 
 const initialState = {
@@ -40,6 +42,7 @@ const initialState = {
   milestoneLevels: [],
   milestoneChallenges: [],
   milestoneSubmissions: [],
+  feedbackItems: [],
   loading: false,
   actionLoading: false,
   error: null,
@@ -234,6 +237,34 @@ const adminSlice = createSlice({
       .addCase(fetchAdminStats.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload || "Failed to fetch stats";
+      })
+      .addCase(fetchAdminFeedback.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(fetchAdminFeedback.fulfilled, (state, action) => {
+        state.loading = false;
+        state.feedbackItems = Array.isArray(action.payload) ? action.payload : [];
+      })
+      .addCase(fetchAdminFeedback.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload || "Failed to fetch feedback";
+      })
+      .addCase(updateAdminFeedback.pending, (state) => {
+        state.actionLoading = true;
+        state.error = null;
+      })
+      .addCase(updateAdminFeedback.fulfilled, (state, action) => {
+        state.actionLoading = false;
+        if (action.payload && action.payload._id) {
+          state.feedbackItems = state.feedbackItems.map((item) =>
+            item._id === action.payload._id ? action.payload : item,
+          );
+        }
+      })
+      .addCase(updateAdminFeedback.rejected, (state, action) => {
+        state.actionLoading = false;
+        state.error = action.payload || "Failed to update feedback";
       })
       .addCase(fetchAdminMilestoneCategories.pending, (state) => {
         state.loading = true;

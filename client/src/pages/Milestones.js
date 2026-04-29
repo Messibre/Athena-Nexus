@@ -5,6 +5,7 @@ import { motion } from "framer-motion";
 import { CheckCircle2, ChevronRight, ChevronLeft, Lock } from "lucide-react";
 import Navbar from "../components/Navbar";
 import { selectUser } from "../redux/selectors/authSelectors";
+import { selectIsAuthenticated } from "../redux/selectors/authSelectors";
 import {
   fetchMilestoneCategories,
   fetchMilestoneLevels,
@@ -28,6 +29,7 @@ const Milestones = () => {
   const dispatch = useDispatch();
   const theme = useSelector(selectTheme) || "dark";
   const user = useSelector(selectUser);
+  const isAuthenticated = useSelector(selectIsAuthenticated);
   const categories = useSelector(selectMilestoneCategories);
 
   const [activeCategoryId, setActiveCategoryId] = useState("");
@@ -57,8 +59,10 @@ const Milestones = () => {
 
   useEffect(() => {
     dispatch(fetchMilestoneCategories());
-    dispatch(fetchMyMilestoneSubmissions());
-  }, [dispatch]);
+    if (isAuthenticated) {
+      dispatch(fetchMyMilestoneSubmissions());
+    }
+  }, [dispatch, isAuthenticated]);
 
   useEffect(() => {
     if (!categories.length || activeCategoryId) return;
@@ -78,8 +82,10 @@ const Milestones = () => {
   useEffect(() => {
     if (!activeCategoryId) return;
     dispatch(fetchMilestoneLevels(activeCategoryId));
-    dispatch(fetchMilestoneProgress({ categoryId: activeCategoryId }));
-  }, [dispatch, activeCategoryId]);
+    if (isAuthenticated) {
+      dispatch(fetchMilestoneProgress({ categoryId: activeCategoryId }));
+    }
+  }, [dispatch, activeCategoryId, isAuthenticated]);
 
   const levels = useSelector((state) =>
     selectMilestoneLevels(state, activeCategoryId),
@@ -382,11 +388,11 @@ const Milestones = () => {
               challenges.map((ch, idx) => (
                 <button
                   key={ch._id}
-                  disabled={idx > firstIncompleteIndex}
                   onClick={() => {
                     setActiveChallengeId(ch._id);
                     setMobileStep("detail");
                   }}
+                  disabled={isAuthenticated && idx > firstIncompleteIndex}
                   className={`w-full text-left p-4 border-b transition-all ${styles.border} ${activeChallengeId === ch._id ? "text-white" : "hover:bg-white/5"}`}
                   style={{
                     backgroundColor:
@@ -400,7 +406,7 @@ const Milestones = () => {
                     {getSubmissionForChallenge(ch._id) && (
                       <CheckCircle2 size={12} />
                     )}
-                    {idx > firstIncompleteIndex && (
+                    {isAuthenticated && idx > firstIncompleteIndex && (
                       <Lock size={12} className="opacity-70" />
                     )}
                   </div>
@@ -433,6 +439,32 @@ const Milestones = () => {
                 >
                   {activeChallenge.title.toLowerCase()}
                 </h2>
+                {!isAuthenticated && (
+                  <div
+                    className={`mt-6 rounded-2xl border p-4 ${theme === "dark" ? "border-white/10 bg-white/5" : "border-slate-200 bg-white/80"}`}
+                  >
+                    <p className="text-[10px] font-black uppercase tracking-[0.35em] text-[#8b5cf6] mb-2">
+                      Log in to submit
+                    </p>
+                    <p className="text-sm opacity-70">
+                      Browse the full milestone tree freely. Sign in when you are ready to submit or continue your progress.
+                    </p>
+                    <div className="mt-4 flex flex-wrap gap-3">
+                      <Link
+                        to="/login"
+                        className="inline-flex items-center justify-center rounded-xl bg-[#8b5cf6] px-4 py-2.5 text-xs font-black uppercase tracking-wider text-white transition-all hover:bg-[#7c3aed]"
+                      >
+                        Log in to submit
+                      </Link>
+                      <Link
+                        to="/gallery"
+                        className={`inline-flex items-center justify-center rounded-xl border px-4 py-2.5 text-xs font-black uppercase tracking-wider transition-all ${theme === "dark" ? "border-white/10 text-slate-200 hover:bg-white/5" : "border-slate-200 text-slate-700 hover:bg-slate-100"}`}
+                      >
+                        View Gallery
+                      </Link>
+                    </div>
+                  </div>
+                )}
                 <div
                   className={`mt-6 rounded-2xl border p-4 ${theme === "dark" ? "border-white/10 bg-white/5" : "border-slate-200 bg-white/80"}`}
                 >
@@ -457,26 +489,45 @@ const Milestones = () => {
                 <p className="mt-6 text-[14px] leading-relaxed opacity-60">
                   {activeChallenge.description}
                 </p>
-                <form
-                  onSubmit={handleSubmit}
-                  className={`mt-12 p-6 rounded-2xl border ${styles.bgSide} ${styles.border} space-y-4 shadow-xl`}
-                >
-                  <input
-                    type="url"
-                    required
-                    value={repoUrl}
-                    onChange={(e) => setRepoUrl(e.target.value)}
-                    className={`w-full p-3 text-[12px] rounded-xl border outline-none focus:border-[#8b5cf6] transition-all ${styles.border} ${theme === "dark" ? "bg-black/40" : "bg-white"}`}
-                    placeholder="Github Repo URL"
-                  />
-                  <button
-                    type="submit"
-                    className="w-full py-4 text-white text-[11px] font-bold uppercase rounded-xl transition-transform hover:scale-[1.02] active:scale-95 shadow-lg shadow-[#8b5cf6]/20"
-                    style={{ backgroundColor: styles.accent }}
+                {isAuthenticated ? (
+                  <form
+                    onSubmit={handleSubmit}
+                    className={`mt-12 p-6 rounded-2xl border ${styles.bgSide} ${styles.border} space-y-4 shadow-xl`}
                   >
-                    Sync Submission
-                  </button>
-                </form>
+                    <input
+                      type="url"
+                      required
+                      value={repoUrl}
+                      onChange={(e) => setRepoUrl(e.target.value)}
+                      className={`w-full p-3 text-[12px] rounded-xl border outline-none focus:border-[#8b5cf6] transition-all ${styles.border} ${theme === "dark" ? "bg-black/40" : "bg-white"}`}
+                      placeholder="Github Repo URL"
+                    />
+                    <button
+                      type="submit"
+                      className="w-full py-4 text-white text-[11px] font-bold uppercase rounded-xl transition-transform hover:scale-[1.02] active:scale-95 shadow-lg shadow-[#8b5cf6]/20"
+                      style={{ backgroundColor: styles.accent }}
+                    >
+                      Sync Submission
+                    </button>
+                  </form>
+                ) : (
+                  <div
+                    className={`mt-12 p-6 rounded-2xl border ${styles.bgSide} ${styles.border} shadow-xl`}
+                  >
+                    <p className="text-xs font-black uppercase tracking-[0.35em] text-[#8b5cf6] mb-2">
+                      Log in to submit
+                    </p>
+                    <p className="text-sm opacity-70">
+                      When you are ready to upload progress, sign in to unlock the submission form and resume where you left off.
+                    </p>
+                    <Link
+                      to="/login"
+                      className="mt-4 inline-flex items-center justify-center rounded-xl bg-[#8b5cf6] px-4 py-2.5 text-xs font-black uppercase tracking-wider text-white transition-all hover:bg-[#7c3aed]"
+                    >
+                      Log in to submit
+                    </Link>
+                  </div>
+                )}
               </motion.div>
             ) : (
               <div className="max-w-2xl mx-auto w-full text-[13px] opacity-60">

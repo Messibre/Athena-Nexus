@@ -11,6 +11,27 @@
   outline-offset: 2px;
 }
 
+.skip-link {
+  position: absolute;
+  left: 1rem;
+  top: 1rem;
+  z-index: 200;
+  transform: translateY(-200%);
+  border-radius: 9999px;
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
+  padding: 0.75rem 1rem;
+  font-size: 0.75rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.22em;
+}
+
+.skip-link:focus {
+  transform: translateY(0);
+}
+
 :root {
   --bg-primary: #ffffff;
   --bg-secondary: #fdfaff;

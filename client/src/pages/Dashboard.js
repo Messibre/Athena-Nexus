@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import Navbar from "../components/Navbar";
@@ -14,6 +14,7 @@ import {
 } from "../redux/selectors/submissionsSelectors";
 import { selectUser } from "../redux/selectors/authSelectors";
 import { selectTheme } from "../redux/selectors/themeSelectors";
+import { activityApi } from "../config/api";
 
 const Dashboard = () => {
   const dispatch = useDispatch();
@@ -23,12 +24,30 @@ const Dashboard = () => {
   const submissions = useSelector(selectMySubmissions);
   const submissionsLoading = useSelector(selectSubmissionsLoading);
   const theme = useSelector(selectTheme);
+  const [notifications, setNotifications] = useState([]);
+  const [notificationsLoading, setNotificationsLoading] = useState(false);
 
   useEffect(() => {
     dispatch(fetchMySubmissions());
     dispatch(fetchActiveWeek());
     dispatch(fetchLeaderboard());
   }, [dispatch]);
+
+  useEffect(() => {
+    const run = async () => {
+      setNotificationsLoading(true);
+      try {
+        const response = await activityApi.getMyActivityLogs({ limit: 6 });
+        setNotifications(Array.isArray(response.data) ? response.data : []);
+      } catch (error) {
+        setNotifications([]);
+      } finally {
+        setNotificationsLoading(false);
+      }
+    };
+
+    run();
+  }, []);
 
   const getStatusBadge = (status) => {
     const badges = {
@@ -52,6 +71,16 @@ const Dashboard = () => {
   const formatDate = (date) => {
     return new Date(date).toLocaleDateString();
   };
+
+  const currentSubmission = useMemo(() => {
+    if (!activeWeek) return submissions[0] || null;
+    return (
+      submissions.find(
+        (submission) =>
+          (submission.week_id?._id || submission.week_id) === activeWeek._id,
+      ) || submissions[0] || null
+    );
+  }, [submissions, activeWeek]);
 
   const topScore = leaderboard[0]?.points || 0;
   const currentTeam = leaderboard.find(
@@ -138,7 +167,109 @@ const Dashboard = () => {
           </div>
         </div>
 
-        {activeWeek && (
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {activeWeek && (
+            <div
+              className={`rounded-3xl border p-6 md:p-8 shadow-2xl lg:col-span-2 ${theme === "dark" ? "bg-[#120a21]/85 border-[#2e1a47]" : "bg-white/90 border-slate-200"}`}
+            >
+              <div
+                className={`mb-5 pb-5 border-b ${theme === "dark" ? "border-white/10" : "border-slate-200"}`}
+              >
+                <h2
+                  className={`text-2xl md:text-3xl font-['Fraunces'] font-black tracking-tight ${theme === "dark" ? "text-white" : "text-slate-900"}`}
+                >
+                  Current Challenge
+                </h2>
+              </div>
+              <h3
+                className={`text-xl font-black mb-3 ${theme === "dark" ? "text-white" : "text-slate-900"}`}
+              >
+                Week {activeWeek.week_number}: {activeWeek.title}
+              </h3>
+              {activeWeek.description && (
+                <p className="mb-4 opacity-70">{activeWeek.description}</p>
+              )}
+              {activeWeek.deadlineDate && (
+                <p className="mb-5">
+                  <strong>Deadline:</strong> {formatDate(activeWeek.deadlineDate)}
+                </p>
+              )}
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div
+                  className={`rounded-2xl border p-4 ${theme === "dark" ? "border-[#2e1a47] bg-[#0a0514]/65" : "border-slate-200 bg-slate-50/90"}`}
+                >
+                  <p className="text-[10px] font-black uppercase tracking-[0.35em] text-[#8b5cf6] mb-2">
+                    Current Submission
+                  </p>
+                  {currentSubmission ? (
+                    <>
+                      <p className={`font-black ${theme === "dark" ? "text-white" : "text-slate-900"}`}>
+                        {currentSubmission.status === "approved"
+                          ? "Approved"
+                          : currentSubmission.status === "rejected"
+                            ? "Needs Revision"
+                            : "In Progress"}
+                      </p>
+                      <p className="mt-2 text-sm opacity-70 line-clamp-2">
+                        {currentSubmission.description || "Your latest project is ready to continue."}
+                      </p>
+                      <Link
+                        to={`/submit?week=${currentSubmission.week_id?._id || currentSubmission.week_id}${currentSubmission._id ? `&edit=${currentSubmission._id}` : ""}`}
+                        className="mt-4 inline-flex items-center justify-center rounded-xl bg-[#8b5cf6] px-4 py-2.5 text-xs font-black uppercase tracking-wider text-white transition-all hover:bg-[#7c3aed]"
+                      >
+                        Continue Working
+                      </Link>
+                    </>
+                  ) : (
+                    <>
+                      <p className={`font-black ${theme === "dark" ? "text-white" : "text-slate-900"}`}>
+                        Start your next submission
+                      </p>
+                      <p className="mt-2 text-sm opacity-70">
+                        No project submitted yet for the current week.
+                      </p>
+                      <Link
+                        to="/submit"
+                        className="mt-4 inline-flex items-center justify-center rounded-xl bg-[#8b5cf6] px-4 py-2.5 text-xs font-black uppercase tracking-wider text-white transition-all hover:bg-[#7c3aed]"
+                      >
+                        Submit Project
+                      </Link>
+                    </>
+                  )}
+                </div>
+
+                <div
+                  className={`rounded-2xl border p-4 ${theme === "dark" ? "border-[#2e1a47] bg-[#0a0514]/65" : "border-slate-200 bg-slate-50/90"}`}
+                >
+                  <p className="text-[10px] font-black uppercase tracking-[0.35em] text-[#8b5cf6] mb-2">
+                    Quick Links
+                  </p>
+                  <div className="flex flex-col gap-2">
+                    <Link
+                      to="/milestones"
+                      className="rounded-xl border px-4 py-3 text-sm font-black transition-all hover:border-[#8b5cf6] hover:text-[#8b5cf6]"
+                    >
+                      Open Milestones
+                    </Link>
+                    <Link
+                      to="/gallery"
+                      className="rounded-xl border px-4 py-3 text-sm font-black transition-all hover:border-[#8b5cf6] hover:text-[#8b5cf6]"
+                    >
+                      Browse Gallery
+                    </Link>
+                    <Link
+                      to="/settings"
+                      className="rounded-xl border px-4 py-3 text-sm font-black transition-all hover:border-[#8b5cf6] hover:text-[#8b5cf6]"
+                    >
+                      Team Settings
+                    </Link>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
           <div
             className={`rounded-3xl border p-6 md:p-8 shadow-2xl ${theme === "dark" ? "bg-[#120a21]/85 border-[#2e1a47]" : "bg-white/90 border-slate-200"}`}
           >
@@ -146,32 +277,44 @@ const Dashboard = () => {
               className={`mb-5 pb-5 border-b ${theme === "dark" ? "border-white/10" : "border-slate-200"}`}
             >
               <h2
-                className={`text-3xl font-['Fraunces'] font-black tracking-tight ${theme === "dark" ? "text-white" : "text-slate-900"}`}
+                className={`text-2xl md:text-3xl font-['Fraunces'] font-black tracking-tight ${theme === "dark" ? "text-white" : "text-slate-900"}`}
               >
-                Current Challenge
+                Notifications
               </h2>
             </div>
-            <h3
-              className={`text-xl font-black mb-3 ${theme === "dark" ? "text-white" : "text-slate-900"}`}
-            >
-              Week {activeWeek.week_number}: {activeWeek.title}
-            </h3>
-            {activeWeek.description && (
-              <p className="mb-4 opacity-70">{activeWeek.description}</p>
+
+            {notificationsLoading ? (
+              <p className="text-sm opacity-60">Loading recent activity...</p>
+            ) : notifications.length === 0 ? (
+              <p className="text-sm opacity-70">No recent activity yet.</p>
+            ) : (
+              <div className="space-y-3">
+                {notifications.map((item) => (
+                  <div
+                    key={item._id}
+                    className={`rounded-2xl border p-4 ${theme === "dark" ? "border-[#2e1a47] bg-[#0a0514]/65" : "border-slate-200 bg-slate-50/90"}`}
+                  >
+                    <p className={`text-sm font-black ${theme === "dark" ? "text-white" : "text-slate-900"}`}>
+                      {item.action === "submit"
+                        ? "Submission sent"
+                        : item.action === "update"
+                          ? "Submission updated"
+                          : item.action === "login"
+                            ? "Signed in"
+                            : "Activity update"}
+                    </p>
+                    <p className="mt-1 text-xs uppercase tracking-widest opacity-60">
+                      {item.detail || "System notification"}
+                    </p>
+                    <p className="mt-2 text-[11px] opacity-45">
+                      {formatDate(item.timestamp)}
+                    </p>
+                  </div>
+                ))}
+              </div>
             )}
-            {activeWeek.deadlineDate && (
-              <p className="mb-5">
-                <strong>Deadline:</strong> {formatDate(activeWeek.deadlineDate)}
-              </p>
-            )}
-            <Link
-              to="/submit"
-              className="inline-flex items-center justify-center px-6 py-3 rounded-xl bg-[#8b5cf6] hover:bg-[#7c3aed] text-white font-black uppercase tracking-wider text-xs shadow-xl shadow-[#8b5cf6]/30 transition-all"
-            >
-              Submit Project
-            </Link>
           </div>
-        )}
+        </div>
 
         <div
           className={`rounded-3xl border p-6 md:p-8 shadow-2xl ${theme === "dark" ? "bg-[#120a21]/85 border-[#2e1a47]" : "bg-white/90 border-slate-200"}`}
@@ -193,7 +336,7 @@ const Dashboard = () => {
             <p className="opacity-70">No leaderboard entries yet.</p>
           ) : (
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-              {leaderboard.slice(0, 6).map((entry) => {
+              {leaderboard.slice(0, 5).map((entry) => {
                 const progressWidth = topScore
                   ? Math.max(8, Math.round((entry.points / topScore) * 100))
                   : 8;

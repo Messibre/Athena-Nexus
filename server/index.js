@@ -12,6 +12,7 @@ import activityRoutes from "./routes/activity.js";
 import milestonesRoutes from "./routes/milestones.js";
 import adminMilestonesRoutes from "./routes/adminMilestones.js";
 import usersRoutes from "./routes/users.js";
+import feedbackRoutes from "./routes/feedback.js";
 
 if (process.env.NODE_ENV !== "production") {
   dotenv.config();
@@ -180,6 +181,7 @@ apiRouter.use("/activity", activityRoutes);
 apiRouter.use("/milestones", milestonesRoutes);
 apiRouter.use("/admin/milestones", adminMilestonesRoutes);
 apiRouter.use("/users", usersRoutes);
+apiRouter.use("/feedback", feedbackRoutes);
 
 app.use("/api", apiRouter);
 
@@ -201,18 +203,6 @@ app.use((err, req, res, next) => {
 const PORT = process.env.PORT || 5000;
 
 const startServer = async () => {
-  try {
-    await connectToDatabase();
-  } catch (error) {
-    console.error("Failed to connect to MongoDB. Server will not start.");
-    console.error("Please check:");
-    console.error(
-      "1. MongoDB is running (local) or connection string is correct (Atlas)",
-    );
-    console.error("2. MONGODB_URI is set correctly");
-    return;
-  }
-
   if (!process.env.JWT_SECRET) {
     console.error("⚠️  WARNING: JWT_SECRET is not set!");
     console.error("Run: cd server && npm run generate-secret");
@@ -223,6 +213,19 @@ const startServer = async () => {
     console.log(`✅ Server running on port ${PORT}`);
     console.log(`📍 Health check: http://localhost:${PORT}/api/health`);
   });
+
+  try {
+    await connectToDatabase();
+    console.log("✅ MongoDB connected");
+  } catch (error) {
+    console.error("⚠️  MongoDB connection failed, but the API is still running.");
+    console.error("Please check:");
+    console.error(
+      "1. MongoDB is running (local) or connection string is correct (Atlas)",
+    );
+    console.error("2. MONGODB_URI is set correctly");
+    console.error(error.message);
+  }
 };
 
 if (!isServerless) {

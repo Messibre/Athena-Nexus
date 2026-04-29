@@ -1,5 +1,5 @@
 import { createAsyncThunk } from "@reduxjs/toolkit";
-import { adminApi, milestonesApi, weeksApi } from "../../config/api";
+import { adminApi, milestonesApi, weeksApi, feedbackApi } from "../../config/api";
 
 export const fetchAdminWeeks = createAsyncThunk(
   "admin/fetchWeeks",
@@ -192,6 +192,34 @@ export const fetchAdminStats = createAsyncThunk(
     } catch (error) {
       return thunkApi.rejectWithValue(
         error.response?.data?.message || "Failed to fetch stats",
+      );
+    }
+  },
+);
+
+export const fetchAdminFeedback = createAsyncThunk(
+  "admin/fetchFeedback",
+  async (params, thunkApi) => {
+    try {
+      const response = await feedbackApi.getFeedback(params);
+      return response.data;
+    } catch (error) {
+      return thunkApi.rejectWithValue(
+        error.response?.data?.message || "Failed to fetch feedback",
+      );
+    }
+  },
+);
+
+export const updateAdminFeedback = createAsyncThunk(
+  "admin/updateFeedback",
+  async ({ id, payload }, thunkApi) => {
+    try {
+      const response = await feedbackApi.updateFeedback(id, payload);
+      return response.data;
+    } catch (error) {
+      return thunkApi.rejectWithValue(
+        error.response?.data?.message || "Failed to update feedback",
       );
     }
   },

@@ -17,6 +17,7 @@ import {
   ListTree,
   Key,
   Link as LinkIcon,
+  Inbox,
 } from "lucide-react";
 import Navbar from "../components/Navbar";
 
@@ -48,6 +49,8 @@ import {
   deleteAdminMilestoneChallenge,
   fetchAdminMilestoneSubmissions,
   updateAdminMilestoneSubmissionStatus,
+  fetchAdminFeedback,
+  updateAdminFeedback,
 } from "../redux/thunks/adminThunks";
 
 import {
@@ -61,6 +64,7 @@ import {
   selectAdminMilestoneLevels,
   selectAdminMilestoneChallenges,
   selectAdminMilestoneSubmissions,
+  selectAdminFeedback,
 } from "../redux/selectors/adminSelectors";
 
 const selectTheme = (state) => state.theme.theme;
@@ -75,6 +79,7 @@ const AdminPanel = () => {
   const users = useSelector(selectAdminUsers);
   const submissions = useSelector(selectAdminSubmissions);
   const mSubmissions = useSelector(selectAdminMilestoneSubmissions);
+  const feedbackItems = useSelector(selectAdminFeedback);
   const categories = useSelector(selectAdminMilestoneCategories);
   const levels = useSelector(selectAdminMilestoneLevels);
   const challenges = useSelector(selectAdminMilestoneChallenges);
@@ -87,6 +92,9 @@ const AdminPanel = () => {
   const [targetType, setTargetType] = useState("week");
   const [formData, setFormData] = useState({});
   const [milestoneScope, setMilestoneScope] = useState("categories");
+  const [feedbackCategoryFilter, setFeedbackCategoryFilter] = useState("all");
+  const [feedbackStatusFilter, setFeedbackStatusFilter] = useState("all");
+  const [feedbackSort, setFeedbackSort] = useState("desc");
 
   useEffect(() => {
     dispatch(fetchAdminStats());
@@ -95,6 +103,7 @@ const AdminPanel = () => {
     dispatch(fetchAdminSubmissions());
     dispatch(fetchAdminMilestoneSubmissions());
     dispatch(fetchAdminMilestoneCategories());
+    dispatch(fetchAdminFeedback());
   }, [dispatch]);
 
   useEffect(() => {
@@ -311,6 +320,7 @@ const AdminPanel = () => {
   const milestoneSectionStyle =
     theme === "dark"
       ? "bg-[#120a21]/70 border-[#2e1a47]"
+              { id: "feedback", label: "Feedback Inbox", icon: Inbox },
       : "bg-slate-50/90 border-slate-200";
 
   const milestoneInputStyle =
@@ -481,6 +491,11 @@ const AdminPanel = () => {
                         v: stats.approvedSubmissions,
                         c: "text-[#a78bfa]",
                       },
+                      {
+                        l: "Feedback",
+                        v: stats.totalFeedback || 0,
+                        c: "text-cyan-400",
+                      },
                     ].map((s, i) => (
                       <div
                         key={i}
@@ -495,7 +510,135 @@ const AdminPanel = () => {
                   </div>
                 )}
 
-                {activeTab !== "stats" && (
+                {activeTab === "feedback" && (
+                  <div className={`rounded-lg border ${styles.panel} ${styles.border} overflow-hidden shadow-2xl`}>
+                    <div className="p-6 md:p-8 border-b border-white/5 flex flex-col md:flex-row md:items-end md:justify-between gap-4">
+                      <div>
+                        <p className="text-[10px] font-bold uppercase tracking-[0.4em] text-[#8b5cf6] mb-2">
+                          Anonymous Feedback
+                        </p>
+                        <h3 className={`text-2xl font-['Fraunces'] font-black ${styles.textHead}`}>
+                          Feedback Inbox
+                        </h3>
+                      </div>
+                      <div className="flex flex-wrap gap-3">
+                        <select
+                          value={feedbackCategoryFilter}
+                          onChange={(e) => setFeedbackCategoryFilter(e.target.value)}
+                          className={`px-4 py-2 rounded border text-[10px] font-black uppercase tracking-widest ${styles.input}`}
+                        >
+                          <option value="all">All categories</option>
+                          <option value="bug">Bug</option>
+                          <option value="suggestion">Suggestion</option>
+                          <option value="praise">Praise</option>
+                        </select>
+                        <select
+                          value={feedbackStatusFilter}
+                          onChange={(e) => setFeedbackStatusFilter(e.target.value)}
+                          className={`px-4 py-2 rounded border text-[10px] font-black uppercase tracking-widest ${styles.input}`}
+                        >
+                          <option value="all">All statuses</option>
+                          <option value="new">New</option>
+                          <option value="read">Read</option>
+                          <option value="resolved">Resolved</option>
+                        </select>
+                        <select
+                          value={feedbackSort}
+                          onChange={(e) => setFeedbackSort(e.target.value)}
+                          className={`px-4 py-2 rounded border text-[10px] font-black uppercase tracking-widest ${styles.input}`}
+                        >
+                          <option value="desc">Newest first</option>
+                          <option value="asc">Oldest first</option>
+                        </select>
+                      </div>
+                    </div>
+
+                    {(() => {
+                      const filtered = [...feedbackItems]
+                        .filter((item) =>
+                          feedbackCategoryFilter === "all"
+                            ? true
+                            : item.category === feedbackCategoryFilter,
+                        )
+                        .filter((item) =>
+                          feedbackStatusFilter === "all"
+                            ? true
+                            : item.status === feedbackStatusFilter,
+                        )
+                        .sort((a, b) => {
+                          const aTime = new Date(a.createdAt || a.timestamp || 0).getTime();
+                          const bTime = new Date(b.createdAt || b.timestamp || 0).getTime();
+                          return feedbackSort === "asc" ? aTime - bTime : bTime - aTime;
+                        });
+
+                      return filtered.length === 0 ? (
+                        <div className="p-8 text-sm opacity-60">No feedback entries match the current filters.</div>
+                      ) : (
+                        <div className="overflow-x-auto">
+                          <table className="w-full text-left">
+                            <thead className="bg-black/20 text-[10px] font-bold uppercase opacity-40 border-b border-white/5">
+                              <tr>
+                                <th className="px-8 py-5">Message</th>
+                                <th className="px-8 py-5">Category</th>
+                                <th className="px-8 py-5">Contact</th>
+                                <th className="px-8 py-5">Status</th>
+                                <th className="px-8 py-5 text-right">Actions</th>
+                              </tr>
+                            </thead>
+                            <tbody className="divide-y divide-white/5">
+                              {filtered.map((item) => (
+                                <tr key={item._id} className="hover:bg-[#8b5cf6]/[0.03] transition-colors group">
+                                  <td className="px-8 py-5 max-w-[420px]">
+                                    <div className={`text-[13px] font-bold ${styles.textHead} whitespace-normal`}>
+                                      {item.message}
+                                    </div>
+                                    <div className="text-[11px] opacity-40 mt-2">
+                                      {new Date(item.createdAt || item.timestamp).toLocaleString()}
+                                    </div>
+                                  </td>
+                                  <td className="px-8 py-5">
+                                    <span className="px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest bg-[#8b5cf6]/10 text-[#8b5cf6]">
+                                      {item.category}
+                                    </span>
+                                  </td>
+                                  <td className="px-8 py-5 text-sm opacity-70">
+                                    {item.email || "Anonymous"}
+                                  </td>
+                                  <td className="px-8 py-5">
+                                    <span className={`px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest ${item.status === "resolved" ? "bg-emerald-500/10 text-emerald-500" : item.status === "read" ? "bg-cyan-500/10 text-cyan-400" : "bg-amber-500/10 text-amber-500"}`}>
+                                      {item.status}
+                                    </span>
+                                  </td>
+                                  <td className="px-8 py-5 text-right">
+                                    <select
+                                      value={item.status}
+                                      disabled={actionLoading}
+                                      onChange={(e) =>
+                                        dispatch(
+                                          updateAdminFeedback({
+                                            id: item._id,
+                                            payload: { status: e.target.value },
+                                          }),
+                                        )
+                                      }
+                                      className={`text-[10px] font-black p-2 rounded border focus:border-[#8b5cf6] outline-none transition-all ${styles.input}`}
+                                    >
+                                      <option value="new">NEW</option>
+                                      <option value="read">READ</option>
+                                      <option value="resolved">RESOLVED</option>
+                                    </select>
+                                  </td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+                      );
+                    })()}
+                  </div>
+                )}
+
+                {activeTab !== "stats" && activeTab !== "feedback" && (
                   <div
                     className={`rounded-lg border ${styles.panel} ${styles.border} overflow-hidden shadow-2xl`}
                   >

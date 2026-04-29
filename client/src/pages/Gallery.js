@@ -1,8 +1,8 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { useParams } from "react-router-dom";
+import { Link, useParams } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { motion } from "framer-motion";
-import { Github, ExternalLink, Layers, Trophy, Search } from "lucide-react";
+import { Github, ExternalLink, Layers, Trophy, Search, Filter } from "lucide-react";
 import Navbar from "../components/Navbar";
 import {
   fetchWeekById,
@@ -16,6 +16,7 @@ import {
   selectSubmissionsLoading,
 } from "../redux/selectors/submissionsSelectors";
 import { selectPublicMilestoneSubmissions } from "../redux/selectors/milestonesSelectors";
+import { selectIsAuthenticated } from "../redux/selectors/authSelectors";
 
 export const selectTheme = (state) => state.theme.theme;
 
@@ -26,7 +27,10 @@ const Gallery = () => {
   const [localLoading, setLocalLoading] = useState(true);
   const [view, setView] = useState("weekly");
   const [searchQuery, setSearchQuery] = useState("");
+  const [weekFilter, setWeekFilter] = useState("all");
+  const [techFilter, setTechFilter] = useState("all");
   const [error, setError] = useState("");
+  const isAuthenticated = useSelector(selectIsAuthenticated);
 
   const weekSubmissions = useSelector((state) =>
     weekId ? selectWeekSubmissions(state, weekId) : [],
@@ -57,16 +61,47 @@ const Gallery = () => {
           : publicSubmissions
         : milestoneSubmissions;
 
-    if (!searchQuery) return list;
-    return list.filter(
-      (s) =>
-        (s.user_id?.username || s.userId?.username || "")
-          .toLowerCase()
-          .includes(searchQuery.toLowerCase()) ||
-        (s.description || s.notes || "")
-          .toLowerCase()
-          .includes(searchQuery.toLowerCase()),
-    );
+    const decorated = list.map((submission) => {
+      const isMilestone = view === "milestones";
+      const techStack = isMilestone
+        ? submission.categoryId?.name || "Milestone"
+        : (submission.tags || []).join(", ") || "General";
+      const submissionWeekId = submission.week_id?._id || submission.week_id || "";
+
+      return {
+        ...submission,
+        isMilestone,
+        techStack,
+        submissionWeekId,
+      };
+    });
+
+    return decorated.filter((submission) => {
+      const loweredQuery = searchQuery.toLowerCase();
+      const matchesSearch = !loweredQuery
+        ? true
+        : (submission.user_id?.username || submission.userId?.username || "")
+            .toLowerCase()
+            .includes(loweredQuery) ||
+          (submission.user_id?.displayName || submission.userId?.displayName || "")
+            .toLowerCase()
+            .includes(loweredQuery) ||
+          (submission.description || submission.notes || "")
+            .toLowerCase()
+            .includes(loweredQuery) ||
+          (submission.challengeId?.title || submission.week_id?.title || "")
+            .toLowerCase()
+            .includes(loweredQuery);
+
+      const matchesWeek =
+        weekFilter === "all" || submission.submissionWeekId === weekFilter;
+
+      const matchesTech =
+        techFilter === "all" ||
+        submission.techStack.toLowerCase().includes(techFilter.toLowerCase());
+
+      return matchesSearch && matchesWeek && matchesTech;
+    });
   }, [
     view,
     weekId,
@@ -74,28 +109,67 @@ const Gallery = () => {
     publicSubmissions,
     milestoneSubmissions,
     searchQuery,
+    weekFilter,
+    techFilter,
   ]);
 
+  const weekOptions = useMemo(() => {
+    const unique = new Map();
+    const source = view === "weekly" ? (weekId ? weekSubmissions : publicSubmissions) : [];
+
+    source.forEach((submission) => {
+      const weekValue = submission.week_id?._id || submission.week_id;
+      if (weekValue && !unique.has(weekValue)) {
+        unique.set(weekValue, {
+          value: weekValue,
+          label: `Week ${submission.week_id?.week_number || "?"}`,
+        });
+      }
+    });
+
+    return [...unique.values()];
+  }, [view, weekId, weekSubmissions, publicSubmissions]);
+
+  const techOptions = useMemo(() => {
+    const unique = new Set();
+    activeSubmissions.forEach((submission) => {
+      (submission.techStack || "")
+        .split(",")
+        .map((item) => item.trim())
+        .filter(Boolean)
+        .forEach((item) => unique.add(item));
+    });
+    return [...unique];
+  }, [activeSubmissions]);
+
   useEffect(() => {
-    if (weekId) setView("weekly");
+    if (weekId) {
+      setView("weekly");
+      setWeekFilter(weekId);
+    }
   }, [weekId]);
+
+  useEffect(() => {
+    if (view === "weekly") {
+      setWeekFilter(weekId || "all");
+    } else {
+      setWeekFilter("all");
+    }
+    setTechFilter("all");
+  }, [view, weekId]);
 
   useEffect(() => {
     const run = async () => {
       setLocalLoading(true);
       setError("");
       try {
-        if (view === "weekly") {
-          if (weekId) {
-            await Promise.all([
-              dispatch(fetchWeekSubmissions(weekId)),
-              dispatch(fetchWeekById(weekId)),
-            ]);
-          } else {
-            await dispatch(fetchPublicSubmissions()).unwrap();
-          }
-        } else {
-          await dispatch(fetchPublicMilestoneSubmissions()).unwrap();
+        await Promise.all([dispatch(fetchPublicSubmissions()), dispatch(fetchPublicMilestoneSubmissions())]);
+
+        if (weekId) {
+          await Promise.all([
+            dispatch(fetchWeekSubmissions(weekId)),
+            dispatch(fetchWeekById(weekId)),
+          ]);
         }
       } catch (err) {
         setError("Unable to load gallery data. Please try again.");
@@ -104,7 +178,7 @@ const Gallery = () => {
       }
     };
     run();
-  }, [dispatch, weekId, view]);
+  }, [dispatch, weekId]);
 
   const ProjectCard = ({ submission, isMilestone }) => (
     <motion.div
@@ -124,28 +198,54 @@ const Gallery = () => {
           >
             {isMilestone ? <Layers size={18} /> : <Trophy size={18} />}
           </div>
-          <div className="min-w-0">
-            <h3 className={`text-sm font-bold truncate ${styles.textHead}`}>
-              {isMilestone
-                ? submission.challengeId?.title
-                : submission.user_id?.displayName ||
-                  submission.user_id?.username}
-            </h3>
+          <div className="min-w-0 flex-1">
+            <div className="flex items-center justify-between gap-2">
+              <h3 className={`text-sm font-bold truncate ${styles.textHead}`}>
+                {isMilestone
+                  ? submission.challengeId?.title || "Milestone Project"
+                  : submission.week_id?.title || "Final Project"}
+              </h3>
+              <span className="text-[9px] font-black uppercase tracking-[0.3em] opacity-50">
+                {isMilestone ? "Milestone" : "Final"}
+              </span>
+            </div>
             <p className="text-[11px] opacity-50 font-medium truncate">
               {isMilestone
-                ? `${submission.userId?.username} - Lvl ${submission.levelId?.levelNumber}`
-                : weekId
-                  ? "Entry"
-                  : `Week ${submission.week_id?.week_number}`}
+                ? `${submission.categoryId?.name || "Atlas"} · Lvl ${submission.levelId?.levelNumber || "?"}`
+                : `Week ${submission.week_id?.week_number || "?"}`}
             </p>
           </div>
         </div>
 
-        <p
-          className={`text-[12px] leading-relaxed mb-4 line-clamp-2 flex-grow ${styles.textMain}`}
-        >
+        {submission.screenshotUrl ? (
+          <img
+            src={submission.screenshotUrl}
+            alt={`${submission.user_id?.displayName || submission.userId?.displayName || "Team"} project preview`}
+            className="mb-4 h-40 w-full rounded-2xl object-cover border border-white/10"
+          />
+        ) : (
+          <div
+            className={`mb-4 flex h-40 w-full items-center justify-center rounded-2xl border border-dashed ${theme === "dark" ? "border-white/10 bg-white/5" : "border-slate-200 bg-slate-100"}`}
+          >
+            <div className="text-center">
+              <p className={`text-sm font-black ${styles.textHead}`}>
+                {submission.techStack || "GitHub Preview"}
+              </p>
+              <p className="mt-1 text-[11px] opacity-60">
+                Thumbnail unavailable
+              </p>
+            </div>
+          </div>
+        )}
+
+        <p className={`text-[12px] leading-relaxed mb-4 line-clamp-2 flex-grow ${styles.textMain}`}>
           {submission.description || submission.notes || "No documentation."}
         </p>
+
+        <div className="mt-auto mb-3 flex items-center justify-between gap-2 text-[11px] font-black uppercase tracking-widest opacity-60">
+          <span>{submission.user_id?.displayName || submission.userId?.displayName || submission.user_id?.username || submission.userId?.username || "Unknown team"}</span>
+          <span>{new Date(submission.createdAt || submission.created_at || Date.now()).toLocaleDateString()}</span>
+        </div>
 
         <div className="flex items-center gap-2 pt-4 border-t border-white/5">
           <a
@@ -215,10 +315,33 @@ const Gallery = () => {
             </p>
           </header>
 
+          {!isAuthenticated && (
+            <div
+              className={`mb-6 rounded-2xl border p-4 ${styles.card}`}
+            >
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                <div>
+                  <p className="text-[10px] font-black uppercase tracking-[0.35em] text-[#8b5cf6] mb-2">
+                    Log in to submit
+                  </p>
+                  <p className={`text-sm ${styles.textMain}`}>
+                    Browse the full showcase freely, then sign in when you are ready to submit your own project.
+                  </p>
+                </div>
+                <Link
+                  to="/submit"
+                  className="inline-flex items-center justify-center rounded-xl bg-[#8b5cf6] px-5 py-3 text-xs font-black uppercase tracking-wider text-white transition-all hover:bg-[#7c3aed]"
+                >
+                  Log in to submit
+                </Link>
+              </div>
+            </div>
+          )}
+
           <div
             className={`p-1.5 rounded-2xl border flex flex-col sm:flex-row gap-2 ${styles.card}`}
           >
-            <div className="flex gap-1">
+            <div className="flex flex-wrap gap-1">
               <button
                 onClick={() => setView("weekly")}
                 className={`flex-1 sm:flex-none py-2.5 px-6 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${
@@ -229,7 +352,7 @@ const Gallery = () => {
                     : "opacity-40 hover:opacity-100"
                 }`}
               >
-                Weekly
+                Final Projects
               </button>
               <button
                 onClick={() => setView("milestones")}
@@ -244,9 +367,7 @@ const Gallery = () => {
                 Milestones
               </button>
             </div>
-            <div
-              className={`flex-1 relative rounded-xl border ${styles.input}`}
-            >
+            <div className={`flex-1 relative rounded-xl border ${styles.input}`}>
               <Search
                 className="absolute left-4 top-1/2 -translate-y-1/2 opacity-30"
                 size={14}
@@ -258,6 +379,55 @@ const Gallery = () => {
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="w-full h-full bg-transparent border-0 focus:ring-0 pl-10 pr-4 text-[12px] font-medium"
               />
+            </div>
+          </div>
+
+          <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-3">
+            {view === "weekly" && (
+              <label className={`rounded-xl border px-4 py-3 ${styles.card}`}>
+                <span className="mb-2 flex items-center gap-2 text-[10px] font-black uppercase tracking-widest opacity-60">
+                  <Filter size={12} /> Week
+                </span>
+                <select
+                  value={weekFilter}
+                  onChange={(e) => setWeekFilter(e.target.value)}
+                  className={`w-full bg-transparent text-sm outline-none ${styles.textHead}`}
+                >
+                  <option value="all">All weeks</option>
+                  {weekOptions.map((item) => (
+                    <option key={item.value} value={item.value}>
+                      {item.label}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            )}
+
+            <label className={`rounded-xl border px-4 py-3 ${styles.card}`}>
+              <span className="mb-2 flex items-center gap-2 text-[10px] font-black uppercase tracking-widest opacity-60">
+                <Filter size={12} /> Tech Stack
+              </span>
+              <select
+                value={techFilter}
+                onChange={(e) => setTechFilter(e.target.value)}
+                className={`w-full bg-transparent text-sm outline-none ${styles.textHead}`}
+              >
+                <option value="all">All stacks</option>
+                {techOptions.map((item) => (
+                  <option key={item} value={item}>
+                    {item}
+                  </option>
+                ))}
+              </select>
+            </label>
+
+            <div className={`rounded-xl border px-4 py-3 ${styles.card}`}>
+              <span className="mb-2 block text-[10px] font-black uppercase tracking-widest opacity-60">
+                Submission Type
+              </span>
+              <p className={`text-sm font-black ${styles.textHead}`}>
+                {view === "weekly" ? "Final projects" : "Milestone entries"}
+              </p>
             </div>
           </div>
         </div>

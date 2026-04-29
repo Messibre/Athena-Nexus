@@ -12,3 +12,4 @@ export const selectAdminMilestoneCategories = (state) => state.admin.milestoneCa
 export const selectAdminMilestoneLevels = (state) => state.admin.milestoneLevels;
 export const selectAdminMilestoneChallenges = (state) => state.admin.milestoneChallenges;
 export const selectAdminMilestoneSubmissions = (state) => state.admin.milestoneSubmissions;
+export const selectAdminFeedback = (state) => state.admin.feedbackItems;

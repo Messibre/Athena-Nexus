@@ -29,6 +29,7 @@ import NotFound from "./pages/NotFound";
 import MiniModal from "./components/MiniModal";
 import CookieConsent from "./components/CookieConsent";
 import SeoManager from "./components/SeoManager";
+import FeedbackButton from "./components/FeedbackButton";
 
 import "./App.css";
 
@@ -90,56 +91,55 @@ function AppContent() {
 
   return (
     <div className="App">
+      <a href="#main-content" className="skip-link">
+        Skip to content
+      </a>
       <SeoManager />
 
-      <Routes>
-        <Route path="/" element={<Home />} />
-        <Route path="/login" element={<Login />} />
-        <Route path="/signup" element={<Signup />} />
-        <Route path="/challenges" element={<Challenges />} />
-        <Route path="/milestones" element={<Milestones />} />
-        <Route path="/gallery" element={<Gallery />} />
-        <Route path="/gallery/:weekId" element={<Gallery />} />
-        <Route path="/about" element={<About />} />
-        <Route path="/privacy" element={<PrivacyPolicy />} />
-        <Route path="/terms" element={<TermsOfService />} />
+      <div id="main-content" role="main" tabIndex={-1}>
+        <Routes>
+          <Route path="/" element={<Home />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/signup" element={<Signup />} />
+          <Route path="/challenges" element={<Challenges />} />
+          <Route path="/milestones" element={<Milestones />} />
+          <Route path="/gallery" element={<Gallery />} />
+          <Route path="/gallery/:weekId" element={<Gallery />} />
+          <Route path="/about" element={<About />} />
+          <Route path="/privacy" element={<PrivacyPolicy />} />
+          <Route path="/terms" element={<TermsOfService />} />
 
-        <Route
-          path="/dashboard"
-          element={
-            <PrivateRoute>
-              <Dashboard />
-            </PrivateRoute>
-          }
-        />
-        <Route
-          path="/submit"
-          element={
-            <PrivateRoute>
-              <Submit />
-            </PrivateRoute>
-          }
-        />
-        <Route
-          path="/settings"
-          element={
-            <PrivateRoute>
-              <Settings />
-            </PrivateRoute>
-          }
-        />
-        <Route
-          path="/admin"
-          element={
-            <AdminRoute>
-              <AdminPanel />
-            </AdminRoute>
-          }
-        />
+          <Route
+            path="/dashboard"
+            element={
+              <PrivateRoute>
+                <Dashboard />
+              </PrivateRoute>
+            }
+          />
+          <Route path="/submit" element={<Submit />} />
+          <Route
+            path="/settings"
+            element={
+              <PrivateRoute>
+                <Settings />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/admin"
+            element={
+              <AdminRoute>
+                <AdminPanel />
+              </AdminRoute>
+            }
+          />
 
-        <Route path="*" element={<NotFound />} />
-      </Routes>
+          <Route path="*" element={<NotFound />} />
+        </Routes>
+      </div>
 
+      <FeedbackButton />
       <MiniModal
         open={modalState.open}
         title={modalState.title}
