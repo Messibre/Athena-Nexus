@@ -98,19 +98,39 @@ const Milestones = () => {
   const activeCategory = categories.find((c) => c._id === activeCategoryId);
   const activeLevel = levels.find((l) => l._id === activeLevelId);
   const activeChallenge = challenges.find((ch) => ch._id === activeChallengeId);
+  const guestResumeStorageKey = "athena-milestones-resume:guest";
   const resumeStorageKey =
     user?._id || user?.id
       ? `athena-milestones-resume:${user._id || user.id}`
-      : "athena-milestones-resume:guest";
+      : guestResumeStorageKey;
 
-  const readResumeState = () => {
+  const readResumeState = (storageKey = resumeStorageKey) => {
     try {
-      const rawValue = localStorage.getItem(resumeStorageKey);
+      const rawValue = localStorage.getItem(storageKey);
       return rawValue ? JSON.parse(rawValue) : null;
     } catch (error) {
       return null;
     }
   };
+
+  useEffect(() => {
+    if (!isAuthenticated || !user) {
+      return;
+    }
+
+    try {
+      const existingUserState = localStorage.getItem(resumeStorageKey);
+      if (!existingUserState) {
+        const guestState = localStorage.getItem(guestResumeStorageKey);
+        if (guestState) {
+          localStorage.setItem(resumeStorageKey, guestState);
+          localStorage.removeItem(guestResumeStorageKey);
+        }
+      }
+    } catch (error) {
+      return;
+    }
+  }, [isAuthenticated, user, resumeStorageKey]);
 
   const getSubmissionForChallenge = (id) =>
     mySubmissions.find((s) => (s.challengeId?._id || s.challengeId) === id);
@@ -207,11 +227,12 @@ const Milestones = () => {
   }, [activeChallengeId, mySubmissions]);
 
   useEffect(() => {
-    if (!user || !activeCategoryId || !activeLevelId || !activeChallengeId)
-      return;
+    if (!activeCategoryId || !activeLevelId || !activeChallengeId) return;
+
+    const storageKey = user ? resumeStorageKey : guestResumeStorageKey;
 
     localStorage.setItem(
-      resumeStorageKey,
+      storageKey,
       JSON.stringify({
         categoryId: activeCategoryId,
         levelId: activeLevelId,
@@ -224,6 +245,7 @@ const Milestones = () => {
     activeLevelId,
     activeChallengeId,
     resumeStorageKey,
+    guestResumeStorageKey,
   ]);
 
   useEffect(() => {
@@ -447,7 +469,8 @@ const Milestones = () => {
                       Log in to submit
                     </p>
                     <p className="text-sm opacity-70">
-                      Browse the full milestone tree freely. Sign in when you are ready to submit or continue your progress.
+                      Browse the full milestone tree freely. Sign in when you
+                      are ready to submit or continue your progress.
                     </p>
                     <div className="mt-4 flex flex-wrap gap-3">
                       <Link
@@ -518,7 +541,8 @@ const Milestones = () => {
                       Log in to submit
                     </p>
                     <p className="text-sm opacity-70">
-                      When you are ready to upload progress, sign in to unlock the submission form and resume where you left off.
+                      When you are ready to upload progress, sign in to unlock
+                      the submission form and resume where you left off.
                     </p>
                     <Link
                       to="/login"

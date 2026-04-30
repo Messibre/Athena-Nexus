@@ -17,7 +17,7 @@ import {
   ListTree,
   Key,
   Link as LinkIcon,
-  Inbox,
+  MessageSquare,
 } from "lucide-react";
 import Navbar from "../components/Navbar";
 
@@ -320,7 +320,6 @@ const AdminPanel = () => {
   const milestoneSectionStyle =
     theme === "dark"
       ? "bg-[#120a21]/70 border-[#2e1a47]"
-              { id: "feedback", label: "Feedback Inbox", icon: Inbox },
       : "bg-slate-50/90 border-slate-200";
 
   const milestoneInputStyle =
@@ -360,6 +359,7 @@ const AdminPanel = () => {
           <nav className="flex md:flex-col px-2 md:px-0 gap-1 md:gap-0">
             {[
               { id: "stats", label: "Overview", icon: BarChart3 },
+              { id: "feedback", label: "Feedback Inbox", icon: MessageSquare },
               { id: "submissions", label: "Week Queue", icon: CheckSquare },
               { id: "milestone-subs", label: "Atlas Queue", icon: Layers },
               { id: "weeks", label: "Weekly Map", icon: Calendar },
@@ -511,20 +511,26 @@ const AdminPanel = () => {
                 )}
 
                 {activeTab === "feedback" && (
-                  <div className={`rounded-lg border ${styles.panel} ${styles.border} overflow-hidden shadow-2xl`}>
+                  <div
+                    className={`rounded-lg border ${styles.panel} ${styles.border} overflow-hidden shadow-2xl`}
+                  >
                     <div className="p-6 md:p-8 border-b border-white/5 flex flex-col md:flex-row md:items-end md:justify-between gap-4">
                       <div>
                         <p className="text-[10px] font-bold uppercase tracking-[0.4em] text-[#8b5cf6] mb-2">
                           Anonymous Feedback
                         </p>
-                        <h3 className={`text-2xl font-['Fraunces'] font-black ${styles.textHead}`}>
+                        <h3
+                          className={`text-2xl font-['Fraunces'] font-black ${styles.textHead}`}
+                        >
                           Feedback Inbox
                         </h3>
                       </div>
                       <div className="flex flex-wrap gap-3">
                         <select
                           value={feedbackCategoryFilter}
-                          onChange={(e) => setFeedbackCategoryFilter(e.target.value)}
+                          onChange={(e) =>
+                            setFeedbackCategoryFilter(e.target.value)
+                          }
                           className={`px-4 py-2 rounded border text-[10px] font-black uppercase tracking-widest ${styles.input}`}
                         >
                           <option value="all">All categories</option>
@@ -534,7 +540,9 @@ const AdminPanel = () => {
                         </select>
                         <select
                           value={feedbackStatusFilter}
-                          onChange={(e) => setFeedbackStatusFilter(e.target.value)}
+                          onChange={(e) =>
+                            setFeedbackStatusFilter(e.target.value)
+                          }
                           className={`px-4 py-2 rounded border text-[10px] font-black uppercase tracking-widest ${styles.input}`}
                         >
                           <option value="all">All statuses</option>
@@ -566,13 +574,21 @@ const AdminPanel = () => {
                             : item.status === feedbackStatusFilter,
                         )
                         .sort((a, b) => {
-                          const aTime = new Date(a.createdAt || a.timestamp || 0).getTime();
-                          const bTime = new Date(b.createdAt || b.timestamp || 0).getTime();
-                          return feedbackSort === "asc" ? aTime - bTime : bTime - aTime;
+                          const aTime = new Date(
+                            a.createdAt || a.timestamp || 0,
+                          ).getTime();
+                          const bTime = new Date(
+                            b.createdAt || b.timestamp || 0,
+                          ).getTime();
+                          return feedbackSort === "asc"
+                            ? aTime - bTime
+                            : bTime - aTime;
                         });
 
                       return filtered.length === 0 ? (
-                        <div className="p-8 text-sm opacity-60">No feedback entries match the current filters.</div>
+                        <div className="p-8 text-sm opacity-60">
+                          No feedback entries match the current filters.
+                        </div>
                       ) : (
                         <div className="overflow-x-auto">
                           <table className="w-full text-left">
@@ -582,18 +598,27 @@ const AdminPanel = () => {
                                 <th className="px-8 py-5">Category</th>
                                 <th className="px-8 py-5">Contact</th>
                                 <th className="px-8 py-5">Status</th>
-                                <th className="px-8 py-5 text-right">Actions</th>
+                                <th className="px-8 py-5 text-right">
+                                  Actions
+                                </th>
                               </tr>
                             </thead>
                             <tbody className="divide-y divide-white/5">
                               {filtered.map((item) => (
-                                <tr key={item._id} className="hover:bg-[#8b5cf6]/[0.03] transition-colors group">
+                                <tr
+                                  key={item._id}
+                                  className="hover:bg-[#8b5cf6]/[0.03] transition-colors group"
+                                >
                                   <td className="px-8 py-5 max-w-[420px]">
-                                    <div className={`text-[13px] font-bold ${styles.textHead} whitespace-normal`}>
+                                    <div
+                                      className={`text-[13px] font-bold ${styles.textHead} whitespace-normal`}
+                                    >
                                       {item.message}
                                     </div>
                                     <div className="text-[11px] opacity-40 mt-2">
-                                      {new Date(item.createdAt || item.timestamp).toLocaleString()}
+                                      {new Date(
+                                        item.createdAt || item.timestamp,
+                                      ).toLocaleString()}
                                     </div>
                                   </td>
                                   <td className="px-8 py-5">
@@ -605,7 +630,9 @@ const AdminPanel = () => {
                                     {item.email || "Anonymous"}
                                   </td>
                                   <td className="px-8 py-5">
-                                    <span className={`px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest ${item.status === "resolved" ? "bg-emerald-500/10 text-emerald-500" : item.status === "read" ? "bg-cyan-500/10 text-cyan-400" : "bg-amber-500/10 text-amber-500"}`}>
+                                    <span
+                                      className={`px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest ${item.status === "resolved" ? "bg-emerald-500/10 text-emerald-500" : item.status === "read" ? "bg-cyan-500/10 text-cyan-400" : "bg-amber-500/10 text-amber-500"}`}
+                                    >
                                       {item.status}
                                     </span>
                                   </td>

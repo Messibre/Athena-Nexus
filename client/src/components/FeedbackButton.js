@@ -25,7 +25,9 @@ const FeedbackButton = () => {
     if (!isOpen) return undefined;
 
     previousActiveElement.current = document.activeElement;
-    const focusTarget = dialogRef.current?.querySelector("textarea, button, select, input");
+    const focusTarget = dialogRef.current?.querySelector(
+      "textarea, button, select, input",
+    );
     focusTarget?.focus();
 
     const onKeyDown = (event) => {
@@ -144,8 +146,12 @@ const FeedbackButton = () => {
               </button>
             </div>
 
-            <p id="feedback-modal-description" className="mt-3 text-sm opacity-75">
-              Share a bug, suggestion, or praise. No login is required, and your submission is stored anonymously.
+            <p
+              id="feedback-modal-description"
+              className="mt-3 text-sm opacity-75"
+            >
+              Share a bug, suggestion, or praise. No login is required, and your
+              submission is stored anonymously.
             </p>
 
             <form onSubmit={handleSubmit} className="mt-5 space-y-4">
