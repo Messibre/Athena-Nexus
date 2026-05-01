@@ -14,8 +14,40 @@ const getApiErrorMessage = (error) => {
     return "Unable to reach the server. Please check your connection and try again.";
   }
 
+  if (error.code === "ECONNABORTED" || error.message?.includes("timeout")) {
+    return "That request is taking longer than expected. Please try again in a moment.";
+  }
+
+  if (error.response?.status === 400) {
+    return "We couldn't process that request. Please review your details and try again.";
+  }
+
+  if (error.response?.status === 401) {
+    return "Your session has expired. Please sign in again.";
+  }
+
+  if (error.response?.status === 403) {
+    return "You do not have permission to do that.";
+  }
+
   if (error.response?.status === 404) {
-    return "Requested resource was not found.";
+    return "We couldn't find that page or resource.";
+  }
+
+  if (error.response?.status === 409) {
+    return "That item already exists. Try a different value.";
+  }
+
+  if (error.response?.status === 422) {
+    return "Some of the information looks incomplete or invalid.";
+  }
+
+  if (error.response?.status === 429) {
+    return "You're doing that too often. Please wait a moment and try again.";
+  }
+
+  if (error.response?.status >= 500) {
+    return "The server ran into a problem. Please try again shortly.";
   }
 
   return "Something went wrong. Please try again.";
@@ -30,6 +62,7 @@ const emitAppError = (detail) => {
 const api = axios.create({
   baseURL: API_BASE_URL,
   withCredentials: true,
+  timeout: 45000,
   headers: {
     "Content-Type": "application/json",
   },

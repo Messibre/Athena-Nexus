@@ -7,7 +7,7 @@ export const fetchMe = createAsyncThunk("auth/fetchMe", async (_, thunkApi) => {
     return response.data.user;
   } catch (error) {
     return thunkApi.rejectWithValue(
-      error.response?.data?.message || "Failed to fetch user",
+      error.normalizedMessage || error.response?.data?.message || "Failed to fetch user",
     );
   }
 });
@@ -20,7 +20,7 @@ export const login = createAsyncThunk(
       return response.data;
     } catch (error) {
       return thunkApi.rejectWithValue(
-        error.response?.data?.message || "Login failed",
+        error.normalizedMessage || error.response?.data?.message || "Login failed",
       );
     }
   },
@@ -40,7 +40,7 @@ export const signup = createAsyncThunk(
       return response.data;
     } catch (error) {
       return thunkApi.rejectWithValue(
-        error.response?.data?.message || "Failed to create account",
+        error.normalizedMessage || error.response?.data?.message || "Failed to create account",
       );
     }
   },
@@ -54,7 +54,7 @@ export const changePassword = createAsyncThunk(
       return true;
     } catch (error) {
       return thunkApi.rejectWithValue(
-        error.response?.data?.message || "Failed to change password",
+        error.normalizedMessage || error.response?.data?.message || "Failed to change password",
       );
     }
   },

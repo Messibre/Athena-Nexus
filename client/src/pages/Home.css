@@ -1,7 +1,7 @@
 .home-container {
   max-width: 1200px;
   margin: 0 auto;
-  padding: 120px 24px 80px;
+  padding: 104px 24px 80px;
   position: relative;
   z-index: 10;
 }
@@ -49,7 +49,7 @@
 }
 
 .hero-title {
-  font-size: clamp(3.25rem, 11vw, 6.5rem);
+  font-size: clamp(2.8rem, 9vw, 5rem);
   font-weight: 900;
   letter-spacing: -0.05em;
   margin-bottom: 24px;
@@ -105,7 +105,7 @@
 }
 
 .quote-text {
-  font-size: clamp(1.5rem, 4vw, 2.4rem);
+  font-size: clamp(1.25rem, 3vw, 1.9rem);
   font-weight: 700;
   color: #ffffff;
   font-style: italic;
@@ -117,7 +117,7 @@
 .hero-desc {
   max-width: 600px;
   margin: 0 auto 40px;
-  font-size: 1.05rem;
+  font-size: 0.98rem;
   font-weight: 500;
   line-height: 1.55;
   color: #ffffff;
@@ -197,7 +197,7 @@
 }
 
 .feature-card h3 {
-  font-size: 1.35rem;
+  font-size: 1.15rem;
   font-weight: 800;
   margin-bottom: 12px;
   color: var(--primary);
@@ -238,7 +238,7 @@
 }
 
 .stat-number {
-  font-size: 3.75rem;
+  font-size: 3rem;
   font-weight: 900;
   color: var(--primary);
   text-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
@@ -265,7 +265,7 @@
 
 @media (max-width: 768px) {
   .home-container {
-    padding-top: 72px;
+    padding-top: 80px;
   }
 
   .btn-primary,
@@ -275,10 +275,10 @@
   }
 
   .hero-title {
-    font-size: 3.25rem;
+    font-size: 2.8rem;
   }
 
   .quote-text {
-    font-size: 1.5rem;
+    font-size: 1.25rem;
   }
 }

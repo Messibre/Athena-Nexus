@@ -76,7 +76,7 @@ const Login = () => {
         }}
       />
 
-      <div className="relative z-10 max-w-md mx-auto px-4 pt-14 md:pt-16 pb-20">
+      <div className="relative z-10 max-w-md mx-auto px-4 pt-20 md:pt-24 pb-20">
         <div
           className={`rounded-3xl border p-8 md:p-10 shadow-2xl ${theme === "dark" ? "bg-[#120a21]/85 border-[#2e1a47]" : "bg-white/90 border-slate-200"}`}
         >
@@ -84,7 +84,7 @@ const Login = () => {
             Athena Nexus
           </p>
           <h2
-            className={`text-center text-4xl md:text-5xl font-['Fraunces'] font-black tracking-tight mb-3 ${theme === "dark" ? "text-white" : "text-slate-900"}`}
+            className={`text-center text-3xl md:text-4xl font-['Fraunces'] font-black tracking-tight mb-3 ${theme === "dark" ? "text-white" : "text-slate-900"}`}
           >
             Login
           </h2>
