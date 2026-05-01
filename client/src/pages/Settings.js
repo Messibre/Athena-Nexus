@@ -68,6 +68,20 @@ const getErrorMessage = (error, fallback) => {
     return error.message || fallback;
   }
 
+  const status = error?.response?.status;
+  if (status === 400)
+    return "Please check the details you entered and try again.";
+  if (status === 401) return "Your session ended. Please sign in again.";
+  if (status === 403) return "You are not allowed to make that change.";
+  if (status === 404) return "We couldn't find the item you were looking for.";
+  if (status === 409)
+    return "That value is already in use. Try a different one.";
+  if (status === 422)
+    return "Some of the information looks incomplete or invalid.";
+  if (status === 429)
+    return "You're doing that too quickly. Please wait a moment.";
+  if (status >= 500) return "The server had a problem. Please try again soon.";
+
   return fallback;
 };
 
@@ -333,14 +347,14 @@ const Settings = () => {
     setProfileForm({ ...profileForm, members: newMembers });
   };
 
-  const panelClass = `rounded-2xl border p-5 md:p-6 shadow-2xl ${theme === "dark" ? "bg-[#120a21]/85 border-[#2e1a47]" : "bg-white/90 border-slate-200"}`;
+  const panelClass = `rounded-2xl border p-4 md:p-5 shadow-2xl ${theme === "dark" ? "bg-[#120a21]/85 border-[#2e1a47]" : "bg-white/90 border-slate-200"}`;
   const inputClass = `w-full p-3 rounded-xl border outline-none transition-all ${
     theme === "dark"
       ? "bg-black/30 border-[#2e1a47] text-white focus:border-[#8b5cf6]"
       : "bg-white border-slate-200 text-slate-900 focus:border-[#8b5cf6]"
   }`;
   const labelClass =
-    "text-xs font-semibold uppercase tracking-wide opacity-70 block mb-1";
+    "text-[11px] font-black uppercase tracking-[0.2em] opacity-70 block mb-1.5";
   const textareaClass = `${inputClass} min-h-[100px] resize-y`;
 
   const renderImagePreview = (preview, label) => {
@@ -385,12 +399,12 @@ const Settings = () => {
       />
 
       <div className="relative z-10 max-w-5xl mx-auto px-4 pt-10 md:pt-12 pb-20">
-        <div className="mb-6">
+        <div className="mb-4">
           <p className="text-xs font-black uppercase tracking-[0.35em] text-[#8b5cf6] mb-2">
             Account Control
           </p>
           <h1
-            className={`text-2xl md:text-2xl font-['Fraunces'] font-black tracking-tight ${theme === "dark" ? "text-white" : "text-slate-900"}`}
+            className={`text-xl md:text-2xl font-['Fraunces'] font-black tracking-tight ${theme === "dark" ? "text-white" : "text-slate-900"}`}
           >
             Team Settings
           </h1>
@@ -414,7 +428,7 @@ const Settings = () => {
         {activeTab === "profile" && (
           <div className={panelClass}>
             <h2
-              className={`text-2xl md:text-2xl font-['Fraunces'] font-black tracking-tight mb-6 ${theme === "dark" ? "text-white" : "text-slate-900"}`}
+              className={`text-xl md:text-2xl font-['Fraunces'] font-black tracking-tight mb-5 ${theme === "dark" ? "text-white" : "text-slate-900"}`}
             >
               Update Team Profile
             </h2>
@@ -707,7 +721,7 @@ const Settings = () => {
         {activeTab === "password" && (
           <div className={panelClass}>
             <h2
-              className={`text-2xl md:text-2xl font-['Fraunces'] font-black tracking-tight mb-6 ${theme === "dark" ? "text-white" : "text-slate-900"}`}
+              className={`text-xl md:text-2xl font-['Fraunces'] font-black tracking-tight mb-5 ${theme === "dark" ? "text-white" : "text-slate-900"}`}
             >
               Change Password
             </h2>

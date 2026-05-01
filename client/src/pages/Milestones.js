@@ -1,7 +1,6 @@
 import React, { useEffect, useMemo, useState, useRef } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Link } from "react-router-dom";
-import { motion } from "framer-motion";
 import { CheckCircle2, ChevronRight, ChevronLeft, Lock } from "lucide-react";
 import Navbar from "../components/Navbar";
 import { selectUser } from "../redux/selectors/authSelectors";
@@ -406,6 +405,7 @@ const Milestones = () => {
                       key={lvl._id}
                       onClick={() => {
                         setActiveLevelId(lvl._id);
+                        setActiveChallengeId("");
                         setMobileStep("challenges");
                       }}
                       className={`w-full text-left px-6 py-2 text-[11px] border-l-2 transition-all ${activeLevelId === lvl._id ? "border-[#8b5cf6]" : "border-transparent " + styles.textDim}`}
@@ -463,16 +463,12 @@ const Milestones = () => {
           </div>
 
           <div
-            className={`${mobileStep === "detail" ? "flex" : "hidden md:flex"} flex-1 overflow-y-auto p-6 md:p-12`}
+            className={`${mobileStep === "detail" ? "flex" : "hidden md:flex"} flex-1 overflow-y-auto p-6 md:p-12 min-h-[520px]`}
           >
             {activeChallenge ? (
-              <motion.div
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="max-w-3xl mx-auto w-full"
-              >
+              <div className="max-w-3xl mx-auto w-full">
                 <div
-                  className={`rounded-[28px] border p-6 md:p-8 shadow-2xl ${styles.bgSide} ${styles.border}`}
+                  className={`rounded-[28px] border p-6 md:p-8 shadow-2xl min-h-[420px] ${styles.bgSide} ${styles.border}`}
                 >
                   <span
                     className="text-[10px] font-black uppercase tracking-[0.35em]"
@@ -560,9 +556,9 @@ const Milestones = () => {
                     )}
                   </div>
                 </div>
-              </motion.div>
+              </div>
             ) : (
-              <div className="max-w-2xl mx-auto w-full text-[13px] opacity-60">
+              <div className="max-w-2xl mx-auto w-full min-h-[420px] flex items-center justify-center text-[13px] opacity-60 text-center px-4">
                 Select a challenge to view details and submit your work.
               </div>
             )}

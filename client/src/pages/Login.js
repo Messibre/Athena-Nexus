@@ -76,15 +76,15 @@ const Login = () => {
         }}
       />
 
-      <div className="relative z-10 max-w-md mx-auto px-4 pt-20 md:pt-24 pb-20">
+      <div className="relative z-10 max-w-md mx-auto px-4 pt-20 md:pt-24 pb-18">
         <div
-          className={`rounded-3xl border p-8 md:p-10 shadow-2xl ${theme === "dark" ? "bg-[#120a21]/85 border-[#2e1a47]" : "bg-white/90 border-slate-200"}`}
+          className={`rounded-3xl border p-6 md:p-8 shadow-2xl ${theme === "dark" ? "bg-[#120a21]/85 border-[#2e1a47]" : "bg-white/90 border-slate-200"}`}
         >
           <p className="text-[10px] font-black uppercase tracking-[0.35em] text-[#8b5cf6] text-center mb-3">
             Athena Nexus
           </p>
           <h2
-            className={`text-center text-3xl md:text-4xl font-['Fraunces'] font-black tracking-tight mb-3 ${theme === "dark" ? "text-white" : "text-slate-900"}`}
+            className={`text-center text-2xl md:text-3xl font-['Fraunces'] font-black tracking-tight mb-3 ${theme === "dark" ? "text-white" : "text-slate-900"}`}
           >
             Login
           </h2>
@@ -96,14 +96,14 @@ const Login = () => {
             <button
               type="button"
               onClick={() => handleOAuthLogin("google")}
-              className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-3 text-xs font-black uppercase tracking-[0.2em] text-slate-900 transition-all hover:border-[#8b5cf6] hover:text-[#8b5cf6]"
+              className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-[11px] font-black uppercase tracking-[0.18em] text-slate-900 transition-all hover:border-[#8b5cf6] hover:text-[#8b5cf6]"
             >
               <Chrome size={15} /> Google
             </button>
             <button
               type="button"
               onClick={() => handleOAuthLogin("github")}
-              className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-3 text-xs font-black uppercase tracking-[0.2em] text-slate-900 transition-all hover:border-[#8b5cf6] hover:text-[#8b5cf6]"
+              className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-[11px] font-black uppercase tracking-[0.18em] text-slate-900 transition-all hover:border-[#8b5cf6] hover:text-[#8b5cf6]"
             >
               <Github size={15} /> GitHub
             </button>
@@ -156,7 +156,7 @@ const Login = () => {
 
             <button
               type="submit"
-              className="w-full py-4 rounded-xl bg-[#8b5cf6] hover:bg-[#7c3aed] text-white font-black uppercase tracking-[0.2em] transition-all shadow-xl shadow-[#8b5cf6]/30 inline-flex items-center justify-center gap-2"
+              className="w-full py-3.5 rounded-xl bg-[#8b5cf6] hover:bg-[#7c3aed] text-white text-sm font-black uppercase tracking-[0.18em] transition-all shadow-xl shadow-[#8b5cf6]/30 inline-flex items-center justify-center gap-2"
               disabled={actionLoading}
             >
               <LogIn size={15} />

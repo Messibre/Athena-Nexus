@@ -29,17 +29,17 @@ const MiniModal = ({ open, title = "Notice", message, onClose }) => {
       onClick={onClose}
     >
       <div
-        className="w-full max-w-sm rounded-2xl border border-white/20 bg-[#1a0f2e] p-4 text-left shadow-2xl"
+        className="w-full max-w-xs rounded-2xl border border-white/20 bg-[#1a0f2e] p-3.5 text-left shadow-2xl"
         onClick={(event) => event.stopPropagation()}
       >
-        <h3 className="text-sm font-black uppercase tracking-wide text-white">
+        <h3 className="text-xs font-black uppercase tracking-[0.28em] text-white">
           {title}
         </h3>
         <p className="mt-2 text-sm leading-relaxed text-slate-200">{message}</p>
-        <div className="mt-4 flex justify-end">
+        <div className="mt-3 flex justify-end">
           <button
             onClick={onClose}
-            className="rounded-xl border border-white/30 px-4 py-2 text-xs font-black uppercase tracking-wide text-white transition-all hover:bg-white hover:text-black"
+            className="rounded-xl border border-white/30 px-3 py-2 text-[10px] font-black uppercase tracking-wider text-white transition-all hover:bg-white hover:text-black"
           >
             Close
           </button>

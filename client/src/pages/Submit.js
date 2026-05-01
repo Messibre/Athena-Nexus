@@ -214,24 +214,27 @@ const Submit = () => {
 
       <div className="relative z-10 max-w-3xl mx-auto px-4 pt-10 md:pt-12 pb-20">
         <div
-          className={`rounded-3xl border p-6 md:p-8 shadow-2xl ${theme === "dark" ? "bg-[#120a21]/85 border-[#2e1a47]" : "bg-white/90 border-slate-200"}`}
+          className={`rounded-3xl border p-5 md:p-6 shadow-2xl ${theme === "dark" ? "bg-[#120a21]/85 border-[#2e1a47]" : "bg-white/90 border-slate-200"}`}
         >
           <p className="text-[10px] font-black uppercase tracking-[0.35em] text-[#8b5cf6] mb-2">
             Weekly Workflow
           </p>
           <h2
-            className={`text-4xl md:text-5xl font-['Fraunces'] font-black tracking-tight mb-6 ${theme === "dark" ? "text-white" : "text-slate-900"}`}
+            className={`text-3xl md:text-4xl font-['Fraunces'] font-black tracking-tight mb-5 ${theme === "dark" ? "text-white" : "text-slate-900"}`}
           >
             {submissionId ? "Update Your Submission" : "Submit Your Project"}
           </h2>
 
           {!isAuthenticated ? (
-            <div className="rounded-2xl border p-5 md:p-6 bg-black/5 dark:bg-white/5">
-              <p className={`text-lg font-black ${theme === "dark" ? "text-white" : "text-slate-900"}`}>
+            <div className="rounded-2xl border p-4 md:p-5 bg-black/5 dark:bg-white/5">
+              <p
+                className={`text-lg font-black ${theme === "dark" ? "text-white" : "text-slate-900"}`}
+              >
                 Log in to submit
               </p>
               <p className="mt-2 opacity-70 max-w-2xl">
-                You can browse the current challenge freely, but submissions are reserved for signed-in teams.
+                You can browse the current challenge freely, but submissions are
+                reserved for signed-in teams.
               </p>
               <div className="mt-5 flex flex-wrap gap-3">
                 <Link
@@ -250,113 +253,113 @@ const Submit = () => {
             </div>
           ) : (
             <form onSubmit={handleSubmit}>
-            <div className="form-group">
-              <label className={labelClass}>Week *</label>
-              <select
-                className={inputClass}
-                value={selectedWeek}
-                onChange={(e) => setSelectedWeek(e.target.value)}
-                required
-                disabled={!!submissionId}
-              >
-                <option value="">Select a week</option>
-                {weeks.map((week) => (
-                  <option key={week._id} value={week._id}>
-                    Week {week.week_number}: {week.title || "Untitled"}
-                  </option>
-                ))}
-              </select>
-              {submissionId && (
-                <small className="opacity-60 text-xs">
-                  Week cannot be changed when updating a submission
-                </small>
-              )}
-            </div>
-
-            <div className="form-group">
-              <label className={labelClass}>GitHub Repository URL *</label>
-              <input
-                type="url"
-                className={inputClass}
-                value={githubRepo}
-                onChange={(e) => setGithubRepo(e.target.value)}
-                placeholder="https://github.com/owner/repo"
-                required
-              />
-              <small className="opacity-60 text-xs">
-                Format: https://github.com/owner/repo
-              </small>
-            </div>
-
-            <div className="form-group">
-              <label className={labelClass}>Live Demo URL</label>
-              <input
-                type="url"
-                className={inputClass}
-                value={liveDemo}
-                onChange={(e) => setLiveDemo(e.target.value)}
-                placeholder="https://your-demo.netlify.app"
-              />
-              <small className="opacity-60 text-xs">
-                GitHub Pages, Netlify, Vercel, etc.
-              </small>
-            </div>
-
-            <div className="form-group">
-              <label className={labelClass}>
-                Description (max 300 characters)
-              </label>
-              <textarea
-                className={`${inputClass} min-h-[120px]`}
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                maxLength={300}
-                placeholder="Brief description of your project..."
-              />
-              <small className="opacity-60 text-xs">
-                {description.length}/300 characters
-              </small>
-            </div>
-
-            <div className="form-group">
-              <label className={labelClass}>Tags</label>
-              <div className="flex gap-3 flex-wrap">
-                {["web", "mobile", "uiux"].map((tag) => (
-                  <label
-                    key={tag}
-                    className={`flex items-center cursor-pointer px-4 py-2 rounded-xl border text-xs font-black uppercase tracking-wider transition-all ${
-                      tags.includes(tag)
-                        ? "border-[#8b5cf6] bg-[#8b5cf6]/15 text-[#8b5cf6]"
-                        : theme === "dark"
-                          ? "border-[#2e1a47] bg-black/30 text-slate-300"
-                          : "border-slate-200 bg-white text-slate-600"
-                    }`}
-                  >
-                    <input
-                      type="checkbox"
-                      checked={tags.includes(tag)}
-                      onChange={() => handleTagChange(tag)}
-                      style={{ marginRight: "8px" }}
-                    />
-                    {tag.toUpperCase()}
-                  </label>
-                ))}
+              <div className="form-group">
+                <label className={labelClass}>Week *</label>
+                <select
+                  className={inputClass}
+                  value={selectedWeek}
+                  onChange={(e) => setSelectedWeek(e.target.value)}
+                  required
+                  disabled={!!submissionId}
+                >
+                  <option value="">Select a week</option>
+                  {weeks.map((week) => (
+                    <option key={week._id} value={week._id}>
+                      Week {week.week_number}: {week.title || "Untitled"}
+                    </option>
+                  ))}
+                </select>
+                {submissionId && (
+                  <small className="opacity-60 text-xs">
+                    Week cannot be changed when updating a submission
+                  </small>
+                )}
               </div>
-            </div>
 
-            <button
-              type="submit"
-              className="w-full mt-4 py-4 rounded-xl bg-[#8b5cf6] hover:bg-[#7c3aed] text-white font-black uppercase tracking-[0.2em] transition-all shadow-xl shadow-[#8b5cf6]/30"
-              disabled={loading || actionLoading}
-            >
-              {loading || actionLoading
-                ? "Submitting..."
-                : submissionId
-                  ? "Update Submission"
-                  : "Submit Project"}
-            </button>
-              </form>
-            )}
+              <div className="form-group">
+                <label className={labelClass}>GitHub Repository URL *</label>
+                <input
+                  type="url"
+                  className={inputClass}
+                  value={githubRepo}
+                  onChange={(e) => setGithubRepo(e.target.value)}
+                  placeholder="https://github.com/owner/repo"
+                  required
+                />
+                <small className="opacity-60 text-xs">
+                  Format: https://github.com/owner/repo
+                </small>
+              </div>
+
+              <div className="form-group">
+                <label className={labelClass}>Live Demo URL</label>
+                <input
+                  type="url"
+                  className={inputClass}
+                  value={liveDemo}
+                  onChange={(e) => setLiveDemo(e.target.value)}
+                  placeholder="https://your-demo.netlify.app"
+                />
+                <small className="opacity-60 text-xs">
+                  GitHub Pages, Netlify, Vercel, etc.
+                </small>
+              </div>
+
+              <div className="form-group">
+                <label className={labelClass}>
+                  Description (max 300 characters)
+                </label>
+                <textarea
+                  className={`${inputClass} min-h-[120px]`}
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                  maxLength={300}
+                  placeholder="Brief description of your project..."
+                />
+                <small className="opacity-60 text-xs">
+                  {description.length}/300 characters
+                </small>
+              </div>
+
+              <div className="form-group">
+                <label className={labelClass}>Tags</label>
+                <div className="flex gap-3 flex-wrap">
+                  {["web", "mobile", "uiux"].map((tag) => (
+                    <label
+                      key={tag}
+                      className={`flex items-center cursor-pointer px-4 py-2 rounded-xl border text-xs font-black uppercase tracking-wider transition-all ${
+                        tags.includes(tag)
+                          ? "border-[#8b5cf6] bg-[#8b5cf6]/15 text-[#8b5cf6]"
+                          : theme === "dark"
+                            ? "border-[#2e1a47] bg-black/30 text-slate-300"
+                            : "border-slate-200 bg-white text-slate-600"
+                      }`}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={tags.includes(tag)}
+                        onChange={() => handleTagChange(tag)}
+                        style={{ marginRight: "8px" }}
+                      />
+                      {tag.toUpperCase()}
+                    </label>
+                  ))}
+                </div>
+              </div>
+
+              <button
+                type="submit"
+                className="w-full mt-4 py-4 rounded-xl bg-[#8b5cf6] hover:bg-[#7c3aed] text-white font-black uppercase tracking-[0.2em] transition-all shadow-xl shadow-[#8b5cf6]/30"
+                disabled={loading || actionLoading}
+              >
+                {loading || actionLoading
+                  ? "Submitting..."
+                  : submissionId
+                    ? "Update Submission"
+                    : "Submit Project"}
+              </button>
+            </form>
+          )}
         </div>
       </div>
 

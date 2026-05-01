@@ -126,7 +126,7 @@ const Dashboard = () => {
 
       <div className="relative z-10 max-w-6xl mx-auto px-4 pt-10 md:pt-12 pb-20 space-y-6">
         <div
-          className={`rounded-3xl border p-6 md:p-8 shadow-xs ${theme === "dark" ? "bg-[#120a21]/85 border-[#2e1a47]" : "bg-white/90 border-slate-200"}`}
+          className={`rounded-3xl border p-5 md:p-6 shadow-xs ${theme === "dark" ? "bg-[#120a21]/85 border-[#2e1a47]" : "bg-white/90 border-slate-200"}`}
         >
           <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-5">
             <div>
@@ -150,7 +150,7 @@ const Dashboard = () => {
         </div>
 
         <div
-          className={`rounded-3xl border p-6 md:p-8 shadow-xs ${theme === "dark" ? "bg-[#120a21]/85 border-[#2e1a47]" : "bg-white/90 border-slate-200"}`}
+          className={`rounded-3xl border p-5 md:p-6 shadow-xs ${theme === "dark" ? "bg-[#120a21]/85 border-[#2e1a47]" : "bg-white/90 border-slate-200"}`}
         >
           <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4 mb-6 pb-6 border-b border-white/10">
             <div>
@@ -178,7 +178,7 @@ const Dashboard = () => {
           ) : (
             <div className="grid grid-cols-1 xl:grid-cols-[1.3fr_0.7fr] gap-5">
               <div
-                className={`relative overflow-hidden rounded-3xl border p-6 md:p-7 ${theme === "dark" ? "border-[#3b225d] bg-gradient-to-br from-[#6d28d9] via-[#7c3aed] to-[#4c1d95] text-white" : "border-slate-200 bg-gradient-to-br from-[#8b5cf6] via-[#7c3aed] to-[#5b21b6] text-white"}`}
+                className={`relative overflow-hidden rounded-3xl border p-5 md:p-7 ${theme === "dark" ? "border-[#3b225d] bg-gradient-to-br from-[#6d28d9] via-[#7c3aed] to-[#4c1d95] text-white" : "border-slate-200 bg-gradient-to-br from-[#8b5cf6] via-[#7c3aed] to-[#5b21b6] text-white"}`}
               >
                 <div className="absolute inset-0 opacity-20 bg-[radial-gradient(circle_at_top_right,_rgba(255,255,255,0.6),_transparent_35%),radial-gradient(circle_at_bottom_left,_rgba(255,255,255,0.25),_transparent_28%)]" />
                 <div className="relative flex flex-col h-full">
@@ -204,36 +204,38 @@ const Dashboard = () => {
                     </div>
                   </div>
 
-                  <div className="mt-8 grid grid-cols-1 xs:grid-cols-3 gap-3">
-                    <div className="rounded-xs border border-white/15 bg-white/10 backdrop-blur-xs p-4">
+                  <div className="mt-6 grid grid-cols-1 xs:grid-cols-3 gap-3">
+                    <div className="rounded-xs border border-white/15 bg-white/10 backdrop-blur-xs p-3.5">
                       <p className="text-xs uppercase tracking-[0.35em] text-white/70">
                         Team rank
                       </p>
-                      <p className="mt-2 text-3xl font-black">
+                      <p className="mt-2 text-2xl md:text-3xl font-black">
                         {currentTeam?.rank || "--"}
                       </p>
                     </div>
-                    <div className="rounded-xs border border-white/15 bg-white/10 backdrop-blur-xs p-4">
+                    <div className="rounded-xs border border-white/15 bg-white/10 backdrop-blur-xs p-3.5">
                       <p className="text-xs uppercase tracking-[0.35em] text-white/70">
                         Total points
                       </p>
-                      <p className="mt-2 text-3xl font-black">
+                      <p className="mt-2 text-2xl md:text-3xl font-black">
                         {currentTeam?.points || 0}
                       </p>
                     </div>
-                    <div className="rounded-xs border border-white/15 bg-white/10 backdrop-blur-xs p-4">
+                    <div className="rounded-xs border border-white/15 bg-white/10 backdrop-blur-xs p-3.5">
                       <p className="text-xs uppercase tracking-[0.35em] text-white/70">
                         Top score
                       </p>
-                      <p className="mt-2 text-3xl font-black">{topScore}</p>
+                      <p className="mt-2 text-2xl md:text-3xl font-black">
+                        {topScore}
+                      </p>
                     </div>
                   </div>
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 xl:grid-cols-1 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-1 gap-3 md:gap-4">
                 <div
-                  className={`rounded-3xl border p-5 ${theme === "dark" ? "border-[#2e1a47] bg-[#0a0514]/65" : "border-slate-200 bg-white"}`}
+                  className={`rounded-3xl border p-4 md:p-5 ${theme === "dark" ? "border-[#2e1a47] bg-[#0a0514]/65" : "border-slate-200 bg-white"}`}
                 >
                   <div className="flex items-center gap-3">
                     <div className="flex h-11 w-11 items-center justify-center rounded-xs bg-amber-500/15 text-amber-500">
@@ -244,7 +246,7 @@ const Dashboard = () => {
                         #1 Leader
                       </p>
                       <p
-                        className={`mt-1 text-lg font-black ${theme === "dark" ? "text-white" : "text-slate-900"}`}
+                        className={`mt-1 text-base font-black ${theme === "dark" ? "text-white" : "text-slate-900"}`}
                       >
                         {leaderboard[0]?.displayName || "No leader"}
                       </p>
@@ -257,7 +259,7 @@ const Dashboard = () => {
                 </div>
 
                 <div
-                  className={`rounded-3xl border p-5 ${theme === "dark" ? "border-[#2e1a47] bg-[#0a0514]/65" : "border-slate-200 bg-white"}`}
+                  className={`rounded-3xl border p-4 md:p-5 ${theme === "dark" ? "border-[#2e1a47] bg-[#0a0514]/65" : "border-slate-200 bg-white"}`}
                 >
                   <div className="flex items-center gap-3">
                     <div className="flex h-11 w-11 items-center justify-center rounded-xs bg-[#8b5cf6]/15 text-[#8b5cf6]">
@@ -268,7 +270,7 @@ const Dashboard = () => {
                         Badge tier
                       </p>
                       <p
-                        className={`mt-1 text-lg font-black ${theme === "dark" ? "text-white" : "text-slate-900"}`}
+                        className={`mt-1 text-base font-black ${theme === "dark" ? "text-white" : "text-slate-900"}`}
                       >
                         {badgeLabel(currentTeam?.badge)}
                       </p>
@@ -301,7 +303,7 @@ const Dashboard = () => {
                         </div>
                         <div className="min-w-0">
                           <div
-                            className={`text-lg font-black truncate ${theme === "dark" ? "text-white" : "text-slate-900"}`}
+                            className={`text-base md:text-lg font-black truncate ${theme === "dark" ? "text-white" : "text-slate-900"}`}
                           >
                             {entry.displayName}
                           </div>
@@ -338,13 +340,13 @@ const Dashboard = () => {
         </div>
 
         <div
-          className={`rounded-3xl border p-6 md:p-8 shadow-xs ${theme === "dark" ? "bg-[#120a21]/85 border-[#2e1a47]" : "bg-white/90 border-slate-200"}`}
+          className={`rounded-3xl border p-4 md:p-6 shadow-xs ${theme === "dark" ? "bg-[#120a21]/85 border-[#2e1a47]" : "bg-white/90 border-slate-200"}`}
         >
           <div
-            className={`mb-5 pb-5 border-b ${theme === "dark" ? "border-white/10" : "border-slate-200"}`}
+            className={`mb-4 pb-4 border-b ${theme === "dark" ? "border-white/10" : "border-slate-200"}`}
           >
             <h2
-              className={`text-3xl font-['Fraunces'] font-black tracking-tight ${theme === "dark" ? "text-white" : "text-slate-900"}`}
+              className={`text-2xl md:text-3xl font-['Fraunces'] font-black tracking-tight ${theme === "dark" ? "text-white" : "text-slate-900"}`}
             >
               Your Submissions
             </h2>
@@ -359,7 +361,7 @@ const Dashboard = () => {
               {submissions.map((submission) => (
                 <div
                   key={submission._id}
-                  className={`p-5 rounded-xs border ${theme === "dark" ? "border-[#2e1a47] bg-[#0a0514]/65" : "border-slate-200 bg-slate-50/90"}`}
+                  className={`p-4 md:p-5 rounded-xs border ${theme === "dark" ? "border-[#2e1a47] bg-[#0a0514]/65" : "border-slate-200 bg-slate-50/90"}`}
                 >
                   <div className="flex flex-col xs:flex-row xs:justify-between xs:items-start gap-3 mb-3">
                     <div>
