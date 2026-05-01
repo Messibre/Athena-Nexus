@@ -153,6 +153,16 @@ Client (`client/package.json`):
 - `vercel.json` routes `/api/*` to `server/index.js`
 - Static client is built from `client/package.json` with `distDir: build`
 - Non-API routes are rewritten to SPA entry (`/client/index.html`)
+- Crawlability files are served from `client/public/robots.txt` and `client/public/sitemap.xml`
+- Route metadata is updated client-side through `client/src/components/SeoManager.js`
+- Static assets are sent with long-lived cache headers through `vercel.json`
+
+## UX and Accessibility Notes
+
+- The client includes a visible skip link and keyboard-friendly focus styles.
+- Key pages use route-specific titles and descriptions for better discoverability.
+- The app includes a no-JavaScript fallback message for progressive enhancement.
+- Shared error surfaces use plain-language copy instead of raw status codes.
 
 ## Admin User Bootstrap
 

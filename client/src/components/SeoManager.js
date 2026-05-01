@@ -53,29 +53,59 @@ const getMetaForPath = (pathname) => {
   );
 };
 
+const buildCanonicalUrl = (pathname) => {
+  if (typeof window === "undefined") {
+    return pathname;
+  }
+
+  return `${window.location.origin}${pathname}`;
+};
+
+const upsertMetaTag = (selector, attribute, value, createAttributes = {}) => {
+  let tag = document.querySelector(selector);
+  if (!tag) {
+    tag = document.createElement("meta");
+    Object.entries(createAttributes).forEach(([key, entryValue]) => {
+      tag.setAttribute(key, entryValue);
+    });
+    document.head.appendChild(tag);
+  }
+
+  tag.setAttribute(attribute, value);
+};
+
+const upsertLinkTag = (selector, attributes) => {
+  let tag = document.querySelector(selector);
+  if (!tag) {
+    tag = document.createElement("link");
+    document.head.appendChild(tag);
+  }
+
+  Object.entries(attributes).forEach(([attribute, value]) => {
+    tag.setAttribute(attribute, value);
+  });
+};
+
 const SeoManager = () => {
   const location = useLocation();
 
   useEffect(() => {
     const { title, description } = getMetaForPath(location.pathname);
+    const canonicalUrl = buildCanonicalUrl(location.pathname);
     document.title = title;
 
-    const descriptionTag = document.querySelector('meta[name="description"]');
-    if (descriptionTag) {
-      descriptionTag.setAttribute("content", description);
-    }
-
-    const ogTitleTag = document.querySelector('meta[property="og:title"]');
-    if (ogTitleTag) {
-      ogTitleTag.setAttribute("content", title);
-    }
-
-    const ogDescriptionTag = document.querySelector(
-      'meta[property="og:description"]',
-    );
-    if (ogDescriptionTag) {
-      ogDescriptionTag.setAttribute("content", description);
-    }
+    upsertMetaTag('meta[name="description"]', "content", description);
+    upsertMetaTag('meta[property="og:title"]', "content", title);
+    upsertMetaTag('meta[property="og:description"]', "content", description);
+    upsertMetaTag('meta[property="og:url"]', "content", canonicalUrl);
+    upsertMetaTag('meta[name="twitter:title"]', "content", title);
+    upsertMetaTag('meta[name="twitter:description"]', "content", description);
+    upsertMetaTag('meta[name="twitter:image"]', "content", `${window.location.origin}/athena.jpg`);
+    upsertMetaTag('meta[property="og:image"]', "content", `${window.location.origin}/athena.jpg`);
+    upsertLinkTag('link[rel="canonical"]', {
+      rel: "canonical",
+      href: canonicalUrl,
+    });
   }, [location.pathname]);
 
   return null;
