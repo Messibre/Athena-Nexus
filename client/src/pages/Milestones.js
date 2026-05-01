@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState, useRef } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
@@ -20,6 +20,7 @@ import {
   selectMilestoneLevels,
   selectMilestoneChallenges,
   selectMyMilestoneSubmissions,
+  selectMilestoneProgress,
 } from "../redux/selectors/milestonesSelectors";
 import MiniModal from "../components/MiniModal";
 
@@ -79,14 +80,6 @@ const Milestones = () => {
     setActiveCategoryId(categories[0]._id);
   }, [categories, activeCategoryId]);
 
-  useEffect(() => {
-    if (!activeCategoryId) return;
-    dispatch(fetchMilestoneLevels(activeCategoryId));
-    if (isAuthenticated) {
-      dispatch(fetchMilestoneProgress({ categoryId: activeCategoryId }));
-    }
-  }, [dispatch, activeCategoryId, isAuthenticated]);
-
   const levels = useSelector((state) =>
     selectMilestoneLevels(state, activeCategoryId),
   );
@@ -94,6 +87,32 @@ const Milestones = () => {
     selectMilestoneChallenges(state, activeLevelId),
   );
   const mySubmissions = useSelector(selectMyMilestoneSubmissions);
+  const progress = useSelector((state) =>
+    selectMilestoneProgress(state, activeCategoryId),
+  );
+
+  // refs to avoid re-dispatching the same fetch repeatedly
+  const lastFetchedLevelsRef = useRef(null);
+  const lastFetchedChallengesRef = useRef(null);
+  const lastFetchedProgressRef = useRef(null);
+
+  useEffect(() => {
+    if (!activeCategoryId) return;
+
+    const hasLevels = Array.isArray(levels) && levels.length > 0;
+    if (!hasLevels && lastFetchedLevelsRef.current !== activeCategoryId) {
+      dispatch(fetchMilestoneLevels(activeCategoryId));
+      lastFetchedLevelsRef.current = activeCategoryId;
+    }
+
+    if (isAuthenticated) {
+      const hasProgress = Array.isArray(progress) && progress.length > 0;
+      if (!hasProgress && lastFetchedProgressRef.current !== activeCategoryId) {
+        dispatch(fetchMilestoneProgress({ categoryId: activeCategoryId }));
+        lastFetchedProgressRef.current = activeCategoryId;
+      }
+    }
+  }, [dispatch, activeCategoryId, isAuthenticated, levels, progress]);
 
   const activeCategory = categories.find((c) => c._id === activeCategoryId);
   const activeLevel = levels.find((l) => l._id === activeLevelId);
@@ -187,7 +206,9 @@ const Milestones = () => {
 
   useEffect(() => {
     if (!activeLevelId) return;
+    if (lastFetchedChallengesRef.current === activeLevelId) return;
     dispatch(fetchMilestoneChallenges(activeLevelId));
+    lastFetchedChallengesRef.current = activeLevelId;
   }, [dispatch, activeLevelId]);
 
   useEffect(() => {
@@ -300,16 +321,16 @@ const Milestones = () => {
     bgMain: "transparent",
     bgSide:
       theme === "dark"
-        ? "bg-[#120a21]/80 backdrop-blur-md"
-        : "bg-white/90 backdrop-blur-md",
+        ? "bg-[#120a21]/70 backdrop-blur-lg"
+        : "bg-white/72 backdrop-blur-lg",
     bgMid:
       theme === "dark"
-        ? "bg-[#1a0f2e]/60 backdrop-blur-md"
-        : "bg-slate-50/90 backdrop-blur-md",
-    border: theme === "dark" ? "border-[#2e1a47]" : "border-slate-200",
+        ? "bg-[#1a0f2e]/48 backdrop-blur-lg"
+        : "bg-white/62 backdrop-blur-lg",
+    border: theme === "dark" ? "border-[#2e1a47]" : "border-slate-200/80",
     textDim: theme === "dark" ? "text-slate-400" : "text-slate-500",
-    textHead: theme === "dark" ? "text-[#f3f4f6]" : "text-slate-900", // Silver/White for dark mode
-    accent: "#8b5cf6", // Primary Purple
+    textHead: theme === "dark" ? "text-[#f8fafc]" : "text-slate-900",
+    accent: "#7c3aed",
   };
 
   return (
@@ -329,6 +350,7 @@ const Milestones = () => {
           backgroundImage: 'url("/pur1.jpg")',
           backgroundSize: "cover",
           backgroundPosition: "center",
+          opacity: theme === "dark" ? 0.28 : 0.16,
           pointerEvents: "none",
         }}
       />
@@ -364,7 +386,7 @@ const Milestones = () => {
 
         <div className="flex-1 flex overflow-hidden">
           <div
-            className={`${mobileStep === "categories" ? "flex" : "hidden md:flex"} w-full md:w-64 flex-col border-r ${styles.bgSide} ${styles.border} overflow-y-auto`}
+            className={`${mobileStep === "categories" ? "flex" : "hidden md:flex"} w-full md:w-56 flex-col border-r ${styles.bgSide} ${styles.border} overflow-y-auto`}
           >
             {categories.map((cat) => (
               <div key={cat._id} className={`border-b ${styles.border}`}>
@@ -400,7 +422,7 @@ const Milestones = () => {
           </div>
 
           <div
-            className={`${mobileStep === "challenges" ? "flex" : "hidden md:flex"} w-full md:w-80 flex-col border-r ${styles.bgMid} ${styles.border} overflow-y-auto`}
+            className={`${mobileStep === "challenges" ? "flex" : "hidden md:flex"} w-full md:w-72 flex-col border-r ${styles.bgMid} ${styles.border} overflow-y-auto`}
           >
             {challenges.length === 0 ? (
               <div className="p-6 text-[12px] opacity-60">
@@ -444,115 +466,99 @@ const Milestones = () => {
             className={`${mobileStep === "detail" ? "flex" : "hidden md:flex"} flex-1 overflow-y-auto p-6 md:p-12`}
           >
             {activeChallenge ? (
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                className="max-w-2xl mx-auto w-full"
+            <motion.div
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="max-w-3xl mx-auto w-full"
+            >
+              <div
+                className={`rounded-[28px] border p-6 md:p-8 shadow-2xl ${styles.bgSide} ${styles.border}`}
               >
                 <span
-                  className="text-[10px] font-bold uppercase tracking-widest"
+                  className="text-[10px] font-black uppercase tracking-[0.35em]"
                   style={{ color: styles.accent }}
                 >
                   Challenge {challenges.indexOf(activeChallenge) + 1}
                 </span>
                 <h2
-                  className={`text-3xl md:text-5xl font-extrabold mt-2 tracking-tighter ${styles.textHead}`}
-                  style={{ fontFamily: "'Fraunces', serif" }}
+                  className={`mt-2 text-2xl md:text-4xl font-bold tracking-tight ${styles.textHead}`}
                 >
-                  {activeChallenge.title.toLowerCase()}
+                  {activeChallenge.title}
                 </h2>
-                {!isAuthenticated && (
+
+                <div className="mt-6 flex items-center justify-between gap-3 text-[10px] font-black uppercase tracking-[0.35em] opacity-70">
+                  <span>Progress</span>
+                  <span>
+                    {completedChallengeCount}/{challenges.length || 0} complete
+                  </span>
+                </div>
+                <div className="mt-3 h-2.5 rounded-full overflow-hidden bg-black/10">
                   <div
-                    className={`mt-6 rounded-2xl border p-4 ${theme === "dark" ? "border-white/10 bg-white/5" : "border-slate-200 bg-white/80"}`}
-                  >
-                    <p className="text-[10px] font-black uppercase tracking-[0.35em] text-[#8b5cf6] mb-2">
-                      Log in to submit
-                    </p>
-                    <p className="text-sm opacity-70">
-                      Browse the full milestone tree freely. Sign in when you
-                      are ready to submit or continue your progress.
-                    </p>
-                    <div className="mt-4 flex flex-wrap gap-3">
+                    className="h-full rounded-full bg-gradient-to-r from-[#7c3aed] to-[#c4b5fd]"
+                    style={{ width: `${completionPercent}%` }}
+                  />
+                </div>
+
+                <p className="mt-5 text-[15px] leading-relaxed opacity-75 max-w-2xl">
+                  {activeChallenge.description}
+                </p>
+
+                <div
+                  className={`mt-8 rounded-2xl border p-5 md:p-6 ${theme === "dark" ? "border-white/10 bg-white/5" : "border-slate-200 bg-white/70"}`}
+                >
+                  {isAuthenticated ? (
+                    <form onSubmit={handleSubmit} className="space-y-4">
+                      <input
+                        type="url"
+                        required
+                        value={repoUrl}
+                        onChange={(e) => setRepoUrl(e.target.value)}
+                        className={`w-full px-4 py-3 text-[14px] rounded-xl border outline-none focus:border-[#7c3aed] transition-all ${styles.border} ${theme === "dark" ? "bg-black/35" : "bg-white"}`}
+                        placeholder="GitHub repo URL"
+                      />
+                      <input
+                        type="url"
+                        value={demoUrl}
+                        onChange={(e) => setDemoUrl(e.target.value)}
+                        className={`w-full px-4 py-3 text-[14px] rounded-xl border outline-none focus:border-[#7c3aed] transition-all ${styles.border} ${theme === "dark" ? "bg-black/35" : "bg-white"}`}
+                        placeholder="Live demo URL"
+                      />
+                      <textarea
+                        value={notes}
+                        onChange={(e) => setNotes(e.target.value)}
+                        rows={4}
+                        className={`w-full px-4 py-3 text-[14px] rounded-xl border outline-none focus:border-[#7c3aed] transition-all resize-none ${styles.border} ${theme === "dark" ? "bg-black/35" : "bg-white"}`}
+                        placeholder="Short notes"
+                      />
+                      <button
+                        type="submit"
+                        className="w-full rounded-xl px-4 py-3 text-xs font-black uppercase tracking-[0.35em] text-white transition-transform hover:scale-[1.01] active:scale-95 shadow-lg shadow-[#7c3aed]/20"
+                        style={{ backgroundColor: styles.accent }}
+                      >
+                        Sync Submission
+                      </button>
+                    </form>
+                  ) : (
+                    <div className="space-y-4">
+                      <div>
+                        <p className="text-xs font-black uppercase tracking-[0.35em] text-[#7c3aed]">
+                          Log in to submit
+                        </p>
+                        <p className="mt-2 text-sm opacity-70">
+                          Sign in to unlock the submission form and save your progress.
+                        </p>
+                      </div>
                       <Link
                         to="/login"
-                        className="inline-flex items-center justify-center rounded-xl bg-[#8b5cf6] px-4 py-2.5 text-xs font-black uppercase tracking-wider text-white transition-all hover:bg-[#7c3aed]"
+                        className="inline-flex items-center justify-center rounded-xl bg-[#7c3aed] px-4 py-3 text-xs font-black uppercase tracking-[0.35em] text-white transition-all hover:bg-[#6d28d9]"
                       >
                         Log in to submit
                       </Link>
-                      <Link
-                        to="/gallery"
-                        className={`inline-flex items-center justify-center rounded-xl border px-4 py-2.5 text-xs font-black uppercase tracking-wider transition-all ${theme === "dark" ? "border-white/10 text-slate-200 hover:bg-white/5" : "border-slate-200 text-slate-700 hover:bg-slate-100"}`}
-                      >
-                        View Gallery
-                      </Link>
                     </div>
-                  </div>
-                )}
-                <div
-                  className={`mt-6 rounded-2xl border p-4 ${theme === "dark" ? "border-white/10 bg-white/5" : "border-slate-200 bg-white/80"}`}
-                >
-                  <div className="flex items-center justify-between gap-3 text-[10px] font-black uppercase tracking-widest opacity-70">
-                    <span>Progress</span>
-                    <span>
-                      {completedChallengeCount}/{challenges.length || 0}{" "}
-                      complete
-                    </span>
-                  </div>
-                  <div className="mt-3 h-2 rounded-full overflow-hidden bg-black/10">
-                    <div
-                      className="h-full rounded-full bg-gradient-to-r from-[#8b5cf6] to-[#c4b5fd]"
-                      style={{ width: `${completionPercent}%` }}
-                    />
-                  </div>
-                  <p className="mt-3 text-[11px] uppercase tracking-widest opacity-60">
-                    The next unlocked challenge is automatically restored when
-                    you return.
-                  </p>
+                  )}
                 </div>
-                <p className="mt-6 text-[14px] leading-relaxed opacity-60">
-                  {activeChallenge.description}
-                </p>
-                {isAuthenticated ? (
-                  <form
-                    onSubmit={handleSubmit}
-                    className={`mt-12 p-6 rounded-2xl border ${styles.bgSide} ${styles.border} space-y-4 shadow-xl`}
-                  >
-                    <input
-                      type="url"
-                      required
-                      value={repoUrl}
-                      onChange={(e) => setRepoUrl(e.target.value)}
-                      className={`w-full p-3 text-[12px] rounded-xl border outline-none focus:border-[#8b5cf6] transition-all ${styles.border} ${theme === "dark" ? "bg-black/40" : "bg-white"}`}
-                      placeholder="Github Repo URL"
-                    />
-                    <button
-                      type="submit"
-                      className="w-full py-4 text-white text-[11px] font-bold uppercase rounded-xl transition-transform hover:scale-[1.02] active:scale-95 shadow-lg shadow-[#8b5cf6]/20"
-                      style={{ backgroundColor: styles.accent }}
-                    >
-                      Sync Submission
-                    </button>
-                  </form>
-                ) : (
-                  <div
-                    className={`mt-12 p-6 rounded-2xl border ${styles.bgSide} ${styles.border} shadow-xl`}
-                  >
-                    <p className="text-xs font-black uppercase tracking-[0.35em] text-[#8b5cf6] mb-2">
-                      Log in to submit
-                    </p>
-                    <p className="text-sm opacity-70">
-                      When you are ready to upload progress, sign in to unlock
-                      the submission form and resume where you left off.
-                    </p>
-                    <Link
-                      to="/login"
-                      className="mt-4 inline-flex items-center justify-center rounded-xl bg-[#8b5cf6] px-4 py-2.5 text-xs font-black uppercase tracking-wider text-white transition-all hover:bg-[#7c3aed]"
-                    >
-                      Log in to submit
-                    </Link>
-                  </div>
-                )}
-              </motion.div>
+              </div>
+            </motion.div>
             ) : (
               <div className="max-w-2xl mx-auto w-full text-[13px] opacity-60">
                 Select a challenge to view details and submit your work.

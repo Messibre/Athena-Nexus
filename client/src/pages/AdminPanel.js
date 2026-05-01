@@ -464,7 +464,7 @@ const AdminPanel = () => {
                 className="space-y-6"
               >
                 {activeTab === "stats" && stats && (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-5 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3">
                     {[
                       {
                         l: "Total Users",
@@ -499,12 +499,14 @@ const AdminPanel = () => {
                     ].map((s, i) => (
                       <div
                         key={i}
-                        className={`p-8 rounded-lg border ${styles.panel} ${styles.border} shadow-sm`}
+                        className={`p-5 rounded-xl border ${styles.panel} ${styles.border} shadow-sm`}
                       >
-                        <p className="text-[10px] font-bold uppercase opacity-30 mb-3 tracking-widest">
+                        <p className="text-[9px] font-bold uppercase opacity-35 mb-2 tracking-[0.28em]">
                           {s.l}
                         </p>
-                        <p className={`text-4xl font-black ${s.c}`}>{s.v}</p>
+                        <p className={`text-3xl md:text-4xl font-black ${s.c}`}>
+                          {s.v}
+                        </p>
                       </div>
                     ))}
                   </div>

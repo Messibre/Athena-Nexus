@@ -2,7 +2,15 @@ import React, { useEffect, useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { motion } from "framer-motion";
-import { Github, ExternalLink, Layers, Trophy, Search, Filter } from "lucide-react";
+import {
+  Github,
+  ExternalLink,
+  Layers,
+  Trophy,
+  Search,
+  Filter,
+  ImageOff,
+} from "lucide-react";
 import Navbar from "../components/Navbar";
 import {
   fetchWeekById,
@@ -66,7 +74,8 @@ const Gallery = () => {
       const techStack = isMilestone
         ? submission.categoryId?.name || "Milestone"
         : (submission.tags || []).join(", ") || "General";
-      const submissionWeekId = submission.week_id?._id || submission.week_id || "";
+      const submissionWeekId =
+        submission.week_id?._id || submission.week_id || "";
 
       return {
         ...submission,
@@ -83,7 +92,11 @@ const Gallery = () => {
         : (submission.user_id?.username || submission.userId?.username || "")
             .toLowerCase()
             .includes(loweredQuery) ||
-          (submission.user_id?.displayName || submission.userId?.displayName || "")
+          (
+            submission.user_id?.displayName ||
+            submission.userId?.displayName ||
+            ""
+          )
             .toLowerCase()
             .includes(loweredQuery) ||
           (submission.description || submission.notes || "")
@@ -115,7 +128,8 @@ const Gallery = () => {
 
   const weekOptions = useMemo(() => {
     const unique = new Map();
-    const source = view === "weekly" ? (weekId ? weekSubmissions : publicSubmissions) : [];
+    const source =
+      view === "weekly" ? (weekId ? weekSubmissions : publicSubmissions) : [];
 
     source.forEach((submission) => {
       const weekValue = submission.week_id?._id || submission.week_id;
@@ -163,7 +177,10 @@ const Gallery = () => {
       setLocalLoading(true);
       setError("");
       try {
-        await Promise.all([dispatch(fetchPublicSubmissions()), dispatch(fetchPublicMilestoneSubmissions())]);
+        await Promise.all([
+          dispatch(fetchPublicSubmissions()),
+          dispatch(fetchPublicMilestoneSubmissions()),
+        ]);
 
         if (weekId) {
           await Promise.all([
@@ -227,24 +244,36 @@ const Gallery = () => {
           <div
             className={`mb-4 flex h-40 w-full items-center justify-center rounded-2xl border border-dashed ${theme === "dark" ? "border-white/10 bg-white/5" : "border-slate-200 bg-slate-100"}`}
           >
-            <div className="text-center">
-              <p className={`text-sm font-black ${styles.textHead}`}>
-                {submission.techStack || "GitHub Preview"}
-              </p>
-              <p className="mt-1 text-[11px] opacity-60">
+            <div className="flex flex-col items-center gap-2 text-center opacity-60">
+              <ImageOff size={26} />
+              <p
+                className={`text-[10px] font-black uppercase tracking-[0.35em] ${styles.textHead}`}
+              >
                 Thumbnail unavailable
               </p>
             </div>
           </div>
         )}
 
-        <p className={`text-[12px] leading-relaxed mb-4 line-clamp-2 flex-grow ${styles.textMain}`}>
+        <p
+          className={`text-[12px] leading-relaxed mb-4 line-clamp-2 flex-grow ${styles.textMain}`}
+        >
           {submission.description || submission.notes || "No documentation."}
         </p>
 
         <div className="mt-auto mb-3 flex items-center justify-between gap-2 text-[11px] font-black uppercase tracking-widest opacity-60">
-          <span>{submission.user_id?.displayName || submission.userId?.displayName || submission.user_id?.username || submission.userId?.username || "Unknown team"}</span>
-          <span>{new Date(submission.createdAt || submission.created_at || Date.now()).toLocaleDateString()}</span>
+          <span>
+            {submission.user_id?.displayName ||
+              submission.userId?.displayName ||
+              submission.user_id?.username ||
+              submission.userId?.username ||
+              "Unknown team"}
+          </span>
+          <span>
+            {new Date(
+              submission.createdAt || submission.created_at || Date.now(),
+            ).toLocaleDateString()}
+          </span>
         </div>
 
         <div className="flex items-center gap-2 pt-4 border-t border-white/5">
@@ -316,16 +345,15 @@ const Gallery = () => {
           </header>
 
           {!isAuthenticated && (
-            <div
-              className={`mb-6 rounded-2xl border p-4 ${styles.card}`}
-            >
+            <div className={`mb-6 rounded-2xl border p-4 ${styles.card}`}>
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <div>
                   <p className="text-[10px] font-black uppercase tracking-[0.35em] text-[#8b5cf6] mb-2">
                     Log in to submit
                   </p>
                   <p className={`text-sm ${styles.textMain}`}>
-                    Browse the full showcase freely, then sign in when you are ready to submit your own project.
+                    Browse the full showcase freely, then sign in when you are
+                    ready to submit your own project.
                   </p>
                 </div>
                 <Link
@@ -367,7 +395,9 @@ const Gallery = () => {
                 Milestones
               </button>
             </div>
-            <div className={`flex-1 relative rounded-xl border ${styles.input}`}>
+            <div
+              className={`flex-1 relative rounded-xl border ${styles.input}`}
+            >
               <Search
                 className="absolute left-4 top-1/2 -translate-y-1/2 opacity-30"
                 size={14}
@@ -385,7 +415,7 @@ const Gallery = () => {
           <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-3">
             {view === "weekly" && (
               <label className={`rounded-xl border px-4 py-3 ${styles.card}`}>
-                <span className="mb-2 flex items-center gap-2 text-[10px] font-black uppercase tracking-widest opacity-60">
+                <span className="mb-2 flex items-center gap-2 text-[9px] font-black uppercase tracking-[0.32em] opacity-60">
                   <Filter size={12} /> Week
                 </span>
                 <select
@@ -404,7 +434,7 @@ const Gallery = () => {
             )}
 
             <label className={`rounded-xl border px-4 py-3 ${styles.card}`}>
-              <span className="mb-2 flex items-center gap-2 text-[10px] font-black uppercase tracking-widest opacity-60">
+              <span className="mb-2 flex items-center gap-2 text-[9px] font-black uppercase tracking-[0.32em] opacity-60">
                 <Filter size={12} /> Tech Stack
               </span>
               <select
@@ -422,7 +452,7 @@ const Gallery = () => {
             </label>
 
             <div className={`rounded-xl border px-4 py-3 ${styles.card}`}>
-              <span className="mb-2 block text-[10px] font-black uppercase tracking-widest opacity-60">
+              <span className="mb-2 block text-[9px] font-black uppercase tracking-[0.32em] opacity-60">
                 Submission Type
               </span>
               <p className={`text-sm font-black ${styles.textHead}`}>
@@ -454,7 +484,7 @@ const Gallery = () => {
             {error}
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {activeSubmissions.map((sub) => (
               <ProjectCard
                 key={sub._id}

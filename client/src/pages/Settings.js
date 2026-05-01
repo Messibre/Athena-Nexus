@@ -333,14 +333,14 @@ const Settings = () => {
     setProfileForm({ ...profileForm, members: newMembers });
   };
 
-  const panelClass = `rounded-3xl border p-5 md:p-6 shadow-2xl ${theme === "dark" ? "bg-[#120a21]/85 border-[#2e1a47]" : "bg-white/90 border-slate-200"}`;
+  const panelClass = `rounded-2xl border p-5 md:p-6 shadow-2xl ${theme === "dark" ? "bg-[#120a21]/85 border-[#2e1a47]" : "bg-white/90 border-slate-200"}`;
   const inputClass = `w-full p-3 rounded-xl border outline-none transition-all ${
     theme === "dark"
       ? "bg-black/30 border-[#2e1a47] text-white focus:border-[#8b5cf6]"
       : "bg-white border-slate-200 text-slate-900 focus:border-[#8b5cf6]"
   }`;
   const labelClass =
-    "text-[10px] font-semibold uppercase tracking-wide opacity-70 block mb-1";
+    "text-xs font-semibold uppercase tracking-wide opacity-70 block mb-1";
   const textareaClass = `${inputClass} min-h-[100px] resize-y`;
 
   const renderImagePreview = (preview, label) => {
@@ -379,18 +379,18 @@ const Settings = () => {
           backgroundImage: 'url("/pur1.jpg")',
           backgroundSize: "cover",
           backgroundPosition: "center",
-          opacity: theme === "dark" ? 0.4 : 0.85,
+          opacity: theme === "dark" ? 0.4 : 0.5,
           pointerEvents: "none",
         }}
       />
 
       <div className="relative z-10 max-w-5xl mx-auto px-4 pt-10 md:pt-12 pb-20">
         <div className="mb-6">
-          <p className="text-[10px] font-black uppercase tracking-[0.35em] text-[#8b5cf6] mb-2">
+          <p className="text-xs font-black uppercase tracking-[0.35em] text-[#8b5cf6] mb-2">
             Account Control
           </p>
           <h1
-            className={`text-3xl md:text-4xl font-['Fraunces'] font-black tracking-tight ${theme === "dark" ? "text-white" : "text-slate-900"}`}
+            className={`text-2xl md:text-2xl font-['Fraunces'] font-black tracking-tight ${theme === "dark" ? "text-white" : "text-slate-900"}`}
           >
             Team Settings
           </h1>
@@ -398,13 +398,13 @@ const Settings = () => {
 
         <div className="flex gap-2 mb-6 flex-wrap">
           <button
-            className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === "profile" ? "bg-[#8b5cf6] text-white shadow-lg shadow-[#8b5cf6]/25" : theme === "dark" ? "bg-white/10 text-slate-300 hover:bg-white/15" : "bg-white text-slate-600 border border-slate-200 hover:bg-slate-100"}`}
+            className={`px-4 py-2 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${activeTab === "profile" ? "bg-[#8b5cf6] text-white shadow-lg shadow-[#8b5cf6]/25" : theme === "dark" ? "bg-white/10 text-slate-300 hover:bg-white/15" : "bg-white text-slate-600 border border-slate-200 hover:bg-slate-100"}`}
             onClick={() => setActiveTab("profile")}
           >
             Profile
           </button>
           <button
-            className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === "password" ? "bg-[#8b5cf6] text-white shadow-lg shadow-[#8b5cf6]/25" : theme === "dark" ? "bg-white/10 text-slate-300 hover:bg-white/15" : "bg-white text-slate-600 border border-slate-200 hover:bg-slate-100"}`}
+            className={`px-4 py-2 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${activeTab === "password" ? "bg-[#8b5cf6] text-white shadow-lg shadow-[#8b5cf6]/25" : theme === "dark" ? "bg-white/10 text-slate-300 hover:bg-white/15" : "bg-white text-slate-600 border border-slate-200 hover:bg-slate-100"}`}
             onClick={() => setActiveTab("password")}
           >
             Change Password
@@ -414,7 +414,7 @@ const Settings = () => {
         {activeTab === "profile" && (
           <div className={panelClass}>
             <h2
-              className={`text-2xl md:text-3xl font-['Fraunces'] font-black tracking-tight mb-6 ${theme === "dark" ? "text-white" : "text-slate-900"}`}
+              className={`text-2xl md:text-2xl font-['Fraunces'] font-black tracking-tight mb-6 ${theme === "dark" ? "text-white" : "text-slate-900"}`}
             >
               Update Team Profile
             </h2>
@@ -613,24 +613,6 @@ const Settings = () => {
                     placeholder="https://x.com/your-profile"
                   />
                 </div>
-                <div className="form-group md:col-span-2">
-                  <label className={labelClass}>Instagram</label>
-                  <input
-                    type="url"
-                    className={inputClass}
-                    value={profileForm.socialLinks.instagram}
-                    onChange={(e) =>
-                      setProfileForm({
-                        ...profileForm,
-                        socialLinks: {
-                          ...profileForm.socialLinks,
-                          instagram: e.target.value,
-                        },
-                      })
-                    }
-                    placeholder="https://instagram.com/your-profile"
-                  />
-                </div>
               </div>
 
               <div className="form-group">
@@ -645,7 +627,7 @@ const Settings = () => {
                       <button
                         type="button"
                         onClick={() => removeMember(index)}
-                        className="px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider bg-red-500/15 text-red-500 hover:bg-red-500/25 transition-all"
+                        className="px-3 py-1.5 rounded-lg text-xs font-black uppercase tracking-wider bg-red-500/15 text-red-500 hover:bg-red-500/25 transition-all"
                       >
                         Remove
                       </button>
@@ -725,7 +707,7 @@ const Settings = () => {
         {activeTab === "password" && (
           <div className={panelClass}>
             <h2
-              className={`text-2xl md:text-3xl font-['Fraunces'] font-black tracking-tight mb-6 ${theme === "dark" ? "text-white" : "text-slate-900"}`}
+              className={`text-2xl md:text-2xl font-['Fraunces'] font-black tracking-tight mb-6 ${theme === "dark" ? "text-white" : "text-slate-900"}`}
             >
               Change Password
             </h2>
