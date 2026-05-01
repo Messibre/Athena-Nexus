@@ -2,6 +2,7 @@ import React from 'react';
 import { Navigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import { selectUser, selectIsAdmin, selectAuthLoading } from '../redux/selectors/authSelectors';
+import LoadingScreen from './LoadingScreen';
 
 const AdminRoute = ({ children }) => {
   const user = useSelector(selectUser);
@@ -9,7 +10,12 @@ const AdminRoute = ({ children }) => {
   const loading = useSelector(selectAuthLoading);
 
   if (loading) {
-    return <div className="loading">Loading...</div>;
+    return (
+      <LoadingScreen
+        title="Checking admin access"
+        message="Loading the admin workspace securely."
+      />
+    );
   }
 
   if (!user) {

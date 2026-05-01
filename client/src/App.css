@@ -219,10 +219,100 @@
 }
 
 
+.loading-screen {
+  min-height: 72vh;
+  display: grid;
+  place-items: center;
+  padding: 32px 20px 48px;
+}
+
+.loading-card {
+  width: min(960px, 100%);
+  border-radius: 28px;
+  padding: 28px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.78), rgba(255, 255, 255, 0.58));
+  border: 1px solid var(--border-light);
+  box-shadow: 0 24px 60px var(--shadow);
+  backdrop-filter: blur(18px);
+}
+
+[data-theme="dark"] .loading-card {
+  background: linear-gradient(180deg, rgba(18, 10, 33, 0.88), rgba(10, 5, 20, 0.78));
+  border-color: var(--border-color);
+}
+
+.loading-eyebrow,
+.loading-title,
+.loading-copy,
+.loading-panel {
+  background: linear-gradient(90deg, rgba(139, 92, 246, 0.18), rgba(167, 139, 250, 0.26), rgba(139, 92, 246, 0.18));
+  background-size: 200% 100%;
+  animation: loading-shimmer 1.6s infinite linear;
+  border-radius: 999px;
+}
+
+.loading-eyebrow {
+  width: 140px;
+  height: 10px;
+  margin-bottom: 20px;
+}
+
+.loading-title {
+  width: min(420px, 72%);
+  height: 30px;
+  margin-bottom: 14px;
+  border-radius: 16px;
+}
+
+.loading-copy {
+  width: min(520px, 88%);
+  height: 16px;
+  margin-bottom: 24px;
+}
+
+.loading-grid {
+  display: grid;
+  grid-template-columns: 1.6fr 1fr;
+  gap: 16px;
+  margin-bottom: 22px;
+}
+
+.loading-panel {
+  min-height: 168px;
+  border-radius: 24px;
+}
+
+.loading-panel-small {
+  min-height: 168px;
+}
+
+.loading-message {
+  color: var(--text-primary);
+  font-size: 14px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  margin-bottom: 6px;
+}
+
+.loading-submessage {
+  color: var(--text-secondary);
+  font-size: 14px;
+}
+
 .loading {
   text-align: center;
   padding: 40px;
   color: var(--text-secondary);
+}
+
+@keyframes loading-shimmer {
+  0% {
+    background-position: 0% 50%;
+  }
+  100% {
+    background-position: 200% 50%;
+  }
 }
 
 
@@ -284,6 +374,19 @@
 
   .container {
     padding: 0 16px;
+  }
+
+  .loading-card {
+    padding: 20px;
+    border-radius: 22px;
+  }
+
+  .loading-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .loading-panel {
+    min-height: 120px;
   }
 }
 

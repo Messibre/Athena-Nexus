@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { Suspense, lazy, useEffect, useRef, useState } from "react";
 import {
   BrowserRouter as Router,
   Routes,
@@ -11,27 +11,27 @@ import AdminRoute from "./components/AdminRoute";
 import { fetchMe } from "./redux/thunks/authThunks";
 import { selectTheme } from "./redux/selectors/themeSelectors";
 import { selectUser } from "./redux/selectors/authSelectors";
-
-import Home from "./pages/Home";
-import Login from "./pages/Login";
-import Signup from "./pages/Signup";
-import Dashboard from "./pages/Dashboard";
-import Submit from "./pages/Submit";
-import Settings from "./pages/Settings";
-import Challenges from "./pages/Challenges";
-import Gallery from "./pages/Gallery";
-import AdminPanel from "./pages/AdminPanel";
-import About from "./pages/About";
-import Milestones from "./pages/Milestones";
-import PrivacyPolicy from "./pages/PrivacyPolicy";
-import TermsOfService from "./pages/TermsOfService";
-import NotFound from "./pages/NotFound";
 import MiniModal from "./components/MiniModal";
 import CookieConsent from "./components/CookieConsent";
 import SeoManager from "./components/SeoManager";
 import FeedbackButton from "./components/FeedbackButton";
-
+import LoadingScreen from "./components/LoadingScreen";
 import "./App.css";
+
+const Home = lazy(() => import("./pages/Home"));
+const Login = lazy(() => import("./pages/Login"));
+const Signup = lazy(() => import("./pages/Signup"));
+const Dashboard = lazy(() => import("./pages/Dashboard"));
+const Submit = lazy(() => import("./pages/Submit"));
+const Settings = lazy(() => import("./pages/Settings"));
+const Challenges = lazy(() => import("./pages/Challenges"));
+const Gallery = lazy(() => import("./pages/Gallery"));
+const AdminPanel = lazy(() => import("./pages/AdminPanel"));
+const About = lazy(() => import("./pages/About"));
+const Milestones = lazy(() => import("./pages/Milestones"));
+const PrivacyPolicy = lazy(() => import("./pages/PrivacyPolicy"));
+const TermsOfService = lazy(() => import("./pages/TermsOfService"));
+const NotFound = lazy(() => import("./pages/NotFound"));
 
 const LAST_ROUTE_KEY = "lastRoute.v1";
 
@@ -40,6 +40,7 @@ function AppContent() {
   const theme = useSelector(selectTheme);
   const user = useSelector(selectUser);
   const location = useLocation();
+  const mainRef = useRef(null);
   const [modalState, setModalState] = useState({
     open: false,
     title: "Error",
@@ -76,6 +77,10 @@ function AppContent() {
   }, [location.pathname, location.search]);
 
   useEffect(() => {
+    mainRef.current?.focus();
+  }, [location.pathname]);
+
+  useEffect(() => {
     const onAppError = (event) => {
       setModalState({
         open: true,
@@ -96,47 +101,56 @@ function AppContent() {
       </a>
       <SeoManager />
 
-      <div id="main-content" role="main" tabIndex={-1}>
-        <Routes>
-          <Route path="/" element={<Home />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/signup" element={<Signup />} />
-          <Route path="/challenges" element={<Challenges />} />
-          <Route path="/milestones" element={<Milestones />} />
-          <Route path="/gallery" element={<Gallery />} />
-          <Route path="/gallery/:weekId" element={<Gallery />} />
-          <Route path="/about" element={<About />} />
-          <Route path="/privacy" element={<PrivacyPolicy />} />
-          <Route path="/terms" element={<TermsOfService />} />
+      <div id="main-content" ref={mainRef} role="main" tabIndex={-1}>
+        <Suspense
+          fallback={
+            <LoadingScreen
+              title="Loading Athena Nexus"
+              message="Streaming in the next screen so you can keep moving."
+            />
+          }
+        >
+          <Routes>
+            <Route path="/" element={<Home />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/signup" element={<Signup />} />
+            <Route path="/challenges" element={<Challenges />} />
+            <Route path="/milestones" element={<Milestones />} />
+            <Route path="/gallery" element={<Gallery />} />
+            <Route path="/gallery/:weekId" element={<Gallery />} />
+            <Route path="/about" element={<About />} />
+            <Route path="/privacy" element={<PrivacyPolicy />} />
+            <Route path="/terms" element={<TermsOfService />} />
 
-          <Route
-            path="/dashboard"
-            element={
-              <PrivateRoute>
-                <Dashboard />
-              </PrivateRoute>
-            }
-          />
-          <Route path="/submit" element={<Submit />} />
-          <Route
-            path="/settings"
-            element={
-              <PrivateRoute>
-                <Settings />
-              </PrivateRoute>
-            }
-          />
-          <Route
-            path="/admin"
-            element={
-              <AdminRoute>
-                <AdminPanel />
-              </AdminRoute>
-            }
-          />
+            <Route
+              path="/dashboard"
+              element={
+                <PrivateRoute>
+                  <Dashboard />
+                </PrivateRoute>
+              }
+            />
+            <Route path="/submit" element={<Submit />} />
+            <Route
+              path="/settings"
+              element={
+                <PrivateRoute>
+                  <Settings />
+                </PrivateRoute>
+              }
+            />
+            <Route
+              path="/admin"
+              element={
+                <AdminRoute>
+                  <AdminPanel />
+                </AdminRoute>
+              }
+            />
 
-          <Route path="*" element={<NotFound />} />
-        </Routes>
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </Suspense>
       </div>
 
       <FeedbackButton />

@@ -355,7 +355,7 @@ const Milestones = () => {
         }}
       />
 
-      <div className="relative z-10 max-w-[100vw] pt-16 md:pt-24 h-[calc(100vh-4rem)] md:h-[calc(100vh-6rem)] flex flex-col">
+      <div className="relative z-10 max-w-[100vw] pt-16 md:pt-24 h-[calc(100vh-2rem)] md:h-[calc(100vh-6rem)] flex flex-col">
         <div
           className={`flex items-center justify-between px-4 py-2 border-b ${styles.bgMid} ${styles.border}`}
         >
@@ -466,99 +466,101 @@ const Milestones = () => {
             className={`${mobileStep === "detail" ? "flex" : "hidden md:flex"} flex-1 overflow-y-auto p-6 md:p-12`}
           >
             {activeChallenge ? (
-            <motion.div
-              initial={{ opacity: 0, y: 8 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="max-w-3xl mx-auto w-full"
-            >
-              <div
-                className={`rounded-[28px] border p-6 md:p-8 shadow-2xl ${styles.bgSide} ${styles.border}`}
+              <motion.div
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="max-w-3xl mx-auto w-full"
               >
-                <span
-                  className="text-[10px] font-black uppercase tracking-[0.35em]"
-                  style={{ color: styles.accent }}
-                >
-                  Challenge {challenges.indexOf(activeChallenge) + 1}
-                </span>
-                <h2
-                  className={`mt-2 text-2xl md:text-4xl font-bold tracking-tight ${styles.textHead}`}
-                >
-                  {activeChallenge.title}
-                </h2>
-
-                <div className="mt-6 flex items-center justify-between gap-3 text-[10px] font-black uppercase tracking-[0.35em] opacity-70">
-                  <span>Progress</span>
-                  <span>
-                    {completedChallengeCount}/{challenges.length || 0} complete
-                  </span>
-                </div>
-                <div className="mt-3 h-2.5 rounded-full overflow-hidden bg-black/10">
-                  <div
-                    className="h-full rounded-full bg-gradient-to-r from-[#7c3aed] to-[#c4b5fd]"
-                    style={{ width: `${completionPercent}%` }}
-                  />
-                </div>
-
-                <p className="mt-5 text-[15px] leading-relaxed opacity-75 max-w-2xl">
-                  {activeChallenge.description}
-                </p>
-
                 <div
-                  className={`mt-8 rounded-2xl border p-5 md:p-6 ${theme === "dark" ? "border-white/10 bg-white/5" : "border-slate-200 bg-white/70"}`}
+                  className={`rounded-[28px] border p-6 md:p-8 shadow-2xl ${styles.bgSide} ${styles.border}`}
                 >
-                  {isAuthenticated ? (
-                    <form onSubmit={handleSubmit} className="space-y-4">
-                      <input
-                        type="url"
-                        required
-                        value={repoUrl}
-                        onChange={(e) => setRepoUrl(e.target.value)}
-                        className={`w-full px-4 py-3 text-[14px] rounded-xl border outline-none focus:border-[#7c3aed] transition-all ${styles.border} ${theme === "dark" ? "bg-black/35" : "bg-white"}`}
-                        placeholder="GitHub repo URL"
-                      />
-                      <input
-                        type="url"
-                        value={demoUrl}
-                        onChange={(e) => setDemoUrl(e.target.value)}
-                        className={`w-full px-4 py-3 text-[14px] rounded-xl border outline-none focus:border-[#7c3aed] transition-all ${styles.border} ${theme === "dark" ? "bg-black/35" : "bg-white"}`}
-                        placeholder="Live demo URL"
-                      />
-                      <textarea
-                        value={notes}
-                        onChange={(e) => setNotes(e.target.value)}
-                        rows={4}
-                        className={`w-full px-4 py-3 text-[14px] rounded-xl border outline-none focus:border-[#7c3aed] transition-all resize-none ${styles.border} ${theme === "dark" ? "bg-black/35" : "bg-white"}`}
-                        placeholder="Short notes"
-                      />
-                      <button
-                        type="submit"
-                        className="w-full rounded-xl px-4 py-3 text-xs font-black uppercase tracking-[0.35em] text-white transition-transform hover:scale-[1.01] active:scale-95 shadow-lg shadow-[#7c3aed]/20"
-                        style={{ backgroundColor: styles.accent }}
-                      >
-                        Sync Submission
-                      </button>
-                    </form>
-                  ) : (
-                    <div className="space-y-4">
-                      <div>
-                        <p className="text-xs font-black uppercase tracking-[0.35em] text-[#7c3aed]">
+                  <span
+                    className="text-[10px] font-black uppercase tracking-[0.35em]"
+                    style={{ color: styles.accent }}
+                  >
+                    Challenge {challenges.indexOf(activeChallenge) + 1}
+                  </span>
+                  <h2
+                    className={`mt-2 text-2xl md:text-4xl font-bold tracking-tight ${styles.textHead}`}
+                  >
+                    {activeChallenge.title}
+                  </h2>
+
+                  <div className="mt-6 flex items-center justify-between gap-3 text-[10px] font-black uppercase tracking-[0.35em] opacity-70">
+                    <span>Progress</span>
+                    <span>
+                      {completedChallengeCount}/{challenges.length || 0}{" "}
+                      complete
+                    </span>
+                  </div>
+                  <div className="mt-3 h-2.5 rounded-full overflow-hidden bg-black/10">
+                    <div
+                      className="h-full rounded-full bg-gradient-to-r from-[#7c3aed] to-[#c4b5fd]"
+                      style={{ width: `${completionPercent}%` }}
+                    />
+                  </div>
+
+                  <p className="mt-5 text-[15px] leading-relaxed opacity-75 max-w-2xl">
+                    {activeChallenge.description}
+                  </p>
+
+                  <div
+                    className={`mt-8 rounded-2xl border p-5 md:p-6 ${theme === "dark" ? "border-white/10 bg-white/5" : "border-slate-200 bg-white/70"}`}
+                  >
+                    {isAuthenticated ? (
+                      <form onSubmit={handleSubmit} className="space-y-4">
+                        <input
+                          type="url"
+                          required
+                          value={repoUrl}
+                          onChange={(e) => setRepoUrl(e.target.value)}
+                          className={`w-full px-4 py-3 text-[14px] rounded-xl border outline-none focus:border-[#7c3aed] transition-all ${styles.border} ${theme === "dark" ? "bg-black/35" : "bg-white"}`}
+                          placeholder="GitHub repo URL"
+                        />
+                        <input
+                          type="url"
+                          value={demoUrl}
+                          onChange={(e) => setDemoUrl(e.target.value)}
+                          className={`w-full px-4 py-3 text-[14px] rounded-xl border outline-none focus:border-[#7c3aed] transition-all ${styles.border} ${theme === "dark" ? "bg-black/35" : "bg-white"}`}
+                          placeholder="Live demo URL"
+                        />
+                        <textarea
+                          value={notes}
+                          onChange={(e) => setNotes(e.target.value)}
+                          rows={4}
+                          className={`w-full px-4 py-3 text-[14px] rounded-xl border outline-none focus:border-[#7c3aed] transition-all resize-none ${styles.border} ${theme === "dark" ? "bg-black/35" : "bg-white"}`}
+                          placeholder="Short notes"
+                        />
+                        <button
+                          type="submit"
+                          className="w-full rounded-xl px-4 py-3 text-xs font-black uppercase tracking-[0.35em] text-white transition-transform hover:scale-[1.01] active:scale-95 shadow-lg shadow-[#7c3aed]/20"
+                          style={{ backgroundColor: styles.accent }}
+                        >
+                          Sync Submission
+                        </button>
+                      </form>
+                    ) : (
+                      <div className="space-y-4">
+                        <div>
+                          <p className="text-xs font-black uppercase tracking-[0.35em] text-[#7c3aed]">
+                            Log in to submit
+                          </p>
+                          <p className="mt-2 text-sm opacity-70">
+                            Sign in to unlock the submission form and save your
+                            progress.
+                          </p>
+                        </div>
+                        <Link
+                          to="/login"
+                          className="inline-flex items-center justify-center rounded-xl bg-[#7c3aed] px-4 py-3 text-xs font-black uppercase tracking-[0.35em] text-white transition-all hover:bg-[#6d28d9]"
+                        >
                           Log in to submit
-                        </p>
-                        <p className="mt-2 text-sm opacity-70">
-                          Sign in to unlock the submission form and save your progress.
-                        </p>
+                        </Link>
                       </div>
-                      <Link
-                        to="/login"
-                        className="inline-flex items-center justify-center rounded-xl bg-[#7c3aed] px-4 py-3 text-xs font-black uppercase tracking-[0.35em] text-white transition-all hover:bg-[#6d28d9]"
-                      >
-                        Log in to submit
-                      </Link>
-                    </div>
-                  )}
+                    )}
+                  </div>
                 </div>
-              </div>
-            </motion.div>
+              </motion.div>
             ) : (
               <div className="max-w-2xl mx-auto w-full text-[13px] opacity-60">
                 Select a challenge to view details and submit your work.
