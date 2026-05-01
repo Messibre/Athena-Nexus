@@ -52,7 +52,7 @@ const Dashboard = () => {
 
   const formatDate = (date) => new Date(date).toLocaleDateString();
 
-  const currentSubmission = useMemo(() => {
+  const _currentSubmission = useMemo(() => {
     if (!activeWeek) return submissions[0] || null;
     return (
       submissions.find(

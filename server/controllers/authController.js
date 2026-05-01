@@ -23,37 +23,38 @@ const getClientBaseUrl = () => {
   return origin.replace(/\/+$/, "");
 };
 
-
-  const sanitizeReturnOrigin = (value) => {
-    if (!value || typeof value !== "string") {
-      return "";
-    }
-
-    try {
-      const parsed = new URL(value);
-      if (parsed.protocol !== "http:" && parsed.protocol !== "https:") {
-        return "";
-      }
-
-      return parsed.origin;
-    } catch {
-      return "";
-    }
-  };
-
-  const getRequestOrigin = (req) => {
-    const origin = sanitizeReturnOrigin(req.headers.origin || "");
-    if (origin) {
-      return origin;
-    }
-
-    const referer = sanitizeReturnOrigin(req.headers.referer || req.headers.referrer || "");
-    if (referer) {
-      return referer;
-    }
-
+const sanitizeReturnOrigin = (value) => {
+  if (!value || typeof value !== "string") {
     return "";
-  };
+  }
+
+  try {
+    const parsed = new URL(value);
+    if (parsed.protocol !== "http:" && parsed.protocol !== "https:") {
+      return "";
+    }
+
+    return parsed.origin;
+  } catch {
+    return "";
+  }
+};
+
+const getRequestOrigin = (req) => {
+  const origin = sanitizeReturnOrigin(req.headers.origin || "");
+  if (origin) {
+    return origin;
+  }
+
+  const referer = sanitizeReturnOrigin(
+    req.headers.referer || req.headers.referrer || "",
+  );
+  if (referer) {
+    return referer;
+  }
+
+  return "";
+};
 const getOAuthStateSecret = () => process.env.JWT_SECRET;
 
 const buildRedirectUrl = (path = OAUTH_REDIRECT_PATH) => {
@@ -123,19 +124,17 @@ const oauthFetch = async (url, options = {}) => {
 
   const contentType = response.headers.get("content-type") || "";
   const data = contentType.includes("application/json")
-      const redirectOrigin = sanitizeReturnOrigin(decodedState.returnOrigin);
-      const redirectTo = redirectOrigin
-        ? `${redirectOrigin}${sanitizeReturnTo(decodedState.returnTo || OAUTH_REDIRECT_PATH)}`
-        : buildRedirectUrl(decodedState.returnTo || OAUTH_REDIRECT_PATH);
+    ? await response.json()
     : await response.text();
 
   if (!response.ok) {
-      const fallbackOrigin = getRequestOrigin(req);
-      const fallbackRedirect = fallbackOrigin
-        ? `${fallbackOrigin}/login`
-        : buildRedirectUrl("/login");
-    const message = typeof data === "string" ? data : data?.error_description || data?.message;
-        `${fallbackRedirect}?error=${encodeURIComponent(error.message || "OAuth login failed")}`,
+    const message =
+      typeof data === "string"
+        ? data
+        : data?.error_description || data?.message;
+    throw new Error(message || "OAuth request failed");
+  }
+
   return data;
 };
 
@@ -143,7 +142,6 @@ const getProviderProfile = async (provider, accessToken) => {
   const config = getOAuthConfig(provider);
 
   if (provider === "google") {
-    const returnOrigin = getRequestOrigin(req);
     return oauthFetch(config.userInfoUrl, {
       headers: { Authorization: `Bearer ${accessToken}` },
     });
@@ -153,7 +151,6 @@ const getProviderProfile = async (provider, accessToken) => {
     headers: {
       Authorization: `Bearer ${accessToken}`,
       "User-Agent": "Athena Nexus",
-        returnOrigin,
       Accept: "application/vnd.github+json",
     },
   });
@@ -356,7 +353,9 @@ const finalizeOAuthLogin = async (req, res, provider) => {
     const accessToken = tokens.access_token || tokens.accessToken;
 
     if (!accessToken) {
-      return res.status(400).json({ message: "OAuth provider did not return an access token" });
+      return res
+        .status(400)
+        .json({ message: "OAuth provider did not return an access token" });
     }
 
     const profile = await getProviderProfile(provider, accessToken);
@@ -374,7 +373,9 @@ const finalizeOAuthLogin = async (req, res, provider) => {
 
     await issueAuthCookies(res, user, req);
 
-    const redirectTo = buildRedirectUrl(decodedState.returnTo || OAUTH_REDIRECT_PATH);
+    const redirectTo = buildRedirectUrl(
+      decodedState.returnTo || OAUTH_REDIRECT_PATH,
+    );
     return res.redirect(redirectTo);
   } catch (error) {
     console.error(`${provider} OAuth login failed:`, error.message);
@@ -644,7 +645,8 @@ export const login = async (req, res) => {
 
 export const startOAuthLogin = async (req, res) => {
   const provider = String(req.params.provider || "").toLowerCase();
-  const returnTo = req.query.returnTo || req.query.redirectTo || OAUTH_REDIRECT_PATH;
+  const returnTo =
+    req.query.returnTo || req.query.redirectTo || OAUTH_REDIRECT_PATH;
 
   if (!["google", "github"].includes(provider)) {
     return res.status(400).json({ message: "Unsupported OAuth provider" });
