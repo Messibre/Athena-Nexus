@@ -23,6 +23,37 @@ const getClientBaseUrl = () => {
   return origin.replace(/\/+$/, "");
 };
 
+
+  const sanitizeReturnOrigin = (value) => {
+    if (!value || typeof value !== "string") {
+      return "";
+    }
+
+    try {
+      const parsed = new URL(value);
+      if (parsed.protocol !== "http:" && parsed.protocol !== "https:") {
+        return "";
+      }
+
+      return parsed.origin;
+    } catch {
+      return "";
+    }
+  };
+
+  const getRequestOrigin = (req) => {
+    const origin = sanitizeReturnOrigin(req.headers.origin || "");
+    if (origin) {
+      return origin;
+    }
+
+    const referer = sanitizeReturnOrigin(req.headers.referer || req.headers.referrer || "");
+    if (referer) {
+      return referer;
+    }
+
+    return "";
+  };
 const getOAuthStateSecret = () => process.env.JWT_SECRET;
 
 const buildRedirectUrl = (path = OAUTH_REDIRECT_PATH) => {
@@ -92,14 +123,19 @@ const oauthFetch = async (url, options = {}) => {
 
   const contentType = response.headers.get("content-type") || "";
   const data = contentType.includes("application/json")
-    ? await response.json()
+      const redirectOrigin = sanitizeReturnOrigin(decodedState.returnOrigin);
+      const redirectTo = redirectOrigin
+        ? `${redirectOrigin}${sanitizeReturnTo(decodedState.returnTo || OAUTH_REDIRECT_PATH)}`
+        : buildRedirectUrl(decodedState.returnTo || OAUTH_REDIRECT_PATH);
     : await response.text();
 
   if (!response.ok) {
+      const fallbackOrigin = getRequestOrigin(req);
+      const fallbackRedirect = fallbackOrigin
+        ? `${fallbackOrigin}/login`
+        : buildRedirectUrl("/login");
     const message = typeof data === "string" ? data : data?.error_description || data?.message;
-    throw new Error(message || "OAuth request failed");
-  }
-
+        `${fallbackRedirect}?error=${encodeURIComponent(error.message || "OAuth login failed")}`,
   return data;
 };
 
@@ -107,6 +143,7 @@ const getProviderProfile = async (provider, accessToken) => {
   const config = getOAuthConfig(provider);
 
   if (provider === "google") {
+    const returnOrigin = getRequestOrigin(req);
     return oauthFetch(config.userInfoUrl, {
       headers: { Authorization: `Bearer ${accessToken}` },
     });
@@ -116,6 +153,7 @@ const getProviderProfile = async (provider, accessToken) => {
     headers: {
       Authorization: `Bearer ${accessToken}`,
       "User-Agent": "Athena Nexus",
+        returnOrigin,
       Accept: "application/vnd.github+json",
     },
   });
