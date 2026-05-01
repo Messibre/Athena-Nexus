@@ -194,7 +194,7 @@ const Submit = () => {
   return (
     <div
       data-theme={theme}
-      className={`min-h-screen font-['Space_Grotesk'] ${theme === "dark" ? "bg-[#0a0514] text-slate-300" : "bg-slate-50 text-slate-700"}`}
+      className={`min-h-screen font-['Manrope'] ${theme === "dark" ? "bg-[#0a0514] text-slate-300" : "bg-slate-50 text-slate-700"}`}
     >
       <Navbar />
 

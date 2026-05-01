@@ -1,6 +1,7 @@
 .App {
   min-height: 100vh;
   background-color: var(--bg-secondary);
+  overflow-x: hidden;
   transition: background-color 0.3s ease;
 }
 

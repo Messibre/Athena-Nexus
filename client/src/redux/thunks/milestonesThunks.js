@@ -4,6 +4,11 @@ import { milestonesApi } from "../../config/api";
 export const fetchMilestoneCategories = createAsyncThunk(
   "milestones/fetchCategories",
   async (_, thunkApi) => {
+    const cachedCategories = thunkApi.getState()?.milestones?.categories;
+    if (Array.isArray(cachedCategories) && cachedCategories.length > 0) {
+      return cachedCategories;
+    }
+
     try {
       const response = await milestonesApi.getMilestoneCategories();
       return response.data;
@@ -18,6 +23,11 @@ export const fetchMilestoneCategories = createAsyncThunk(
 export const fetchMilestoneLevels = createAsyncThunk(
   "milestones/fetchLevels",
   async (categoryId, thunkApi) => {
+    const cachedLevels = thunkApi.getState()?.milestones?.levelsByCategory?.[categoryId];
+    if (Array.isArray(cachedLevels) && cachedLevels.length > 0) {
+      return { categoryId, levels: cachedLevels };
+    }
+
     try {
       const response = await milestonesApi.getMilestoneLevels(categoryId);
       return { categoryId, levels: response.data };
@@ -32,6 +42,11 @@ export const fetchMilestoneLevels = createAsyncThunk(
 export const fetchMilestoneChallenges = createAsyncThunk(
   "milestones/fetchChallenges",
   async (levelId, thunkApi) => {
+    const cachedChallenges = thunkApi.getState()?.milestones?.challengesByLevel?.[levelId];
+    if (Array.isArray(cachedChallenges) && cachedChallenges.length > 0) {
+      return { levelId, challenges: cachedChallenges };
+    }
+
     try {
       const response = await milestonesApi.getMilestoneChallenges(levelId);
       return { levelId, challenges: response.data };
@@ -116,6 +131,15 @@ export const updateMilestoneSubmission = createAsyncThunk(
 export const fetchMilestoneProgress = createAsyncThunk(
   "milestones/fetchProgress",
   async (params, thunkApi) => {
+    const categoryId = params?.categoryId;
+    const cachedProgress =
+      categoryId &&
+      thunkApi.getState()?.milestones?.progressByCategory?.[categoryId];
+
+    if (Array.isArray(cachedProgress) && cachedProgress.length > 0) {
+      return { params, data: cachedProgress };
+    }
+
     try {
       const response = await milestonesApi.getMilestoneProgress(params);
       return { params, data: response.data };

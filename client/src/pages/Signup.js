@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
+import { Github, Chrome, UserPlus } from "lucide-react";
 import { signup } from "../redux/thunks/authThunks";
 import Navbar from "../components/Navbar";
 import MiniModal from "../components/MiniModal";
@@ -84,10 +85,18 @@ const Signup = () => {
     }
   };
 
+  const handleOAuthSignup = async (provider) => {
+    setError("");
+
+    const returnTo = localStorage.getItem(LAST_ROUTE_KEY) || "/dashboard";
+    const apiBase = process.env.REACT_APP_API_URL || "";
+    window.location.href = `${apiBase}/api/auth/oauth/${provider}/start?returnTo=${encodeURIComponent(returnTo)}`;
+  };
+
   return (
     <div
       data-theme={theme}
-      className={`min-h-screen font-['Space_Grotesk'] ${theme === "dark" ? "bg-[#0a0514] text-slate-300" : "bg-slate-50 text-slate-700"}`}
+      className={`min-h-screen font-['Manrope'] ${theme === "dark" ? "bg-[#0a0514] text-slate-300" : "bg-slate-50 text-slate-700"}`}
     >
       <Navbar />
 
@@ -121,6 +130,31 @@ const Signup = () => {
           <p className="text-center opacity-70 mb-6">
             Create an account for your team of 3 members
           </p>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-5">
+            <button
+              type="button"
+              onClick={() => handleOAuthSignup("google")}
+              className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-3 text-xs font-black uppercase tracking-[0.2em] text-slate-900 transition-all hover:border-[#8b5cf6] hover:text-[#8b5cf6]"
+            >
+              <Chrome size={15} /> Google
+            </button>
+            <button
+              type="button"
+              onClick={() => handleOAuthSignup("github")}
+              className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-3 text-xs font-black uppercase tracking-[0.2em] text-slate-900 transition-all hover:border-[#8b5cf6] hover:text-[#8b5cf6]"
+            >
+              <Github size={15} /> GitHub
+            </button>
+          </div>
+
+          <div className="my-5 flex items-center gap-3">
+            <div className="h-px flex-1 bg-slate-200" />
+            <span className="text-[10px] font-black uppercase tracking-[0.35em] opacity-50">
+              or register manually
+            </span>
+            <div className="h-px flex-1 bg-slate-200" />
+          </div>
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="form-group">
@@ -245,9 +279,10 @@ const Signup = () => {
 
             <button
               type="submit"
-              className="w-full py-4 rounded-xl bg-[#8b5cf6] hover:bg-[#7c3aed] text-white font-black uppercase tracking-[0.2em] transition-all shadow-xl shadow-[#8b5cf6]/30"
+              className="w-full py-4 rounded-xl bg-[#8b5cf6] hover:bg-[#7c3aed] text-white font-black uppercase tracking-[0.2em] transition-all shadow-xl shadow-[#8b5cf6]/30 inline-flex items-center justify-center gap-2"
               disabled={actionLoading}
             >
+              <UserPlus size={15} />
               {actionLoading ? "Creating Account..." : "Create Account"}
             </button>
           </form>

@@ -355,7 +355,7 @@ const Milestones = () => {
         }}
       />
 
-      <div className="relative z-10 max-w-[100vw] pt-16 md:pt-24 h-[calc(100vh-2rem)] md:h-[calc(100vh-6rem)] flex flex-col">
+      <div className="relative z-10 max-w-[100vw] pt-16 md:pt-24 h-[calc(100vh-1rem)] md:h-[calc(100vh-2rem)] flex flex-col">
         <div
           className={`flex items-center justify-between px-4 py-2 border-b ${styles.bgMid} ${styles.border}`}
         >

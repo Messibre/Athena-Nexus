@@ -307,7 +307,7 @@ const Gallery = () => {
   return (
     <div
       data-theme={theme}
-      className={`min-h-screen transition-colors duration-300 font-['Space_Grotesk'] ${styles.bg}`}
+      className={`min-h-screen transition-colors duration-300 font-['Manrope'] ${styles.bg}`}
     >
       <Navbar />
 

@@ -12,9 +12,341 @@ const REFRESH_COOKIE_MAX_AGE =
   parseInt(process.env.REFRESH_COOKIE_MAX_AGE_MS || "604800000", 10) ||
   1000 * 60 * 60 * 24 * 7;
 const MAX_REFRESH_TOKENS_PER_USER = 15;
+const OAUTH_STATE_EXPIRE = "10m";
+const OAUTH_REDIRECT_PATH = "/dashboard";
 
 const getRefreshSecret = () =>
   process.env.JWT_REFRESH_SECRET || process.env.JWT_SECRET;
+
+const getClientBaseUrl = () => {
+  const origin = process.env.FRONTEND_URL || process.env.CLIENT_URL || "";
+  return origin.replace(/\/+$/, "");
+};
+
+const getOAuthStateSecret = () => process.env.JWT_SECRET;
+
+const buildRedirectUrl = (path = OAUTH_REDIRECT_PATH) => {
+  const baseUrl = getClientBaseUrl();
+  if (!baseUrl) {
+    return path;
+  }
+
+  return `${baseUrl}${path}`;
+};
+
+const sanitizeReturnTo = (value) => {
+  if (!value || typeof value !== "string") {
+    return OAUTH_REDIRECT_PATH;
+  }
+
+  if (!value.startsWith("/") || value.startsWith("//")) {
+    return OAUTH_REDIRECT_PATH;
+  }
+
+  return value;
+};
+
+const getOAuthConfig = (provider) => {
+  const baseUrl = process.env.FRONTEND_URL || process.env.CLIENT_URL || "";
+
+  if (provider === "google") {
+    return {
+      clientId: process.env.GOOGLE_CLIENT_ID,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+      authorizeUrl: "https://accounts.google.com/o/oauth2/v2/auth",
+      tokenUrl: "https://oauth2.googleapis.com/token",
+      userInfoUrl: "https://www.googleapis.com/oauth2/v3/userinfo",
+      scope: "openid email profile",
+      redirectUri:
+        process.env.GOOGLE_OAUTH_REDIRECT_URI ||
+        `${baseUrl}/api/auth/oauth/google/callback`,
+    };
+  }
+
+  if (provider === "github") {
+    return {
+      clientId: process.env.GITHUB_CLIENT_ID,
+      clientSecret: process.env.GITHUB_CLIENT_SECRET,
+      authorizeUrl: "https://github.com/login/oauth/authorize",
+      tokenUrl: "https://github.com/login/oauth/access_token",
+      userInfoUrl: "https://api.github.com/user",
+      emailsUrl: "https://api.github.com/user/emails",
+      scope: "read:user user:email",
+      redirectUri:
+        process.env.GITHUB_OAUTH_REDIRECT_URI ||
+        `${baseUrl}/api/auth/oauth/github/callback`,
+    };
+  }
+
+  return null;
+};
+
+const oauthFetch = async (url, options = {}) => {
+  const response = await fetch(url, {
+    ...options,
+    headers: {
+      Accept: "application/json",
+      ...(options.headers || {}),
+    },
+  });
+
+  const contentType = response.headers.get("content-type") || "";
+  const data = contentType.includes("application/json")
+    ? await response.json()
+    : await response.text();
+
+  if (!response.ok) {
+    const message = typeof data === "string" ? data : data?.error_description || data?.message;
+    throw new Error(message || "OAuth request failed");
+  }
+
+  return data;
+};
+
+const getProviderProfile = async (provider, accessToken) => {
+  const config = getOAuthConfig(provider);
+
+  if (provider === "google") {
+    return oauthFetch(config.userInfoUrl, {
+      headers: { Authorization: `Bearer ${accessToken}` },
+    });
+  }
+
+  const profile = await oauthFetch(config.userInfoUrl, {
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+      "User-Agent": "Athena Nexus",
+      Accept: "application/vnd.github+json",
+    },
+  });
+
+  let primaryEmail = profile.email || "";
+  if (!primaryEmail) {
+    try {
+      const emails = await oauthFetch(config.emailsUrl, {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          "User-Agent": "Athena Nexus",
+          Accept: "application/vnd.github+json",
+        },
+      });
+      primaryEmail =
+        emails.find((item) => item.primary && item.verified)?.email ||
+        emails.find((item) => item.verified)?.email ||
+        emails[0]?.email ||
+        "";
+    } catch (emailError) {
+      primaryEmail = "";
+    }
+  }
+
+  return {
+    ...profile,
+    email: primaryEmail,
+  };
+};
+
+const exchangeOAuthCode = async (provider, code) => {
+  const config = getOAuthConfig(provider);
+
+  if (provider === "google") {
+    return oauthFetch(config.tokenUrl, {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: new URLSearchParams({
+        code,
+        client_id: config.clientId,
+        client_secret: config.clientSecret,
+        redirect_uri: config.redirectUri,
+        grant_type: "authorization_code",
+      }),
+    });
+  }
+
+  return oauthFetch(config.tokenUrl, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Accept: "application/json",
+    },
+    body: JSON.stringify({
+      client_id: config.clientId,
+      client_secret: config.clientSecret,
+      code,
+      redirect_uri: config.redirectUri,
+    }),
+  });
+};
+
+const buildOAuthUserData = (provider, profile) => {
+  const providerName = provider === "google" ? "google" : "github";
+  const providerId = String(profile.sub || profile.id || profile.node_id || "");
+  const usernameSeed =
+    provider === "google"
+      ? profile.email?.split("@")[0]
+      : profile.login || profile.email?.split("@")[0];
+  const username =
+    `${providerName}_${usernameSeed || providerId || crypto.randomUUID()}`
+      .toLowerCase()
+      .replace(/[^a-z0-9_]/g, "_")
+      .replace(/_+/g, "_")
+      .replace(/^_|_$/g, "")
+      .slice(0, 32);
+
+  const displayName =
+    profile.name || profile.login || profile.email?.split("@")[0] || username;
+
+  return {
+    username,
+    displayName,
+    email: profile.email || "",
+    profileImageUrl: profile.picture || profile.avatar_url || "",
+    socialLinks: {
+      github: profile.html_url || "",
+      website: "",
+      linkedin: "",
+      x: "",
+      instagram: "",
+    },
+    providerId,
+  };
+};
+
+const findOrCreateOAuthUser = async (provider, profile) => {
+  const providerField = provider === "google" ? "googleId" : "githubId";
+  const providerId = String(profile.sub || profile.id || profile.node_id || "");
+  const email = profile.email || "";
+
+  if (!providerId) {
+    throw new Error("OAuth provider did not return a stable user id");
+  }
+
+  let user = await User.findOne({ [providerField]: providerId });
+
+  if (!user && email) {
+    user = await User.findOne({ email });
+  }
+
+  const baseUserData = buildOAuthUserData(provider, profile);
+
+  if (!user) {
+    const fallbackUsername = `${baseUserData.username}_${providerId.slice(-6)}`;
+    user = new User({
+      username: fallbackUsername,
+      password_hash: crypto.randomBytes(24).toString("hex"),
+      email,
+      displayName: baseUserData.displayName,
+      profileImageUrl: baseUserData.profileImageUrl,
+      socialLinks: baseUserData.socialLinks,
+      contactEmail: email,
+      [providerField]: providerId,
+      authProviders: {
+        google: provider === "google",
+        github: provider === "github",
+        local: false,
+      },
+    });
+  } else {
+    user[providerField] = providerId;
+    user.authProviders = {
+      ...(user.authProviders || {}),
+      [provider]: true,
+    };
+    if (!user.displayName && baseUserData.displayName) {
+      user.displayName = baseUserData.displayName;
+    }
+    if (!user.email && email) {
+      user.email = email;
+      user.contactEmail = email;
+    }
+    if (!user.profileImageUrl && baseUserData.profileImageUrl) {
+      user.profileImageUrl = baseUserData.profileImageUrl;
+    }
+  }
+
+  await user.save();
+  return user;
+};
+
+const issueOAuthRedirect = (res, provider, returnTo) => {
+  const config = getOAuthConfig(provider);
+
+  if (!config?.clientId || !config?.clientSecret) {
+    return res.status(500).json({
+      message: `OAuth for ${provider} is not configured`,
+    });
+  }
+
+  const state = jwt.sign(
+    {
+      provider,
+      returnTo: sanitizeReturnTo(returnTo),
+    },
+    getOAuthStateSecret(),
+    { expiresIn: OAUTH_STATE_EXPIRE },
+  );
+
+  const authUrl = new URL(config.authorizeUrl);
+  authUrl.searchParams.set("client_id", config.clientId);
+  authUrl.searchParams.set("redirect_uri", config.redirectUri);
+  authUrl.searchParams.set("response_type", "code");
+  authUrl.searchParams.set("scope", config.scope);
+  authUrl.searchParams.set("state", state);
+
+  if (provider === "google") {
+    authUrl.searchParams.set("access_type", "offline");
+    authUrl.searchParams.set("prompt", "consent select_account");
+  }
+
+  return res.redirect(authUrl.toString());
+};
+
+const finalizeOAuthLogin = async (req, res, provider) => {
+  try {
+    const { code, state } = req.query;
+
+    if (!code || !state) {
+      return res.status(400).json({ message: "Missing OAuth code or state" });
+    }
+
+    const decodedState = jwt.verify(state, getOAuthStateSecret());
+    if (decodedState.provider !== provider) {
+      return res.status(400).json({ message: "OAuth provider mismatch" });
+    }
+
+    const tokens = await exchangeOAuthCode(provider, code);
+    const accessToken = tokens.access_token || tokens.accessToken;
+
+    if (!accessToken) {
+      return res.status(400).json({ message: "OAuth provider did not return an access token" });
+    }
+
+    const profile = await getProviderProfile(provider, accessToken);
+    const user = await findOrCreateOAuthUser(provider, profile);
+
+    try {
+      await ActivityLog.create({
+        user_id: user._id,
+        action: `${provider}_login`,
+        detail: `${provider} OAuth login`,
+      });
+    } catch {
+      console.error("Failed to write activity log");
+    }
+
+    await issueAuthCookies(res, user, req);
+
+    const redirectTo = buildRedirectUrl(decodedState.returnTo || OAUTH_REDIRECT_PATH);
+    return res.redirect(redirectTo);
+  } catch (error) {
+    console.error(`${provider} OAuth login failed:`, error.message);
+    return res.redirect(
+      `${buildRedirectUrl("/login")}?error=${encodeURIComponent(
+        error.message || "OAuth login failed",
+      )}`,
+    );
+  }
+};
 
 const hashToken = (token) =>
   crypto.createHash("sha256").update(token).digest("hex");
@@ -270,6 +602,27 @@ export const login = async (req, res) => {
       error: process.env.NODE_ENV === "development" ? error.message : undefined,
     });
   }
+};
+
+export const startOAuthLogin = async (req, res) => {
+  const provider = String(req.params.provider || "").toLowerCase();
+  const returnTo = req.query.returnTo || req.query.redirectTo || OAUTH_REDIRECT_PATH;
+
+  if (!["google", "github"].includes(provider)) {
+    return res.status(400).json({ message: "Unsupported OAuth provider" });
+  }
+
+  return issueOAuthRedirect(res, provider, returnTo);
+};
+
+export const oauthCallback = async (req, res) => {
+  const provider = String(req.params.provider || "").toLowerCase();
+
+  if (!["google", "github"].includes(provider)) {
+    return res.status(400).json({ message: "Unsupported OAuth provider" });
+  }
+
+  return finalizeOAuthLogin(req, res, provider);
 };
 
 export const getMe = async (req, res) => {

@@ -17,6 +17,32 @@ const userSchema = new mongoose.Schema({
     trim: true,
     lowercase: true,
   },
+  googleId: {
+    type: String,
+    trim: true,
+    default: "",
+    index: true,
+  },
+  githubId: {
+    type: String,
+    trim: true,
+    default: "",
+    index: true,
+  },
+  authProviders: {
+    google: {
+      type: Boolean,
+      default: false,
+    },
+    github: {
+      type: Boolean,
+      default: false,
+    },
+    local: {
+      type: Boolean,
+      default: true,
+    },
+  },
   role: {
     type: String,
     enum: ["member", "admin"],
@@ -136,6 +162,11 @@ const userSchema = new mongoose.Schema({
 
 userSchema.pre("save", async function (next) {
   if (!this.isModified("password_hash")) return next();
+
+  if (!this.password_hash) {
+    return next();
+  }
+
   this.password_hash = await bcrypt.hash(this.password_hash, 10);
   this.updated_at = Date.now();
   next();

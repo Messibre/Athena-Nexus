@@ -329,7 +329,7 @@ const AdminPanel = () => {
 
   return (
     <div
-      className={`min-h-screen transition-colors duration-300 font-['Space_Grotesk'] ${styles.bg} ${styles.textMain}`}
+      className={`min-h-screen transition-colors duration-300 font-['Manrope'] ${styles.bg} ${styles.textMain}`}
     >
       <Navbar />
 

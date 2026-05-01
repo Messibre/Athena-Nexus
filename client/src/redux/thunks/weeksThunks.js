@@ -4,6 +4,11 @@ import { weeksApi } from "../../config/api";
 export const fetchWeeks = createAsyncThunk(
   "weeks/fetchWeeks",
   async (_, thunkApi) => {
+    const cachedWeeks = thunkApi.getState()?.weeks?.items;
+    if (Array.isArray(cachedWeeks) && cachedWeeks.length > 0) {
+      return cachedWeeks;
+    }
+
     try {
       const response = await weeksApi.getWeeks();
       return response.data;
@@ -18,6 +23,11 @@ export const fetchWeeks = createAsyncThunk(
 export const fetchActiveWeek = createAsyncThunk(
   "weeks/fetchActiveWeek",
   async (_, thunkApi) => {
+    const cachedActiveWeek = thunkApi.getState()?.weeks?.activeWeek;
+    if (cachedActiveWeek) {
+      return cachedActiveWeek;
+    }
+
     try {
       const response = await weeksApi.getActiveWeek();
       return response.data;
@@ -60,6 +70,11 @@ export const fetchWeekSubmissions = createAsyncThunk(
 export const fetchPublicStats = createAsyncThunk(
   "weeks/fetchPublicStats",
   async (_, thunkApi) => {
+    const cachedStats = thunkApi.getState()?.weeks?.publicStats;
+    if (cachedStats) {
+      return cachedStats;
+    }
+
     try {
       const response = await weeksApi.getPublicStats();
       return response.data;
@@ -74,6 +89,11 @@ export const fetchPublicStats = createAsyncThunk(
 export const fetchLeaderboard = createAsyncThunk(
   "weeks/fetchLeaderboard",
   async (_, thunkApi) => {
+    const cachedLeaderboard = thunkApi.getState()?.weeks?.leaderboard;
+    if (Array.isArray(cachedLeaderboard) && cachedLeaderboard.length > 0) {
+      return cachedLeaderboard;
+    }
+
     try {
       const response = await weeksApi.getLeaderboard();
       return response.data;
