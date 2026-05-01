@@ -395,7 +395,7 @@ const AdminPanel = () => {
                 System Data Stream
               </span>
               <h1
-                className={`text-5xl font-['Fraunces'] font-black tracking-tighter ${styles.textHead}`}
+                className={`text-3xl md:text-4xl font-['Fraunces'] font-black tracking-tighter ${styles.textHead}`}
               >
                 {activeTab.replace("-", " ")}
               </h1>
@@ -499,12 +499,12 @@ const AdminPanel = () => {
                     ].map((s, i) => (
                       <div
                         key={i}
-                        className={`p-5 rounded-xl border ${styles.panel} ${styles.border} shadow-sm`}
+                        className={`p-4 rounded-xl border ${styles.panel} ${styles.border} shadow-sm`}
                       >
                         <p className="text-[9px] font-bold uppercase opacity-35 mb-2 tracking-[0.28em]">
                           {s.l}
                         </p>
-                        <p className={`text-3xl md:text-4xl font-black ${s.c}`}>
+                        <p className={`text-2xl md:text-3xl font-black ${s.c}`}>
                           {s.v}
                         </p>
                       </div>
@@ -516,13 +516,13 @@ const AdminPanel = () => {
                   <div
                     className={`rounded-lg border ${styles.panel} ${styles.border} overflow-hidden shadow-2xl`}
                   >
-                    <div className="p-6 md:p-8 border-b border-white/5 flex flex-col md:flex-row md:items-end md:justify-between gap-4">
+                    <div className="p-5 md:p-6 border-b border-white/5 flex flex-col md:flex-row md:items-end md:justify-between gap-4">
                       <div>
                         <p className="text-[10px] font-bold uppercase tracking-[0.4em] text-[#8b5cf6] mb-2">
                           Anonymous Feedback
                         </p>
                         <h3
-                          className={`text-2xl font-['Fraunces'] font-black ${styles.textHead}`}
+                          className={`text-xl md:text-2xl font-['Fraunces'] font-black ${styles.textHead}`}
                         >
                           Feedback Inbox
                         </h3>

@@ -238,6 +238,8 @@ const Gallery = () => {
           <img
             src={submission.screenshotUrl}
             alt={`${submission.user_id?.displayName || submission.userId?.displayName || "Team"} project preview`}
+            loading="lazy"
+            decoding="async"
             className="mb-4 h-40 w-full rounded-2xl object-cover border border-white/10"
           />
         ) : (
@@ -332,7 +334,7 @@ const Gallery = () => {
               Community Showcase
             </span>
             <h1
-              className={`text-4xl md:text-5xl font-['Fraunces'] font-black tracking-tighter mb-4 ${styles.textHead}`}
+              className={`text-3xl md:text-4xl font-['Fraunces'] font-black tracking-tighter mb-4 ${styles.textHead}`}
             >
               The Gallery.
             </h1>

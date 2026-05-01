@@ -100,8 +100,16 @@ const SeoManager = () => {
     upsertMetaTag('meta[property="og:url"]', "content", canonicalUrl);
     upsertMetaTag('meta[name="twitter:title"]', "content", title);
     upsertMetaTag('meta[name="twitter:description"]', "content", description);
-    upsertMetaTag('meta[name="twitter:image"]', "content", `${window.location.origin}/athena.jpg`);
-    upsertMetaTag('meta[property="og:image"]', "content", `${window.location.origin}/athena.jpg`);
+    upsertMetaTag(
+      'meta[name="twitter:image"]',
+      "content",
+      `${window.location.origin}/athena.jpg`,
+    );
+    upsertMetaTag(
+      'meta[property="og:image"]',
+      "content",
+      `${window.location.origin}/athena.jpg`,
+    );
     upsertLinkTag('link[rel="canonical"]', {
       rel: "canonical",
       href: canonicalUrl,

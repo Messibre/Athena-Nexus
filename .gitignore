@@ -12,6 +12,7 @@ node_modules/
 /client/build
 /server/dist
 build.log
+build-output.txt
 
 # Misc
 .DS_Store
