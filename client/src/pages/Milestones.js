@@ -327,7 +327,7 @@ const Milestones = () => {
         ? "bg-[#1a0f2e]/48 backdrop-blur-lg"
         : "bg-white/62 backdrop-blur-lg",
     border: theme === "dark" ? "border-[#2e1a47]" : "border-slate-200/80",
-    textDim: theme === "dark" ? "text-slate-400" : "text-slate-500",
+    textDim: theme === "dark" ? "text-slate-400" : "text-slate-700",
     textHead: theme === "dark" ? "text-[#f8fafc]" : "text-slate-900",
     accent: "#7c3aed",
   };
@@ -335,7 +335,7 @@ const Milestones = () => {
   return (
     <div
       data-theme={theme}
-      className={`min-h-screen transition-colors duration-300 ${theme === "dark" ? "bg-[#0a0514] text-slate-300" : "bg-white text-slate-700"}`}
+      className={`min-h-screen transition-colors duration-300 ${theme === "dark" ? "bg-[#0a0514] text-slate-300" : "bg-white text-slate-800"}`}
     >
       <Navbar />
 
@@ -354,7 +354,7 @@ const Milestones = () => {
         }}
       />
 
-      <div className="relative z-10 max-w-[100vw] pt-16 md:pt-24 h-[calc(100vh-1rem)] md:h-[calc(100vh-2rem)] flex flex-col">
+      <div className="relative z-10 max-w-[100vw] pt-16 md:pt-24 h-[calc(100vh-1rem)] md:h-[calc(100vh-1rem)] flex flex-col">
         <div
           className={`flex items-center justify-between px-4 py-2 border-b ${styles.bgMid} ${styles.border}`}
         >

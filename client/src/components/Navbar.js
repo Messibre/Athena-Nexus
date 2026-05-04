@@ -30,9 +30,13 @@ const Navbar = () => {
     };
   }, [isMobileMenuOpen]);
 
-  const handleLogout = () => {
-    dispatch(logoutSession());
+  const handleLogout = async () => {
     setIsMobileMenuOpen(false);
+    try {
+      await dispatch(logoutSession());
+    } finally {
+      navigate("/login");
+    }
   };
 
   // Consistent Bold Silver / High Contrast Link Classes

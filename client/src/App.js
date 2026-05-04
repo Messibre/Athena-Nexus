@@ -12,6 +12,7 @@ import { fetchMe } from "./redux/thunks/authThunks";
 import { selectTheme } from "./redux/selectors/themeSelectors";
 import { selectUser } from "./redux/selectors/authSelectors";
 import MiniModal from "./components/MiniModal";
+import WelcomeModal, { shouldShowWelcome } from "./components/WelcomeModal";
 import CookieConsent from "./components/CookieConsent";
 import SeoManager from "./components/SeoManager";
 import FeedbackButton from "./components/FeedbackButton";
@@ -46,6 +47,16 @@ function AppContent() {
     title: "Error",
     message: "",
   });
+
+  const [showWelcome, setShowWelcome] = useState(false);
+
+  useEffect(() => {
+    try {
+      if (shouldShowWelcome()) setShowWelcome(true);
+    } catch {
+      // ignore
+    }
+  }, []);
 
   useEffect(() => {
     const root = document.documentElement;
@@ -160,6 +171,7 @@ function AppContent() {
         message={modalState.message}
         onClose={() => setModalState((prev) => ({ ...prev, open: false }))}
       />
+      <WelcomeModal open={showWelcome} onClose={() => setShowWelcome(false)} />
       <CookieConsent />
     </div>
   );

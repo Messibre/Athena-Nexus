@@ -234,7 +234,7 @@ const Gallery = () => {
           </div>
         </div>
 
-        {submission.screenshotUrl ? (
+        {submission.screenshotUrl && (
           <img
             src={submission.screenshotUrl}
             alt={`${submission.user_id?.displayName || submission.userId?.displayName || "Team"} project preview`}
@@ -242,19 +242,6 @@ const Gallery = () => {
             decoding="async"
             className="mb-4 h-40 w-full rounded-2xl object-cover border border-white/10"
           />
-        ) : (
-          <div
-            className={`mb-4 flex h-40 w-full items-center justify-center rounded-2xl border border-dashed ${theme === "dark" ? "border-white/10 bg-white/5" : "border-slate-200 bg-slate-100"}`}
-          >
-            <div className="flex flex-col items-center gap-2 text-center opacity-60">
-              <ImageOff size={26} />
-              <p
-                className={`text-[10px] font-black uppercase tracking-[0.35em] ${styles.textHead}`}
-              >
-                Thumbnail unavailable
-              </p>
-            </div>
-          </div>
         )}
 
         <p
