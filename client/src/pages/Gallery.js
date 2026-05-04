@@ -9,7 +9,6 @@ import {
   Trophy,
   Search,
   Filter,
-  ImageOff,
 } from "lucide-react";
 import Navbar from "../components/Navbar";
 import {
@@ -296,23 +295,11 @@ const Gallery = () => {
   return (
     <div
       data-theme={theme}
-      className={`min-h-screen transition-colors duration-300 font-['Manrope'] ${styles.bg}`}
+      className={`secondary-page-shell min-h-screen transition-colors duration-300 font-['Manrope'] ${styles.bg}`}
     >
       <Navbar />
 
-      <div
-        className="bg-image-layer"
-        style={{
-          position: "fixed",
-          inset: 0,
-          zIndex: 0,
-          backgroundImage: 'url("/pur1.jpg")',
-          backgroundSize: "cover",
-          backgroundPosition: "center",
-          opacity: theme === "dark" ? 0.4 : 0.85,
-          pointerEvents: "none",
-        }}
-      />
+      <div className="secondary-page-bg-layer" />
 
       <section className="relative z-10 pt-16 pb-8">
         <div className="container mx-auto px-6">

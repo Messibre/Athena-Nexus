@@ -329,23 +329,11 @@ const AdminPanel = () => {
 
   return (
     <div
-      className={`min-h-screen transition-colors duration-300 font-['Manrope'] ${styles.bg} ${styles.textMain}`}
+      className={`secondary-page-shell min-h-screen transition-colors duration-300 font-['Manrope'] ${styles.bg} ${styles.textMain}`}
     >
       <Navbar />
 
-      <div
-        className="bg-image-layer"
-        style={{
-          position: "fixed",
-          inset: 0,
-          zIndex: 0,
-          backgroundImage: 'url("/pur1.jpg")',
-          backgroundSize: "cover",
-          backgroundPosition: "center",
-          opacity: theme === "dark" ? 0.4 : 0.85,
-          pointerEvents: "none",
-        }}
-      />
+      <div className="secondary-page-bg-layer" />
 
       <div className="max-w-[1600px] mx-auto pt-20 md:pt-24 flex flex-col md:flex-row h-[calc(100vh-5rem)] md:h-[calc(100vh-6rem)] overflow-hidden">
         <aside

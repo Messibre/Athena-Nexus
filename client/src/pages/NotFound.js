@@ -10,10 +10,11 @@ const NotFound = () => {
   return (
     <div
       data-theme={theme}
-      className={`min-h-screen ${theme === "dark" ? "bg-[#0a0514] text-slate-300" : "bg-slate-50 text-slate-700"}`}
+      className={`secondary-page-shell min-h-screen ${theme === "dark" ? "bg-[#0a0514] text-slate-300" : "bg-slate-50 text-slate-700"}`}
     >
       <Navbar />
-      <main className="mx-auto flex min-h-[70vh] max-w-3xl flex-col items-center justify-center px-4 text-center">
+      <div className="secondary-page-bg-layer" />
+      <main className="relative z-10 mx-auto flex min-h-[70vh] max-w-3xl flex-col items-center justify-center px-4 text-center">
         <h1 className="text-6xl font-black text-[#8b5cf6]">404</h1>
         <h2 className="mt-4 text-3xl font-black">Page not found</h2>
         <p className="mt-3 opacity-80">

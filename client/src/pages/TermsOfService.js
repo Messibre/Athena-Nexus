@@ -9,10 +9,11 @@ const TermsOfService = () => {
   return (
     <div
       data-theme={theme}
-      className={`min-h-screen ${theme === "dark" ? "bg-[#0a0514] text-slate-300" : "bg-slate-50 text-slate-700"}`}
+      className={`secondary-page-shell min-h-screen ${theme === "dark" ? "bg-[#0a0514] text-slate-300" : "bg-slate-50 text-slate-700"}`}
     >
       <Navbar />
-      <main className="mx-auto max-w-4xl px-4 pb-16 pt-28">
+      <div className="secondary-page-bg-layer" />
+      <main className="relative z-10 mx-auto max-w-4xl px-4 pb-16 pt-28">
         <h1 className="mb-6 text-4xl font-black text-[#8b5cf6]">
           Terms of Service
         </h1>

@@ -5,6 +5,45 @@
   transition: background-color 0.3s ease;
 }
 
+.secondary-page-shell {
+  min-height: 100vh;
+  font-family: "Manrope", sans-serif;
+  background-color: #f8fafc !important;
+  color: #334155;
+}
+
+[data-theme="dark"] .secondary-page-shell {
+  background-color: #0a0514 !important;
+  color: #cbd5e1;
+}
+
+.secondary-page-shell h1,
+.secondary-page-shell h2,
+.secondary-page-shell h3,
+.secondary-page-shell h4 {
+  font-family: "Fraunces", serif;
+  letter-spacing: -0.03em;
+}
+
+.secondary-page-bg-layer {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  background-image:
+    linear-gradient(180deg, rgba(10, 5, 20, 0.86), rgba(10, 5, 20, 0.72)),
+    url("../public/pur1.jpg");
+  background-size: cover;
+  background-position: center;
+  opacity: 0.18;
+  filter: saturate(0.75) contrast(0.9);
+  pointer-events: none;
+}
+
+[data-theme="dark"] .secondary-page-bg-layer {
+  opacity: 0.16;
+  filter: saturate(0.75) brightness(0.6) contrast(1.05);
+}
+
 .container {
   max-width: 1200px;
   margin: 0 auto;

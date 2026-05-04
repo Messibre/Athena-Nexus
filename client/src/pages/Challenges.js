@@ -115,9 +115,9 @@ const Challenges = () => {
   }
 
   return (
-    <div className="challenges-page" data-theme={theme}>
+    <div className="challenges-page secondary-page-shell" data-theme={theme}>
       <Navbar />
-      <div className="challenges-bg-image-layer" />
+      <div className="secondary-page-bg-layer" />
 
       <div className="challenges-layout">
         <header className="challenges-header">

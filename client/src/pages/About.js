@@ -11,10 +11,10 @@ const About = () => {
   return (
     <div
       data-theme={theme}
-      className={`about-page-root ${theme === "dark" ? "bg-[#0a0514] text-slate-300" : "bg-slate-50 text-slate-700"}`}
+      className={`about-page-root secondary-page-shell ${theme === "dark" ? "bg-[#0a0514] text-slate-300" : "bg-slate-50 text-slate-700"}`}
     >
       <Navbar />
-      <div className="about-bg-layer" />
+      <div className="secondary-page-bg-layer" />
       <div className="about-container">
         <div className="container about-content">
           <div className="about-hero">

@@ -194,23 +194,11 @@ const Submit = () => {
   return (
     <div
       data-theme={theme}
-      className={`min-h-screen font-['Manrope'] ${theme === "dark" ? "bg-[#0a0514] text-slate-300" : "bg-slate-50 text-slate-700"}`}
+      className={`secondary-page-shell min-h-screen font-['Manrope'] ${theme === "dark" ? "bg-[#0a0514] text-slate-300" : "bg-slate-50 text-slate-700"}`}
     >
       <Navbar />
 
-      <div
-        className="bg-image-layer"
-        style={{
-          position: "fixed",
-          inset: 0,
-          zIndex: 0,
-          backgroundImage: 'url("/pur1.jpg")',
-          backgroundSize: "cover",
-          backgroundPosition: "center",
-          opacity: theme === "dark" ? 0.4 : 0.85,
-          pointerEvents: "none",
-        }}
-      />
+      <div className="secondary-page-bg-layer" />
 
       <div className="relative z-10 max-w-3xl mx-auto px-4 pt-10 md:pt-12 pb-20">
         <div

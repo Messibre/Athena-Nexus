@@ -335,26 +335,13 @@ const Milestones = () => {
   return (
     <div
       data-theme={theme}
-      className={`min-h-screen transition-colors duration-300 ${theme === "dark" ? "bg-[#0a0514] text-slate-300" : "bg-white text-slate-800"}`}
+      className={`secondary-page-shell min-h-screen transition-colors duration-300 ${theme === "dark" ? "bg-[#0a0514] text-slate-300" : "bg-white text-slate-800"}`}
     >
       <Navbar />
 
-      {/* Background Layer to match Home.js */}
-      <div
-        className="bg-image-layer"
-        style={{
-          position: "fixed",
-          inset: 0,
-          zIndex: 0,
-          backgroundImage: 'url("/pur1.jpg")',
-          backgroundSize: "cover",
-          backgroundPosition: "center",
-          opacity: theme === "dark" ? 0.28 : 0.16,
-          pointerEvents: "none",
-        }}
-      />
+      <div className="secondary-page-bg-layer" />
 
-      <div className="relative z-10 max-w-[100vw] pt-16 md:pt-24 h-[calc(100vh-1rem)] md:h-[calc(100vh-1rem)] flex flex-col">
+      <div className="relative z-10 max-w-[100vw] pt-16 md:pt-14 h-[calc(100vh-1rem)] md:h-[calc(100vh-1rem)] flex flex-col">
         <div
           className={`flex items-center justify-between px-4 py-2 border-b ${styles.bgMid} ${styles.border}`}
         >
