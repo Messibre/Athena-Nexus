@@ -52,7 +52,7 @@
 
 .btn {
   padding: 10px 18px;
-  border-radius: 12px;
+  border-radius: 16px;
   font-size: 14px;
   font-weight: 600;
   transition: all 0.3s ease;
@@ -125,7 +125,7 @@
   width: 100%;
   padding: 10px 12px;
   border: 1px solid var(--border-light);
-  border-radius: 12px;
+  border-radius: 14px;
   font-size: 15px;
   background-color: var(--bg-primary);
   color: var(--text-primary);
@@ -156,7 +156,7 @@
 
 .card {
   background: var(--bg-primary);
-  border-radius: 18px;
+  border-radius: 16px;
   padding: 18px;
   box-shadow: 0 1px 3px var(--shadow);
   margin-bottom: 16px;
@@ -217,8 +217,8 @@
 
 .theme-toggle {
   background: transparent;
-  border: 2px solid var(--border-color);
-  border-radius: 12px;
+  border: 1px solid var(--border-color);
+  border-radius: 14px;
   padding: 7px 10px;
   color: var(--text-primary);
   cursor: pointer;
@@ -271,7 +271,7 @@
 
 .loading-card {
   width: min(960px, 100%);
-  border-radius: 24px;
+  border-radius: 18px;
   padding: 22px;
   background: linear-gradient(
     180deg,
@@ -433,7 +433,7 @@
 
   .loading-card {
     padding: 20px;
-    border-radius: 22px;
+    border-radius: 18px;
   }
 
   .loading-grid {

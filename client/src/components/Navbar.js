@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
-import { Menu, X, ArrowLeft } from "lucide-react";
+import { Menu, Moon, SunMedium, X, ArrowLeft } from "lucide-react";
 import { logoutSession } from "../redux/thunks/authThunks";
 import { toggleTheme } from "../redux/slices/themeSlice";
 import {
@@ -116,19 +116,23 @@ const Navbar = () => {
             <div className="flex items-center gap-3">
               <button
                 onClick={() => dispatch(toggleTheme())}
-                className="flex h-10 w-10 items-center justify-center rounded-full border-2 border-white/50 bg-white/10 text-[10px] font-black uppercase text-white transition-all hover:bg-white hover:text-black"
+                className="flex h-10 w-10 items-center justify-center rounded-full bg-white/10 text-white transition-all hover:bg-white hover:text-black"
                 aria-label={
                   theme === "light"
                     ? "Switch to dark mode"
                     : "Switch to light mode"
                 }
               >
-                {theme === "light" ? "Dark" : "Light"}
+                {theme === "light" ? (
+                  <Moon size={16} />
+                ) : (
+                  <SunMedium size={16} />
+                )}
               </button>
 
               <button
                 onClick={() => setIsMobileMenuOpen((prev) => !prev)}
-                className="md:hidden flex h-10 w-10 items-center justify-center rounded-full border-2 border-white/50 bg-white/10 text-white transition-all hover:bg-white hover:text-black"
+                className="md:hidden flex h-10 w-10 items-center justify-center rounded-full bg-white/10 text-white transition-all hover:bg-white hover:text-black"
                 aria-label="Toggle menu"
               >
                 {isMobileMenuOpen ? <X size={18} /> : <Menu size={18} />}
@@ -158,7 +162,7 @@ const Navbar = () => {
 
                   <button
                     onClick={handleLogout}
-                    className="hidden md:inline rounded-full border-2 border-white bg-transparent px-6 py-2 text-xs font-black uppercase text-white transition-all hover:bg-white hover:text-black"
+                    className="hidden md:inline rounded-full bg-gradient-to-b from-white to-neutral-400 px-6 py-2 text-xs font-black uppercase text-black shadow-lg transition-all hover:scale-105"
                   >
                     Logout
                   </button>

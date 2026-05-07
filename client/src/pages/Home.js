@@ -116,7 +116,7 @@ const Home = () => {
             <Link to="/challenges" className="btn-primary">
               View Challenges
             </Link>
-            <Link to="/signup" className="btn-secondary">
+            <Link to="/signup" className="btn-primary">
               Register Now
             </Link>
           </div>
