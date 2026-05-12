@@ -35,7 +35,7 @@ const ensureProgressForCategory = async (userId, categoryId) => {
             categoryId,
             levelId: lvl._id,
             levelNumber: lvl.levelNumber,
-            status: lvl.levelNumber === 1 ? "unlocked" : "locked",
+            status: "unlocked",
           },
         },
         upsert: true,
@@ -45,52 +45,6 @@ const ensureProgressForCategory = async (userId, categoryId) => {
   if (ops.length) {
     await MilestoneProgress.bulkWrite(ops);
   }
-};
-
-const updateProgressOnApproval = async (submission) => {
-  const level = await MilestoneLevel.findById(submission.levelId).select(
-    "levelNumber categoryId",
-  );
-  if (!level) return;
-
-  await ensureProgressForCategory(submission.userId, level.categoryId);
-
-  await MilestoneProgress.findOneAndUpdate(
-    {
-      userId: submission.userId,
-      categoryId: level.categoryId,
-      levelId: submission.levelId,
-    },
-    {
-      $set: { status: "completed", completedAt: new Date() },
-    },
-    { upsert: true },
-  );
-
-  const nextLevel = await MilestoneLevel.findOne({
-    categoryId: level.categoryId,
-    levelNumber: level.levelNumber + 1,
-  }).select("_id levelNumber");
-
-  if (!nextLevel) return;
-
-  await MilestoneProgress.findOneAndUpdate(
-    {
-      userId: submission.userId,
-      categoryId: level.categoryId,
-      levelId: nextLevel._id,
-    },
-    {
-      $setOnInsert: {
-        userId: submission.userId,
-        categoryId: level.categoryId,
-        levelId: nextLevel._id,
-        levelNumber: nextLevel.levelNumber,
-        status: "unlocked",
-      },
-    },
-    { upsert: true },
-  );
 };
 
 export const createCategory = async (req, res) => {

@@ -218,7 +218,9 @@ const startServer = async () => {
     await connectToDatabase();
     console.log("✅ MongoDB connected");
   } catch (error) {
-    console.error("⚠️  MongoDB connection failed, but the API is still running.");
+    console.error(
+      "⚠️  MongoDB connection failed, but the API is still running.",
+    );
     console.error("Please check:");
     console.error(
       "1. MongoDB is running (local) or connection string is correct (Atlas)",

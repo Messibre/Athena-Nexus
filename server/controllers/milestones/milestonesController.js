@@ -40,7 +40,7 @@ const ensureProgressForCategory = async (userId, categoryId) => {
             categoryId,
             levelId: lvl._id,
             levelNumber: lvl.levelNumber,
-            status: lvl.levelNumber === 1 ? "unlocked" : "locked",
+            status: "unlocked",
           },
         },
         upsert: true,
@@ -82,35 +82,6 @@ const updateProgressOnSubmission = async (submission) => {
     },
     { upsert: true },
   );
-
-  const nextChallenge = await MilestoneChallenge.findOne({
-    categoryId: level.categoryId,
-    levelId: submission.levelId,
-    isActive: true,
-    _id: { $ne: submission.challengeId },
-  })
-    .sort({ createdAt: 1 })
-    .select("_id levelId levelNumber");
-
-  if (nextChallenge) {
-    await MilestoneProgress.findOneAndUpdate(
-      {
-        userId: submission.userId,
-        categoryId: level.categoryId,
-        levelId: nextChallenge.levelId,
-      },
-      {
-        $setOnInsert: {
-          userId: submission.userId,
-          categoryId: level.categoryId,
-          levelId: nextChallenge.levelId,
-          levelNumber: nextChallenge.levelNumber,
-          status: "unlocked",
-        },
-      },
-      { upsert: true },
-    );
-  }
 };
 
 export const listCategories = async (req, res) => {
