@@ -184,6 +184,7 @@ const Milestones = () => {
 
   useEffect(() => {
     if (!levels.length) return;
+    if (activeLevelId) return;
 
     const savedState = readResumeState();
     if (savedState?.categoryId === activeCategoryId && savedState?.levelId) {
@@ -377,7 +378,11 @@ const Milestones = () => {
             {categories.map((cat) => (
               <div key={cat._id} className={`border-b ${styles.border}`}>
                 <button
-                  onClick={() => setActiveCategoryId(cat._id)}
+                  onClick={() => {
+                    setActiveCategoryId(cat._id);
+                    setActiveLevelId("");
+                    setActiveChallengeId("");
+                  }}
                   className={`w-full text-left px-4 py-3 text-[12px] transition-colors ${activeCategoryId === cat._id ? "bg-[#8b5cf6]/10" : styles.textDim}`}
                   style={{
                     color:
