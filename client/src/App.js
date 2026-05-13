@@ -6,6 +6,7 @@ import {
   useLocation,
 } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
+import { Analytics } from "@vercel/analytics/react";
 import PrivateRoute from "./components/PrivateRoute";
 import AdminRoute from "./components/AdminRoute";
 import { fetchMe } from "./redux/thunks/authThunks";
@@ -173,6 +174,7 @@ function AppContent() {
       />
       <WelcomeModal open={showWelcome} onClose={() => setShowWelcome(false)} />
       <CookieConsent />
+      <Analytics />
     </div>
   );
 }

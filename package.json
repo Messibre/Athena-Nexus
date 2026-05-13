@@ -9,11 +9,14 @@
     "client": "cd client && npm start",
     "install-all": "npm install && cd server && npm install && cd ../client && npm install"
   },
-  "keywords": ["mern", "challenges", "submissions"],
+  "keywords": [
+    "mern",
+    "challenges",
+    "submissions"
+  ],
   "author": "",
   "license": "ISC",
   "devDependencies": {
     "concurrently": "^8.2.2"
   }
 }
-
