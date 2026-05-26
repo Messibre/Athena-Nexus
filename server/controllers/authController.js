@@ -23,7 +23,7 @@ const getClientBaseUrl = () => {
   return origin.replace(/\/+$/, "");
 };
 
-const sanitizeReturnOrigin = (value) => {
+export const sanitizeReturnOrigin = (value) => {
   if (!value || typeof value !== "string") {
     return "";
   }
@@ -40,24 +40,29 @@ const sanitizeReturnOrigin = (value) => {
   }
 };
 
-const getRequestOrigin = (req) => {
+export const getRequestOrigin = (req) => {
+  if (!req?.headers) {
+    return "";
+  }
   const origin = sanitizeReturnOrigin(req.headers.origin || "");
   if (origin) {
     return origin;
   }
 
-  const referer = sanitizeReturnOrigin(
-    req.headers.referer || req.headers.referrer || "",
-  );
+  const referer = sanitizeReturnOrigin(req.headers.referer || "");
   if (referer) {
     return referer;
   }
 
+  const referrer = sanitizeReturnOrigin(req.headers.referrer || "");
+  if (referrer) {
+    return referrer;
+  }
   return "";
 };
-const getOAuthStateSecret = () => process.env.JWT_SECRET;
+export const getOAuthStateSecret = () => process.env.JWT_SECRET;
 
-const buildRedirectUrl = (path = OAUTH_REDIRECT_PATH) => {
+export const buildRedirectUrl = (path = OAUTH_REDIRECT_PATH) => {
   const baseUrl = getClientBaseUrl();
   if (!baseUrl) {
     return path;
@@ -66,7 +71,7 @@ const buildRedirectUrl = (path = OAUTH_REDIRECT_PATH) => {
   return `${baseUrl}${path}`;
 };
 
-const sanitizeReturnTo = (value) => {
+export const sanitizeReturnTo = (value) => {
   if (!value || typeof value !== "string") {
     return OAUTH_REDIRECT_PATH;
   }
@@ -78,7 +83,7 @@ const sanitizeReturnTo = (value) => {
   return value;
 };
 
-const getOAuthConfig = (provider) => {
+export const getOAuthConfig = (provider) => {
   const baseUrl = process.env.FRONTEND_URL || process.env.CLIENT_URL || "";
 
   if (provider === "google") {
@@ -113,7 +118,7 @@ const getOAuthConfig = (provider) => {
   return null;
 };
 
-const oauthFetch = async (url, options = {}) => {
+export const oauthFetch = async (url, options = {}) => {
   const response = await fetch(url, {
     ...options,
     headers: {
@@ -138,7 +143,7 @@ const oauthFetch = async (url, options = {}) => {
   return data;
 };
 
-const getProviderProfile = async (provider, accessToken) => {
+export const getProviderProfile = async (provider, accessToken) => {
   const config = getOAuthConfig(provider);
 
   if (provider === "google") {
@@ -181,7 +186,7 @@ const getProviderProfile = async (provider, accessToken) => {
   };
 };
 
-const exchangeOAuthCode = async (provider, code) => {
+export const exchangeOAuthCode = async (provider, code) => {
   const config = getOAuthConfig(provider);
 
   if (provider === "google") {
@@ -213,7 +218,7 @@ const exchangeOAuthCode = async (provider, code) => {
   });
 };
 
-const buildOAuthUserData = (provider, profile) => {
+export const buildOAuthUserData = (provider, profile) => {
   const providerName = provider === "google" ? "google" : "github";
   const providerId = String(profile.sub || profile.id || profile.node_id || "");
   const usernameSeed =
@@ -247,7 +252,7 @@ const buildOAuthUserData = (provider, profile) => {
   };
 };
 
-const findOrCreateOAuthUser = async (provider, profile) => {
+export const findOrCreateOAuthUser = async (provider, profile) => {
   const providerField = provider === "google" ? "googleId" : "githubId";
   const providerId = String(profile.sub || profile.id || profile.node_id || "");
   const email = profile.email || "";
@@ -303,7 +308,7 @@ const findOrCreateOAuthUser = async (provider, profile) => {
   return user;
 };
 
-const issueOAuthRedirect = (res, provider, returnTo) => {
+export const issueOAuthRedirect = (res, provider, returnTo) => {
   const config = getOAuthConfig(provider);
 
   if (!config?.clientId || !config?.clientSecret) {
@@ -336,7 +341,7 @@ const issueOAuthRedirect = (res, provider, returnTo) => {
   return res.redirect(authUrl.toString());
 };
 
-const finalizeOAuthLogin = async (req, res, provider) => {
+export const finalizeOAuthLogin = async (req, res, provider) => {
   try {
     const { code, state } = req.query;
 
@@ -387,10 +392,10 @@ const finalizeOAuthLogin = async (req, res, provider) => {
   }
 };
 
-const hashToken = (token) =>
+export const hashToken = (token) =>
   crypto.createHash("sha256").update(token).digest("hex");
 
-const getCookieOptions = () => {
+export const getCookieOptions = () => {
   const isProd = process.env.NODE_ENV === "production";
   const sameSite = process.env.AUTH_COOKIE_SAME_SITE || "lax";
   return {
@@ -402,12 +407,12 @@ const getCookieOptions = () => {
   };
 };
 
-const getRefreshCookieOptions = () => ({
+export const getRefreshCookieOptions = () => ({
   ...getCookieOptions(),
   maxAge: REFRESH_COOKIE_MAX_AGE,
 });
 
-const parseCookies = (cookieHeader = "") => {
+export const parseCookies = (cookieHeader = "") => {
   return cookieHeader
     .split(";")
     .map((part) => part.trim())
@@ -423,29 +428,29 @@ const parseCookies = (cookieHeader = "") => {
     }, {});
 };
 
-const setAuthCookie = (res, token) => {
+export const setAuthCookie = (res, token) => {
   res.cookie(AUTH_COOKIE_NAME, token, getCookieOptions());
 };
 
-const setRefreshCookie = (res, token) => {
+export const setRefreshCookie = (res, token) => {
   res.cookie(REFRESH_COOKIE_NAME, token, getRefreshCookieOptions());
 };
 
-const clearRefreshCookie = (res) => {
+export const clearRefreshCookie = (res) => {
   res.clearCookie(REFRESH_COOKIE_NAME, {
     ...getRefreshCookieOptions(),
     maxAge: undefined,
   });
 };
 
-const clearAuthCookie = (res) => {
+export const clearAuthCookie = (res) => {
   res.clearCookie(AUTH_COOKIE_NAME, {
     ...getCookieOptions(),
     maxAge: undefined,
   });
 };
 
-const createAccessToken = (user) => {
+export const createAccessToken = (user) => {
   return jwt.sign(
     { userId: user._id, role: user.role },
     process.env.JWT_SECRET,
@@ -453,7 +458,7 @@ const createAccessToken = (user) => {
   );
 };
 
-const createRefreshToken = (user) => {
+export const createRefreshToken = (user) => {
   const jti = crypto.randomUUID();
   const token = jwt.sign(
     { userId: user._id, role: user.role, jti },
@@ -463,7 +468,7 @@ const createRefreshToken = (user) => {
   return { token, jti };
 };
 
-const buildUserResponse = (user) => ({
+export const buildUserResponse = (user) => ({
   id: user._id,
   username: user.username,
   role: user.role,
@@ -479,7 +484,7 @@ const buildUserResponse = (user) => ({
   socialLinks: user.socialLinks || {},
 });
 
-const persistRefreshToken = async (user, refreshToken, req) => {
+export const persistRefreshToken = async (user, refreshToken, req) => {
   const decoded = jwt.decode(refreshToken);
   const expiresAt = decoded?.exp
     ? new Date(decoded.exp * 1000)
@@ -500,7 +505,7 @@ const persistRefreshToken = async (user, refreshToken, req) => {
   await user.save();
 };
 
-const issueAuthCookies = async (res, user, req) => {
+export const issueAuthCookies = async (res, user, req) => {
   const accessToken = createAccessToken(user);
   const { token: refreshToken } = createRefreshToken(user);
 
