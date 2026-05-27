@@ -1,6 +1,6 @@
 import jwt from "jsonwebtoken";
 import crypto from "crypto";
-import { jest } from "@jest/globals";
+import { describe, jest } from "@jest/globals";
 
 await jest.unstable_mockModule("../../utils/validators.js", () => ({
   isValidPassword: jest.fn().mockResolvedValue(true),
@@ -112,11 +112,13 @@ describe("test signup function", () => {
 
   beforeEach(() => {
     req = {
-      username: "kebede",
-      password: "kebede123",
-      displayName: "Kebede",
-      email: "kebede@example.com",
-      members: ["Abebe", "Alemu"],
+      body: {
+        username: "kebede",
+        password: "kebede123",
+        displayName: "Kebede",
+        email: "kebede@example.com",
+        members: ["Abebe", "Alemu"],
+      },
     };
     res = {
       status: jest.fn().mockReturnThis(),
@@ -132,8 +134,8 @@ describe("test signup function", () => {
   test("user signs up successfully", async () => {
     await signup(req, res);
 
-    expect(isValidPassword).toHaveBeenCalledWith(req.password);
-    expect(User.findOne).toHaveBeenCalledWith(req.username);
+    expect(isValidPassword).toHaveBeenCalledWith(req.body.password);
+    expect(User.findOne).toHaveBeenCalledWith(req.body.username);
     expect(user.save).toHaveBeenCalled();
     expect(ActivityLog.create).toHaveBeenCalledWith({
       user_id: 123,
@@ -147,5 +149,95 @@ describe("test signup function", () => {
       user: user,
       message: "Account created successfully!",
     });
+  });
+
+  test("username not found", async () => {
+    req.body.username = "";
+
+    await signup(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(res.json).toHaveBeenCalledWith({
+      message: "Username and password are required",
+    });
+  });
+  test("username not found", async () => {
+    req.body.password = "";
+
+    await signup(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(res.json).toHaveBeenCalledWith({
+      message: "Username and password are required",
+    });
+  });
+
+  test("invalid password", async () => {
+    await jest.unstable_mockModule("../../utils/validators.js", () => ({
+      isValidPassword: jest.fn().mockRejectedValue(false),
+    }));
+
+    await signup(req, res);
+
+    expect(isValidPassword).toHaveBeenCalledWith(req.body.password);
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(res.json).toHaveBeenCalledWith({
+      message:
+        "Password must be at least 8 characters and contain both letters and numbers",
+    });
+  });
+
+  test("user already exists", async () => {
+    User.findOne = jest.fn().mockResolvedValue(true);
+
+    await signup(req, res);
+
+    expect(isValidPassword).toHaveBeenCalledWith(req.body.password);
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(res.json).toHaveBeenCalledWith({
+      message: "Username already exists",
+    });
+  });
+});
+
+describe("tests for login", () => {
+  let req, res;
+
+  beforeEach(() => {
+    req = {
+      body: {
+        username: "kebede",
+        password: "kebede123",
+      },
+    };
+    res = {
+      status: jest.fn().mockReturnThis(),
+      json: jest.fn(),
+    };
+    user = { username: "kebede", pasword: "kebede123" };
+    User.findOne = jest.fn().mockRejectedValue(false);
+    ActivityLog.create = jest.fn().mockReturnThis();
+    user.comparePassword = jest.fn().mockResolvedValue(false);
+    issueAuthCookies = jest.fn().mockResolvedValue(true);
+    buildUserResponse = jest.fn().mockResolvedValue({
+      id: 123,
+      username: "kebede",
+      password: "kebede123",
+    });
+  });
+
+  test("user signs up successfully", async () => {
+    await login(req, res);
+
+    expect(User.findOne).toHaveBeenCalledWith(req.body.username);
+    expect(user.comparePassword).toHaveBeenCalledWith(req.body.password);
+    expect(ActivityLog.create).toHaveBeenCalledWith({
+      user_id: 123,
+      action: "login",
+      detail: "Successful login",
+    });
+    expect(issueAuthCookies).toHaveBeenCalledWith(req, user, res);
+    expect(res.json).toHaveBeenCalledWith({ user: user });
+    expect(buildUserResponse).toHaveBeenCalledWith(user);
   });
 });
