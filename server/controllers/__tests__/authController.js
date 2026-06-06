@@ -1,17 +1,27 @@
 import jwt from "jsonwebtoken";
 import crypto from "crypto";
-import { describe, jest } from "@jest/globals";
+import { describe, expect, jest } from "@jest/globals";
 
 await jest.unstable_mockModule("../../utils/validators.js", () => ({
   isValidPassword: jest.fn().mockResolvedValue(true),
 }));
-
+await jest.unstable_mockModule("../../models/User.js", () => {
+  function MockUser(data) {
+    Object.assign(this, data);
+    this._id = "id123";
+    this.save = jest.fn().mockResolvedValue(this);
+    this.comparePassword = jest.fn().mockResolvedValue(true);
+  }
+  MockUser.findOne = jest.fn().mockResolvedValue(null); // default for signup success
+  return { default: MockUser };
+});
 import User from "../../models/User.js";
 import ActivityLog from "../../models/ActivityLog.js";
 import { isValidPassword } from "../../utils/validators.js";
 
 import * as funs from "../authController";
 
+let user;
 describe("sanitizing return origins", () => {
   test("test valid return origin", () => {
     expect(
@@ -105,6 +115,13 @@ describe("getting request origins", () => {
     expect(funs.getRequestOrigin(req)).toBe("");
   });
 });
+user = {
+  _id: "123",
+  username: "kebede",
+  password: "kebede123",
+  save: jest.fn().mockResolvedValue(this),
+  comparePassword: jest.fn().mockResolvedValue(true),
+};
 
 describe("test signup function", () => {
   let User = jest.fn().mockReturnThis();
@@ -125,14 +142,13 @@ describe("test signup function", () => {
       json: jest.fn(),
     };
     User.findOne = jest.fn().mockRejectedValue(false);
-    user.save = jest.fn().mockResolvedValue();
     ActivityLog.create = jest.fn();
     issueAuthCookies = jest.fn();
     buildUserResponse = jest.fn().mockReturnThis();
   });
 
   test("user signs up successfully", async () => {
-    await signup(req, res);
+    await funs.signup(req, res);
 
     expect(isValidPassword).toHaveBeenCalledWith(req.body.password);
     expect(User.findOne).toHaveBeenCalledWith(req.body.username);
@@ -154,7 +170,7 @@ describe("test signup function", () => {
   test("username not found", async () => {
     req.body.username = "";
 
-    await signup(req, res);
+    await funs.signup(req, res);
 
     expect(res.status).toHaveBeenCalledWith(400);
     expect(res.json).toHaveBeenCalledWith({
@@ -164,7 +180,7 @@ describe("test signup function", () => {
   test("username not found", async () => {
     req.body.password = "";
 
-    await signup(req, res);
+    await funs.signup(req, res);
 
     expect(res.status).toHaveBeenCalledWith(400);
     expect(res.json).toHaveBeenCalledWith({
@@ -177,7 +193,7 @@ describe("test signup function", () => {
       isValidPassword: jest.fn().mockRejectedValue(false),
     }));
 
-    await signup(req, res);
+    await funs.signup(req, res);
 
     expect(isValidPassword).toHaveBeenCalledWith(req.body.password);
     expect(res.status).toHaveBeenCalledWith(400);
@@ -190,7 +206,7 @@ describe("test signup function", () => {
   test("user already exists", async () => {
     User.findOne = jest.fn().mockResolvedValue(true);
 
-    await signup(req, res);
+    await funs.signup(req, res);
 
     expect(isValidPassword).toHaveBeenCalledWith(req.body.password);
     expect(res.status).toHaveBeenCalledWith(400);
@@ -214,10 +230,8 @@ describe("tests for login", () => {
       status: jest.fn().mockReturnThis(),
       json: jest.fn(),
     };
-    user = { username: "kebede", pasword: "kebede123" };
-    User.findOne = jest.fn().mockRejectedValue(false);
+    process.env.JWT_SECRET = jest.fn().mockReturnValue(true);
     ActivityLog.create = jest.fn().mockReturnThis();
-    user.comparePassword = jest.fn().mockResolvedValue(false);
     issueAuthCookies = jest.fn().mockResolvedValue(true);
     buildUserResponse = jest.fn().mockResolvedValue({
       id: 123,
@@ -226,8 +240,8 @@ describe("tests for login", () => {
     });
   });
 
-  test("user signs up successfully", async () => {
-    await login(req, res);
+  test("user signs in successfully", async () => {
+    await funs.login(req, res);
 
     expect(User.findOne).toHaveBeenCalledWith(req.body.username);
     expect(user.comparePassword).toHaveBeenCalledWith(req.body.password);
@@ -239,5 +253,53 @@ describe("tests for login", () => {
     expect(issueAuthCookies).toHaveBeenCalledWith(req, user, res);
     expect(res.json).toHaveBeenCalledWith({ user: user });
     expect(buildUserResponse).toHaveBeenCalledWith(user);
+  });
+
+  test("username not entered", async () => {
+    req.body.username = "";
+
+    await funs.login(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(res.json).toHaveBeenCalledWith({
+      message: "Username and password are required",
+    });
+  });
+  test("no password entered", async () => {
+    req.body.password = "";
+
+    await funs.login(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(res.json).toHaveBeenCalledWith({
+      message: "Username and password are required",
+    });
+  });
+
+  test("username not found in db", async () => {
+    User.findOne = jest.fn().mockRejectedValue(false);
+
+    await funs.login(req, res);
+
+    expect(ActivityLog.create).toHaveBeenCalledWith({
+      action: "failed_login",
+      detail: "Failed login attempt",
+    });
+    expect(res.status).toHaveBeenCalledWith(401);
+    expect(res.json).toHaveBeenCalledWith({ message: "Invalid credentials" });
+  });
+
+  test("Invalid password", async () => {
+    user.comparePassword = jest.fn().mockRejectedValue(false);
+
+    await funs.login(req, res);
+
+    expect(ActivityLog.create).toHaveBeenCalledWith({
+      user_id: user._id,
+      action: "failed_login",
+      detail: "Invalid password",
+    });
+    expect(res.status).toHaveBeenCalledWith(401);
+    expect(res.json).toHaveBeenCalledWith({ message: "Invalid credentials" });
   });
 });
