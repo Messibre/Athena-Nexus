@@ -682,6 +682,7 @@ export const getMe = async (req, res) => {
       user: buildUserResponse(user),
     });
   } catch (error) {
+    console.error("Get current user failed:", error.message);
     res.status(401).json({ message: "Unauthorized" });
   }
 };
@@ -748,8 +749,8 @@ export const logout = async (req, res) => {
         }
       }
     }
-  } catch {
-    // noop
+  } catch (error) {
+    console.error("Logout token revocation failed:", error.message);
   }
 
   clearAuthCookie(res);
@@ -833,7 +834,8 @@ export const refreshToken = async (req, res) => {
     setRefreshCookie(res, nextRefreshToken);
 
     return res.json({ success: true });
-  } catch {
+  } catch (error) {
+    console.error("Refresh token failed:", error.message);
     clearAuthCookie(res);
     clearRefreshCookie(res);
     return res.status(401).json({ message: "Unauthorized" });
