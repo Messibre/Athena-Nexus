@@ -248,6 +248,30 @@ describe("getWeekById", () => {
     expect(res.status).toHaveBeenCalledWith(500);
     expect(res.json).toHaveBeenCalledWith({ message: "Server error" });
   });
+  test("returns 500 when id is invalid (CastError)", async () => {
+    Week.findById.mockRejectedValue(
+      new Error("CastError: Cast to ObjectId failed"),
+    );
+
+    await funs.getWeekById(req, res);
+
+    expect(Week.findById).toHaveBeenCalledWith("42");
+    expect(res.status).toHaveBeenCalledWith(500);
+    expect(res.json).toHaveBeenCalledWith({ message: "Server error" });
+  });
+
+  test("returns 500 when id is missing", async () => {
+    req = { params: {} }; // missing id
+    Week.findById.mockRejectedValue(
+      new Error('CastError: Cast to ObjectId failed for value "undefined"'),
+    );
+
+    await funs.getWeekById(req, res);
+
+    expect(Week.findById).toHaveBeenCalledWith(undefined);
+    expect(res.status).toHaveBeenCalledWith(500);
+    expect(res.json).toHaveBeenCalledWith({ message: "Server error" });
+  });
 });
 
 describe("getWeekSubmissions", () => {
@@ -308,6 +332,33 @@ describe("getWeekSubmissions", () => {
     expect(res.status).toHaveBeenCalledWith(500);
     expect(res.json).toHaveBeenCalledWith({ message: "Server error" });
   });
+  test("returns 500 when populate rejects", async () => {
+    Submission.find.mockReturnValue({
+      populate: jest.fn().mockReturnValue({
+        sort: jest.fn().mockRejectedValue(new Error("Populate error")),
+      }),
+    });
+
+    await funs.getWeekSubmissions(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(500);
+    expect(res.json).toHaveBeenCalledWith({ message: "Server error" });
+  });
+
+  test("handles missing week_id param", async () => {
+    req = { params: {} }; // missing id
+
+    const query = makeSubmissionQuery([]);
+    Submission.find.mockReturnValue(query);
+
+    await funs.getWeekSubmissions(req, res);
+
+    expect(Submission.find).toHaveBeenCalledWith({
+      week_id: undefined,
+      status: "approved",
+    });
+    expect(res.json).toHaveBeenCalledWith([]);
+  });
 });
 
 describe("getPublicStats", () => {
@@ -364,6 +415,43 @@ describe("getPublicStats", () => {
 
     expect(res.status).toHaveBeenCalledWith(500);
     expect(res.json).toHaveBeenCalledWith({ message: "Server error" });
+  });
+  test("returns 500 when Week.countDocuments fails", async () => {
+    User.countDocuments.mockResolvedValue(10);
+    Week.countDocuments.mockRejectedValue(new Error("Week count error"));
+    Submission.countDocuments.mockResolvedValue(20);
+
+    await funs.getPublicStats(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(500);
+    expect(res.json).toHaveBeenCalledWith({ message: "Server error" });
+    expect(res.json).toHaveBeenCalledTimes(1);
+  });
+
+  test("returns 500 when Submission.countDocuments fails", async () => {
+    User.countDocuments.mockResolvedValue(10);
+    Week.countDocuments.mockResolvedValue(5);
+    Submission.countDocuments.mockRejectedValue(
+      new Error("Submission count error"),
+    );
+
+    await funs.getPublicStats(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(500);
+    expect(res.json).toHaveBeenCalledWith({ message: "Server error" });
+  });
+
+  test("returns 500 when User.countDocuments succeeds but later query fails", async () => {
+    User.countDocuments.mockResolvedValue(10);
+    Week.countDocuments.mockRejectedValue(new Error("Week count error"));
+
+    await funs.getPublicStats(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(500);
+    expect(res.json).toHaveBeenCalledWith({ message: "Server error" });
+    expect(res.json).not.toHaveBeenCalledWith(
+      expect.objectContaining({ totalUsers: 10 }),
+    );
   });
 });
 
@@ -482,6 +570,232 @@ describe("getLeaderboard", () => {
       }),
     });
     MilestoneSubmission.find.mockReturnValue(makeLeaderboardQuery([]));
+
+    await funs.getLeaderboard(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(500);
+    expect(res.json).toHaveBeenCalledWith({ message: "Server error" });
+  });
+  test("aggregates multiple weekly submissions for the same user", async () => {
+    const user = {
+      _id: { toString: () => "u1" },
+      username: "zoe",
+      displayName: "Zoe",
+      profileImageUrl: "/zoe.png",
+      members: [],
+    };
+    Submission.find.mockReturnValue(
+      makeLeaderboardQuery([{ user_id: user }, { user_id: user }]),
+    );
+    MilestoneSubmission.find.mockReturnValue(makeLeaderboardQuery([]));
+
+    await funs.getLeaderboard(req, res);
+
+    expect(res.json).toHaveBeenCalledWith([
+      expect.objectContaining({
+        userId: "u1",
+        weeklyProjects: 2,
+        milestoneProjects: 0,
+        projectCount: 2,
+        points: 20,
+        rank: 1,
+        badge: "gold",
+      }),
+    ]);
+  });
+
+  test("aggregates multiple milestone submissions for the same user", async () => {
+    const user = {
+      _id: { toString: () => "u2" },
+      username: "amy",
+      displayName: "Amy",
+      profileImageUrl: "",
+      members: [],
+    };
+    Submission.find.mockReturnValue(makeLeaderboardQuery([]));
+    MilestoneSubmission.find.mockReturnValue(
+      makeLeaderboardQuery([{ userId: user }, { userId: user }]),
+    );
+
+    await funs.getLeaderboard(req, res);
+
+    expect(res.json).toHaveBeenCalledWith([
+      expect.objectContaining({
+        userId: "u2",
+        weeklyProjects: 0,
+        milestoneProjects: 2,
+        projectCount: 2,
+        points: 20,
+        rank: 1,
+        badge: "gold",
+      }),
+    ]);
+  });
+
+  test("aggregates multiple weekly and milestone submissions for the same user", async () => {
+    const user = {
+      _id: { toString: () => "u3" },
+      username: "bob",
+      displayName: "Bob",
+      profileImageUrl: "/bob.png",
+      members: ["Team Bob"],
+    };
+    Submission.find.mockReturnValue(
+      makeLeaderboardQuery([{ user_id: user }, { user_id: user }]),
+    );
+    MilestoneSubmission.find.mockReturnValue(
+      makeLeaderboardQuery([{ userId: user }, { userId: user }]),
+    );
+
+    await funs.getLeaderboard(req, res);
+
+    expect(res.json).toHaveBeenCalledWith([
+      expect.objectContaining({
+        userId: "u3",
+        weeklyProjects: 2,
+        milestoneProjects: 2,
+        projectCount: 4,
+        points: 40,
+        rank: 1,
+        badge: "gold",
+      }),
+    ]);
+  });
+  test("handles missing _id in user object and returns 500", async () => {
+    const userNoId = {
+      username: "ghost",
+      displayName: "Ghost",
+      profileImageUrl: "",
+      members: [],
+    };
+    Submission.find.mockReturnValue(
+      makeLeaderboardQuery([{ user_id: userNoId }]),
+    );
+    MilestoneSubmission.find.mockReturnValue(makeLeaderboardQuery([]));
+
+    await funs.getLeaderboard(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(500);
+    expect(res.json).toHaveBeenCalledWith({ message: "Server error" });
+  });
+
+  test("uses fallback displayName when username and displayName are missing", async () => {
+    const user = {
+      _id: { toString: () => "u4" },
+      username: undefined,
+      displayName: undefined,
+      profileImageUrl: "",
+      members: [],
+    };
+    Submission.find.mockReturnValue(makeLeaderboardQuery([{ user_id: user }]));
+    MilestoneSubmission.find.mockReturnValue(makeLeaderboardQuery([]));
+
+    await funs.getLeaderboard(req, res);
+
+    expect(res.json).toHaveBeenCalledWith([
+      expect.objectContaining({
+        userId: "u4",
+        username: "",
+        displayName: "Team",
+        profileImageUrl: "",
+        members: [],
+        projectCount: 1,
+        points: 10,
+      }),
+    ]);
+  });
+
+  test("defaults profileImageUrl to empty string when missing", async () => {
+    const user = {
+      _id: { toString: () => "u5" },
+      username: "noimg",
+      displayName: "No Image",
+      members: [],
+    };
+    Submission.find.mockReturnValue(makeLeaderboardQuery([{ user_id: user }]));
+    MilestoneSubmission.find.mockReturnValue(makeLeaderboardQuery([]));
+
+    await funs.getLeaderboard(req, res);
+
+    expect(res.json).toHaveBeenCalledWith([
+      expect.objectContaining({
+        userId: "u5",
+        profileImageUrl: "",
+      }),
+    ]);
+  });
+
+  test("normalizes non-array members to empty array", async () => {
+    const user = {
+      _id: { toString: () => "u6" },
+      username: "badmembers",
+      displayName: "Bad Members",
+      profileImageUrl: "",
+      members: null,
+    };
+    Submission.find.mockReturnValue(makeLeaderboardQuery([{ user_id: user }]));
+    MilestoneSubmission.find.mockReturnValue(makeLeaderboardQuery([]));
+
+    await funs.getLeaderboard(req, res);
+
+    expect(res.json).toHaveBeenCalledWith([
+      expect.objectContaining({
+        userId: "u6",
+        members: [],
+      }),
+    ]);
+  });
+
+  test("handles _id as a plain string", async () => {
+    const user = {
+      _id: "u7",
+      username: "stringid",
+      displayName: "String ID",
+      profileImageUrl: "",
+      members: [],
+    };
+    Submission.find.mockReturnValue(makeLeaderboardQuery([{ user_id: user }]));
+    MilestoneSubmission.find.mockReturnValue(makeLeaderboardQuery([]));
+
+    await funs.getLeaderboard(req, res);
+
+    expect(res.json).toHaveBeenCalledWith([
+      expect.objectContaining({
+        userId: "u7",
+      }),
+    ]);
+  });
+  test("returns 500 when MilestoneSubmission.find rejects", async () => {
+    Submission.find.mockReturnValue(makeLeaderboardQuery([]));
+    MilestoneSubmission.find.mockReturnValue({
+      populate: jest.fn().mockReturnValue({
+        select: jest.fn().mockRejectedValue(new Error("Milestone error")),
+      }),
+    });
+
+    await funs.getLeaderboard(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(500);
+    expect(res.json).toHaveBeenCalledWith({ message: "Server error" });
+  });
+
+  test("returns 500 when Submission.find populate rejects", async () => {
+    Submission.find.mockReturnValue({
+      populate: jest.fn().mockReturnValue({
+        select: jest.fn().mockRejectedValue(new Error("Populate error")),
+      }),
+    });
+    MilestoneSubmission.find.mockReturnValue(makeLeaderboardQuery([]));
+
+    await funs.getLeaderboard(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(500);
+    expect(res.json).toHaveBeenCalledWith({ message: "Server error" });
+  });
+
+  test("returns 500 when MilestoneSubmission.find returns null", async () => {
+    Submission.find.mockReturnValue(makeLeaderboardQuery([]));
+    MilestoneSubmission.find.mockResolvedValue(null);
 
     await funs.getLeaderboard(req, res);
 

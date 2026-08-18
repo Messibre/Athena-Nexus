@@ -66,7 +66,11 @@ export const getSubmissionById = async (req, res) => {
         return res.json(submission);
       }
 
-      const isOwner = submission.user_id._id.toString() === user._id.toString();
+      // Guard against missing user_id on submission
+      let isOwner = false;
+      if (submission.user_id && submission.user_id._id) {
+        isOwner = submission.user_id._id.toString() === user._id.toString();
+      }
       const isAdmin = user.role === "admin";
 
       if (submission.status === "approved" || isOwner || isAdmin) {
@@ -77,17 +81,25 @@ export const getSubmissionById = async (req, res) => {
         .status(403)
         .json({ message: "Not authorized to view this submission" });
     } catch (authError) {
-      if (submission.status !== "approved") {
-        return res.status(403).json({ message: "Submission not available" });
+      if (
+        authError.name === "JsonWebTokenError" ||
+        authError.name === "TokenExpiredError" ||
+        authError.name === "NotBeforeError"
+      ) {
+        if (submission.status !== "approved") {
+          return res.status(403).json({ message: "Submission not available" });
+        }
+        return res.json(submission);
       }
-      return res.json(submission);
+
+      console.error("Get submission error:", authError);
+      return res.status(500).json({ message: "Server error" });
     }
   } catch (error) {
     console.error("Get submission error:", error);
     res.status(500).json({ message: "Server error" });
   }
 };
-
 export const createSubmission = async (req, res) => {
   try {
     const {
@@ -152,11 +164,16 @@ export const createSubmission = async (req, res) => {
 
     await submission.save();
 
-    await ActivityLog.create({
-      user_id: req.user._id,
-      action: "submit",
-      detail: `Submitted for week ${week.week_number}`,
-    });
+    // Log activity, but don't let a logging error affect the response
+    try {
+      await ActivityLog.create({
+        user_id: req.user._id,
+        action: "submit",
+        detail: `Submitted for week ${week.week_number}`,
+      });
+    } catch (logError) {
+      console.error("Activity log creation failed:", logError);
+    }
 
     res.status(201).json(submission);
   } catch (error) {
@@ -164,7 +181,6 @@ export const createSubmission = async (req, res) => {
     res.status(500).json({ message: "Server error" });
   }
 };
-
 export const updateSubmission = async (req, res) => {
   try {
     const submission = await Submission.findById(req.params.id);
@@ -179,7 +195,12 @@ export const updateSubmission = async (req, res) => {
         .json({ message: "Not authorized to update this submission" });
     }
 
+    // ---------- FIX 3: Check if week exists before accessing deadlineDate ----------
     const week = await Week.findById(submission.week_id);
+    if (!week) {
+      return res.status(404).json({ message: "Week not found" });
+    }
+
     if (week.deadlineDate && new Date() > new Date(week.deadlineDate)) {
       return res
         .status(400)
@@ -206,8 +227,9 @@ export const updateSubmission = async (req, res) => {
     }
 
     if (github_repo_url) submission.github_repo_url = github_repo_url;
-    if (github_live_demo_url !== undefined)
-      submission.github_live_demo_url = github_live_demo_url;
+    if (github_live_demo_url !== undefined) {
+      submission.github_live_demo_url = github_live_demo_url || "";
+    }
     if (description !== undefined) submission.description = description;
     if (tags !== undefined) submission.tags = tags;
     if (screenshotUrl !== undefined) submission.screenshotUrl = screenshotUrl;
