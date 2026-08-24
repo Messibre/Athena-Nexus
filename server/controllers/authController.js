@@ -669,21 +669,16 @@ export const oauthCallback = async (req, res) => {
 
   return finalizeOAuthLogin(req, res, provider);
 };
-
 export const getMe = async (req, res) => {
   try {
     const user = await User.findById(req.user._id).select("-password_hash");
-
     if (!user) {
       return res.status(401).json({ message: "User not found" });
     }
-
-    res.json({
-      user: buildUserResponse(user),
-    });
+    res.json({ user: buildUserResponse(user) });
   } catch (error) {
     console.error("Get current user failed:", error.message);
-    res.status(401).json({ message: "Unauthorized" });
+    res.status(500).json({ message: "Server error" });
   }
 };
 
@@ -764,6 +759,8 @@ export const refreshToken = async (req, res) => {
     const refreshTokenValue = cookies[REFRESH_COOKIE_NAME];
 
     if (!refreshTokenValue) {
+      clearAuthCookie(res);
+      clearRefreshCookie(res);
       return res.status(401).json({ message: "Unauthorized" });
     }
 
