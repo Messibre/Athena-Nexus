@@ -19,6 +19,34 @@ export const createWeek = async (req, res) => {
       return res.status(400).json({ message: "Week number is required" });
     }
 
+    // Validate title and description are strings if provided
+    if (title !== undefined && typeof title !== "string") {
+      return res.status(400).json({ message: "Title must be a string" });
+    }
+    if (description !== undefined && typeof description !== "string") {
+      return res.status(400).json({ message: "Description must be a string" });
+    }
+
+    // Parse and validate dates
+    let parsedStartDate = startDate ? new Date(startDate) : null;
+    let parsedDeadlineDate = deadlineDate ? new Date(deadlineDate) : null;
+
+    if (startDate && isNaN(parsedStartDate.getTime())) {
+      return res.status(400).json({ message: "Invalid startDate" });
+    }
+    if (deadlineDate && isNaN(parsedDeadlineDate.getTime())) {
+      return res.status(400).json({ message: "Invalid deadlineDate" });
+    }
+    if (
+      parsedStartDate &&
+      parsedDeadlineDate &&
+      parsedDeadlineDate <= parsedStartDate
+    ) {
+      return res.status(400).json({
+        message: "deadlineDate must be after startDate",
+      });
+    }
+
     const existingWeek = await Week.findOne({ week_number });
     if (existingWeek) {
       return res.status(400).json({ message: "Week number already exists" });
@@ -28,8 +56,8 @@ export const createWeek = async (req, res) => {
       week_number,
       title: title || "",
       description: description || "",
-      startDate: startDate ? new Date(startDate) : null,
-      deadlineDate: deadlineDate ? new Date(deadlineDate) : null,
+      startDate: parsedStartDate,
+      deadlineDate: parsedDeadlineDate,
       resources: resources || [],
       isActive: false,
     });
@@ -51,13 +79,37 @@ export const updateWeek = async (req, res) => {
 
     const { title, description, startDate, deadlineDate, resources, isActive } =
       req.body;
+    let parsedStartDate = null;
+    let parsedDeadlineDate = null;
+
+    if (startDate !== undefined) {
+      parsedStartDate = startDate ? new Date(startDate) : null;
+      if (startDate && isNaN(parsedStartDate.getTime())) {
+        return res.status(400).json({ message: "Invalid startDate" });
+      }
+    }
+    if (deadlineDate !== undefined) {
+      parsedDeadlineDate = deadlineDate ? new Date(deadlineDate) : null;
+      if (deadlineDate && isNaN(parsedDeadlineDate.getTime())) {
+        return res.status(400).json({ message: "Invalid deadlineDate" });
+      }
+    }
+    if (
+      parsedStartDate &&
+      parsedDeadlineDate &&
+      parsedDeadlineDate <= parsedStartDate
+    ) {
+      return res.status(400).json({
+        message: "deadlineDate must be after startDate",
+      });
+    }
 
     if (title !== undefined) week.title = title;
     if (description !== undefined) week.description = description;
     if (startDate !== undefined)
-      week.startDate = startDate ? new Date(startDate) : null;
+      week.startDate = startDate ? parsedStartDate : null;
     if (deadlineDate !== undefined)
-      week.deadlineDate = deadlineDate ? new Date(deadlineDate) : null;
+      week.deadlineDate = deadlineDate ? parsedDeadlineDate : null;
     if (resources !== undefined) week.resources = resources;
     if (isActive !== undefined) week.isActive = isActive;
 
@@ -189,20 +241,33 @@ export const updateUser = async (req, res) => {
       }
     }
 
-    if (socialLinks !== undefined && typeof socialLinks !== "object") {
-      return res.status(400).json({ message: "Invalid social links" });
-    }
-
-    if (socialLinks && typeof socialLinks === "object") {
+    if (socialLinks !== undefined && socialLinks !== null) {
+      if (typeof socialLinks !== "object") {
+        return res.status(400).json({ message: "Invalid social links" });
+      }
       for (const [key, value] of Object.entries(socialLinks)) {
         if (value && !isValidUrl(value)) {
-          return res.status(400).json({
-            message: `Invalid social link: ${key}`,
-          });
+          return res
+            .status(400)
+            .json({ message: `Invalid social link: ${key}` });
         }
       }
+      user.socialLinks = {
+        website: socialLinks.website || "",
+        github: socialLinks.github || "",
+        linkedin: socialLinks.linkedin || "",
+        x: socialLinks.x || "",
+        instagram: socialLinks.instagram || "",
+      };
+    } else if (socialLinks === null) {
+      user.socialLinks = {
+        website: "",
+        github: "",
+        linkedin: "",
+        x: "",
+        instagram: "",
+      };
     }
-
     if (displayName !== undefined) user.displayName = displayName;
     if (email !== undefined) user.email = email;
     if (members !== undefined) user.members = members;
