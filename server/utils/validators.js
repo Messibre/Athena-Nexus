@@ -5,8 +5,8 @@ export const normalizeGitHubUrl = (url) => {
 
   return url
     .trim()
-    .replace(/\.git$/i, "")
-    .replace(/\/+$/, "");
+    .replace(/\/+$/, "")
+    .replace(/\.git$/i, "");
 };
 
 export const isValidGitHubUrl = (url) => {

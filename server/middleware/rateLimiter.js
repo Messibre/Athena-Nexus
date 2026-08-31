@@ -9,7 +9,7 @@ export const loginLimiter = rateLimit({
   legacyHeaders: false,
 
   keyGenerator: (req) => {
-    return req.ip || req.socket.remoteAddress || "unknown";
+    return req.ip || (req.socket && req.socket.remoteAddress) || "unknown";
   },
 
   validate: {
@@ -36,7 +36,7 @@ export const apiLimiter = rateLimit({
   message: "Too many requests from this IP, please try again later",
 
   keyGenerator: (req) => {
-    return req.ip || req.socket.remoteAddress || "unknown";
+    return req.ip || (req.socket && req.socket.remoteAddress) || "unknown";
   },
 
   validate: {
