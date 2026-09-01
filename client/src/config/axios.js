@@ -86,12 +86,14 @@ api.interceptors.response.use(
         return api(originalRequest);
       } catch {
         window.location.href = "/login";
+        error.normalizedMessage = getApiErrorMessage(error);
         return Promise.reject(error);
       }
     }
 
     if (error.response?.status === 401 && !originalRequest.skipAuthRedirect) {
       window.location.href = "/login";
+      error.normalizedMessage = getApiErrorMessage(error);
       return Promise.reject(error);
     }
 

@@ -22,6 +22,11 @@
     "test": "react-scripts test",
     "eject": "react-scripts eject"
   },
+  "jest": {
+    "transformIgnorePatterns": [
+      "node_modules/(?!(axios|msw|@mswjs|@bundled-es-modules|rettime|lens-list)/)"
+    ]
+  },
   "eslintConfig": {
     "extends": [
       "react-app"
@@ -50,8 +55,16 @@
     ]
   },
   "devDependencies": {
+    "@testing-library/jest-dom": "^7.0.1",
+    "@testing-library/react": "^16.3.3",
+    "@testing-library/user-event": "^14.6.6",
     "autoprefixer": "^10.4.27",
+    "axios-mock-adapter": "^2.1.0",
+    "jest": "^27.5.1",
+    "jsdom": "^29.1.1",
+    "msw": "^2.15.0",
     "postcss": "^8.5.8",
-    "tailwindcss": "^3.4.19"
+    "tailwindcss": "^3.4.19",
+    "vitest": "^4.1.11"
   }
 }
